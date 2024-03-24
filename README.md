@@ -145,6 +145,14 @@ func(int a) {
 }
 ```
 
+### Funkcje wbudowane
+
+- print() - wypisuje tekst na standardowe wyjście
+- to_str() - jawna konwersja na typ `string` (potrzebna tylko w nietypowych przypadkach)
+- to_float()
+- to_int()
+- to_bool()
+
 ### Przekazanie przez referencję, mutowalność
 
 - int a - niemutowalna kopia
