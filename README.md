@@ -27,6 +27,7 @@ main() {
 
 | Priorytet |               Operatory                |                   Znaczenie                    | Asocjacyjność |
 | :-------: | :------------------------------------: | :--------------------------------------------: | :-----------: |
+|     8     |                  `.`                   |            Dostęp do pola struktury            |  Lewostronna  |
 |     7     |                  `!`                   |              Negacja typu `bool`               |     Brak      |
 |     7     |                  `-`                   |                 Negacja liczby                 |     Brak      |
 |     6     |                `*`, `/`                | Mnożenie/dzielenie/dzielenie całkowitoliczbowe |  Lewostronna  |
@@ -38,20 +39,18 @@ main() {
 
 ### Konwersja typów
 
-Brak mechanizmu rozpoznawania 1 jako true i 0 jako false znanego z C++.
-
-| Oryginalny typ |                    float                    |                  int                  |                   string                   |                 bool                 |
-| :------------: | :-----------------------------------------: | :-----------------------------------: | :----------------------------------------: | :----------------------------------: |
-|     float      |                      -                      |        `5.4` -> `5` (odcięcie)        |              `2.4` -> `"2.4"`              |                 błąd                 |
-|      int       |                `4` -> `4.0`                 |                   -                   |                `3` -> `"3"`                |                 błąd                 |
-|     string     | `"3.14"` -> `3.14`<br>`"a"` -> błąd runtime | `"4"` -> `4`<br>`"a"` -> błąd runtime |                     -                      | `"sth"` -> `true`<br>`""` -> `false` |
-|      bool      |                    błąd                     |                 błąd                  | `true` -> `"true"`<br>`false` -> `"false"` |                  -                   |
+| Oryginalny typ |                    float                    |                  int                  |                   string                   |                               bool                                |
+| :------------: | :-----------------------------------------: | :-----------------------------------: | :----------------------------------------: | :---------------------------------------------------------------: |
+|     float      |                      -                      |        `5.4` -> `5` (odcięcie)        |              `2.4` -> `"2.4"`              | `1.0` -> `true`<br>`0.0` -> false<br>inna wartość -> błąd runtime |
+|      int       |                `4` -> `4.0`                 |                   -                   |                `3` -> `"3"`                |  `1` -> `true`<br>`0` -> `false`<br>inna wartość -> błąd runtime  |
+|     string     | `"3.14"` -> `3.14`<br>`"a"` -> błąd runtime | `"4"` -> `4`<br>`"a"` -> błąd runtime |                     -                      |               `"sth"` -> `true`<br>`""` -> `false`                |
+|      bool      |     `true` -> `1.0`<br>`false` -> `0.0`     |    `true` -> `1`<br>`false` -> `0`    | `true` -> `"true"`<br>`false` -> `"false"` |                                 -                                 |
 
 W przypadku przypisania wyniku do zmiennej, na samym końcu występuje konwersja do zadanego typu (jeśli jest możliwa).
 
 #### Operatory `*` i `/`
 
-Operacje mnożenia i dzielenia na typach `string` i `bool` są zabronione.  
+Mnożenie i dzielenie interpretowane jedynie jako operacja matematyczna - rzutowanie na `float` lub `int`.  
 Jedynie mnożenie dwóch liczb typu `int` daje typu `int`. Wszystkie inne kombinacje dają typ `float`.
 
 #### Operator `+`
@@ -67,15 +66,18 @@ main() {
 }
 ```
 
-#### Operatory `>`, `>=`, `<` i `<=`
+#### Operatory `==` i `!=`
 
-Operacje na typie `bool` są zabronione.
-W innych przypadkach występuje rzutowanie na `float` lub `int`.
+Kolejność argumentów nie ma wpływu na wynik.
+
+- `int`, `float` - rzutowanie na `float`
+- `string`, \* - rzutowanie na string
 
 #### Reszta operatorów
 
-Operatory `-` (odejmowanie) oraz `-` (negacja liczby) działają jedynie na liczbach.  
-Operatory `and`, `or` oraz `!` działają jedynie na typie `bool`
+Operatory `>`, `>=`, `<` i `<=` - rzutowanie do typu `float` lub `int`.  
+Operatory `-` (odejmowanie) oraz `-` (negacja liczby) - rzutowanie do typu `float` lub `int`  
+Operatory `and`, `or` oraz `!` - rzutowanie na `bool`
 
 ### Zmienne
 
@@ -205,12 +207,14 @@ struct SomeStruct {
     float b
 }
 
+union SomeUnion { SomeStruct, int }
+
 main() {
     SomeStruct someStruct = {a: 1, b: 1.5};
     print(someStruct.a); // 1
 
-    union<SomeStruct | int> someVariant = {a: 1, b: 1.5}; // ok
-    union<SomeStruct | int> otherVariant = 1; // ok
+    SomeUnion someVariant = {a: 1, b: 1.5}; // ok
+    SomeUnion otherVariant = 1; // ok
 }
 ```
 
@@ -219,15 +223,17 @@ main() {
 - Jeśli zmienna przechowująca strukturę jest niemutowalna, wszystkie jej pola są niemutowalne (wliczając pola zagnieżdżonych struktur)
 
 ```zephyr
-type SomeStruct = {
+struct SomeStruct {
     int a,
     float b
-};
+}
+union SomeUnion { SomeStruct, int }
+
 main() {
     SomeStruct someStruct = {a: 1, b: 1.5};
     someStruct.a = 1; // bład, zmienna someStruct jest niemutowalna
 
-    union<SomeStruct | int> mut a = {a: 1, b: 1.5}; // ok
+    SomeUnion mut a = {a: 1, b: 1.5}; // ok
     a = 1; // ok, zmiana rzeczywistego typu na int
 }
 ```
@@ -243,19 +249,20 @@ struct Result {
 struct Error {
     int errno;
 }
+union Maybe { Result, Error }
 
-do_something() -> union<Result | Error> {
+do_something() -> Maybe {
     return {result: 1};
 }
 
 main() {
-    union<Result | Error> res = do_something();
-    match(res) {
-        case Result {
+    Maybe maybe = do_something();
+    match(maybe) {
+        case (Result res) {
             print("Result: " + res.result);
         }
-        case Error {
-            print("Error: " + res.errno);
+        case (Error err) {
+            print("Error: " + err.errno);
         }
     }
 }
@@ -308,18 +315,19 @@ fib(int n) -> int {
 ### Warstwa składniowa
 
 ```ebnf
-program = {comment | struct_definition | function_definition};
+program = {struct_definition | union_definition | function_definition };
 
-comment = "//", {letter | digit};
+struct_definition = "struct", identifier, "{", struct_members, "}";
+struct_members = type, identifier, {",", type, identifier};
 
-struct_definition = "struct", identifier, "{", {struct_member}, "}";
-struct_member = builtin_type, identifier, ",";
+union_definition = "union", identifier, "{", union_members, "}";
+union_members = type, {",", type};
 
-function_definition = identifier, "(", arguments, ")", ["->", type], block;
+function_definition = identifier, "(", parameters, ")", ["->", type], block;
 
-arguments = [argument_definition, {",", argument_definition}];
-argument_definition = type, argument_modifier, identifier, ["=", literal];
-argument_modifier = "mut", "ref", "mref";
+parameters = [parameter_definition, {",", parameter_definition}];
+parameter_definition = type, parameter_modifier, identifier, ["=", literal];
+parameter_modifier = "mut", "ref", "mref";
 
 block = "{", {statement}, "}";
 statement = assignment
@@ -329,17 +337,15 @@ statement = assignment
           | conditional_statement
           | match_statement
           | function_call_statement
-          | block
-          | comment;
+          | block;
 
-assignment = identifier, "=", (expression | function_call), ";";
+assignment = identifier, "=", expression, ";";
 
 variable_declaration = type, variable_modifier, "=", expression, ";";
 variable_modifier = "mut";
-type = builtin_type | identifier | union_type;
-union_type = "union", "<", type, {"|", type}, ">";
+type = builtin_type | identifier;
 
-return_statement = "return", expression, ";";
+return_statement = "return", [expression], ";";
 
 loop = "while", "(", expression, ")", block;
 
@@ -347,23 +353,25 @@ conditional_statement = "if", "(", expression, ")", block,
                         {"elif", "(", expression, ")", block},
                         ["else", "(", expression, ")", block];
 
-match_statement = "match", "(", identifier, ")", "{", {case_statement}, "}";
-case_statement = "case", type, block;
+match_statement = "match", "(", expression, ")", "{", {case_statement}, "}";
+case_statement = "case", "(", type, identifier, ")", block;
 
+(* TODO: possibly refactor statement in grammar *)
 function_call_statement = function_call, ";";
 function_call = identifier, "(", [expression, {",", expression}], ")";
 
 expression = and_term, {"or", and_term};
 and_term = comparison_expression, {"and", comparison_expression};
-comparison_expression = additive_term, {(">" | "<" | ">=" | "<=" | "==" | "!="), additive_term};
+comparison_expression = additive_term, [(">" | "<" | ">=" | "<=" | "==" | "!="), additive_term];
 additive_term = term, {("+" | "-"), term};
 term = factor, {("*" | "/"), factor};
-factor = ["-" | "!"], elementary_expresssion;
-elementary_expresssion = literal 
-                       | identifier 
-                       | identifier, ".", identifier 
+factor = ["-" | "!"], (dot_expression | literal);
+dot_expression = elementary_expression, {".", elementary_expression};
+
+elementary_expresssion = identifier
                        | "(", expression, ")"
-                       | struct_expression;
+                       | struct_expression
+                       | function_call;
 
 literal = int_literal | float_literal | string_literal | bool_literal;
 
@@ -382,7 +390,6 @@ int_literal = nonzero_digit, {digit};
 float_literal = nonzero_digit, {digit}, ".", {digit};
 string_literal = "\"", {character}, "\"";
 bool_literal = "true" | "false";
-struct_literal = 
 ```
 
 `letter` - litera zdefiniowana przez funkcję Character.isLetter()_  
@@ -400,25 +407,25 @@ Interpreter napisany w języku Java.
 
 Do każdego tokenu dodawany jest nr linii oraz nr kolumny w źródle.
 
-|    Typ tokenu    |             Wartość             |
-| :--------------: | :-----------------------------: |
-|  Literał `int`   |        Obliczona liczba         |
-| Literał `float`  |        Obliczona liczba         |
-| Literał `string` |   Reprezentowany ciąg znaków    |
-|  Literał `bool`  | Reprezentowana wartość logiczna |
-|    Komentarz     | Treść komentarza bez znaku `//` |
-|  Identyfikator   |     Wartość identyfikatora      |
-| Słowo kluczowe | Enum reprezentujący słowo kluczowe z listy* |
-| Operator negacji logicznej | `!` |
-| Operator multiplikatywny | Enum: `*`, `/` |
-| Operator addytywny | Enum: `+`, `-` |
-| Operator relacyjny | Enum: `==`, `>`, `<`, `>=`, `<=`, `==`, `!=` |
-| Operator logiczny | Enum: `and`, `or` |
-| Operator przypisania | `=` |
-| Operator strzałki | `->` |
-| Typ danych | Struktura przechowująca odpowiednie nazwy typów wbudowanych lub identyfikatory |
-| Nawias | Enum: `(`, `)`, `{`, `}` |
-| Separator | Enum: `;`, `:`, `,` |
+|         Typ tokenu         |                                    Wartość                                     |
+| :------------------------: | :----------------------------------------------------------------------------: |
+|       Literał `int`        |                                Obliczona liczba                                |
+|      Literał `float`       |                                Obliczona liczba                                |
+|      Literał `string`      |                           Reprezentowany ciąg znaków                           |
+|       Literał `bool`       |                        Reprezentowana wartość logiczna                         |
+|         Komentarz          |                        Treść komentarza bez znaku `//`                         |
+|       Identyfikator        |                             Wartość identyfikatora                             |
+|       Słowo kluczowe       |                  Enum reprezentujący słowo kluczowe z listy\*                  |
+| Operator negacji logicznej |                                      `!`                                       |
+|  Operator multiplikatywny  |                                 Enum: `*`, `/`                                 |
+|     Operator addytywny     |                                 Enum: `+`, `-`                                 |
+|     Operator relacyjny     |                  Enum: `==`, `>`, `<`, `>=`, `<=`, `==`, `!=`                  |
+|     Operator logiczny      |                               Enum: `and`, `or`                                |
+|    Operator przypisania    |                                      `=`                                       |
+|     Operator strzałki      |                                      `->`                                      |
+|         Typ danych         | Struktura przechowująca odpowiednie nazwy typów wbudowanych lub identyfikatory |
+|           Nawias           |                            Enum: `(`, `)`, `{`, `}`                            |
+|         Separator          |                              Enum: `;`, `:`, `,`                               |
 
 \* Lista słów kluczowych:
 
