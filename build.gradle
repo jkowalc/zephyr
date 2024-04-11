@@ -28,3 +28,11 @@ task fatJar(type: Jar) {
     from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
+
+test {
+    useJUnitPlatform()
+    // Show test results.
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}

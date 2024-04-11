@@ -41,4 +41,5 @@ public enum TokenType {
     SEMICOLON,
     COLON,
     ARROW,
+    EOF
 }
