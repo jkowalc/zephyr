@@ -1,5 +1,6 @@
-package me.jkowalc.zephyr.exception;
+package me.jkowalc.zephyr.exception.lexical;
 
+import me.jkowalc.zephyr.exception.ZephyrException;
 import me.jkowalc.zephyr.util.TextPosition;
 
 public class LexicalException extends ZephyrException {

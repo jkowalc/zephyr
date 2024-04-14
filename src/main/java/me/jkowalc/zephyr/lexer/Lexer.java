@@ -7,7 +7,7 @@ import me.jkowalc.zephyr.domain.token.TokenType;
 import me.jkowalc.zephyr.domain.token.literal.FloatLiteralToken;
 import me.jkowalc.zephyr.domain.token.literal.IntegerLiteralToken;
 import me.jkowalc.zephyr.domain.token.literal.StringLiteralToken;
-import me.jkowalc.zephyr.exception.LexicalException;
+import me.jkowalc.zephyr.exception.lexical.*;
 import me.jkowalc.zephyr.input.LineReader;
 import me.jkowalc.zephyr.util.TextPosition;
 
@@ -36,7 +36,7 @@ public class Lexer {
         TextPosition tokenStart = reader.getPosition();
         while(Character.isUnicodeIdentifierPart(reader.getChar()) && reader.getChar() != Character.UNASSIGNED) {
             if(buffer.length() >= MAX_IDENTIFIER_LENGTH) {
-                throw new LexicalException("Identifier too long, max is " + MAX_IDENTIFIER_LENGTH, tokenStart);
+                throw new TokenTooLongException("Identifier too long, max is " + MAX_IDENTIFIER_LENGTH, tokenStart);
             }
             buffer.append(reader.getChar());
             reader.next();
@@ -53,7 +53,7 @@ public class Lexer {
         buffer.append('.');
         reader.next();
         while(Character.isDigit(reader.getChar())) {
-            if(buffer.length() >= MAX_NUMBER_LENGTH) throw new LexicalException("Number too long, max is " + MAX_NUMBER_LENGTH, reader.getPosition());
+            if(buffer.length() >= MAX_NUMBER_LENGTH) throw new TokenTooLongException("Number too long, max is " + MAX_NUMBER_LENGTH, reader.getPosition());
             buffer.append(reader.getChar());
             reader.next();
         }
@@ -70,7 +70,7 @@ public class Lexer {
             else return new IntegerLiteralToken(startPosition, reader.getPosition().subtractColumn(1), "0");
         }
         while(Character.isDigit(reader.getChar())) {
-            if(buffer.length() >= MAX_NUMBER_LENGTH) throw new LexicalException("Number too long, max is " + MAX_NUMBER_LENGTH, reader.getPosition());
+            if(buffer.length() >= MAX_NUMBER_LENGTH) throw new TokenTooLongException("Number too long, max is " + MAX_NUMBER_LENGTH, reader.getPosition());
             buffer.append(reader.getChar());
             reader.next();
         }
@@ -89,7 +89,7 @@ public class Lexer {
             case 'f': buffer.append('\f'); break;
             case '"': buffer.append('"'); break;
             case '\\': buffer.append('\\'); break;
-            default: throw new LexicalException("Invalid escape sequence \\" + getRepresentation(reader.getChar()), escapeStart);
+            default: throw new InvalidEscapeSequenceException("Invalid escape sequence \\" + getRepresentation(reader.getChar()), escapeStart);
         }
         reader.next();
         return true;
@@ -100,7 +100,7 @@ public class Lexer {
         reader.next();
         while(reader.getChar() != '"' && reader.getChar() != Character.UNASSIGNED) {
             if(buffer.length() >= MAX_STRING_LENGTH) {
-                throw new LexicalException("String too long, max is " + MAX_STRING_LENGTH, stringStart);
+                throw new TokenTooLongException("String too long, max is " + MAX_STRING_LENGTH, stringStart);
             }
             if(!readEscapeSequence()) {
                 buffer.append(reader.getChar());
@@ -108,7 +108,7 @@ public class Lexer {
             }
         }
         if(reader.getChar() == Character.UNASSIGNED) {
-            throw new LexicalException("Unterminated string", stringStart);
+            throw new UnterminatedStringException("Unterminated string", stringStart);
         }
         reader.next();
         return new StringLiteralToken(stringStart, reader.getPosition(), buffer.toString());
@@ -135,7 +135,7 @@ public class Lexer {
         reader.next(); reader.next();
         while(reader.getChar() != '\n' && reader.getChar() != Character.UNASSIGNED) {
             if(buffer.length() >= MAX_COMMENT_LENGTH) {
-                throw new LexicalException("Comment too long, max is " + MAX_COMMENT_LENGTH, commentStart);
+                throw new TokenTooLongException("Comment too long, max is " + MAX_COMMENT_LENGTH, commentStart);
             }
             buffer.append(reader.getChar());
             reader.next();
@@ -161,6 +161,6 @@ public class Lexer {
         if (token != null) {return token;}
         token = readSingleCharOperator();
         if (token != null) {return token;}
-        throw new LexicalException("Invalid character " + getRepresentation(reader.getChar()), reader.getPosition());
+        throw new InvalidCharacterException("Invalid character " + getRepresentation(reader.getChar()), reader.getPosition());
     }
 }

@@ -6,7 +6,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.FileConverter;
 import me.jkowalc.zephyr.domain.token.Token;
 import me.jkowalc.zephyr.domain.token.TokenType;
-import me.jkowalc.zephyr.exception.LexicalException;
+import me.jkowalc.zephyr.exception.lexical.LexicalException;
 import me.jkowalc.zephyr.lexer.Lexer;
 
 import java.io.*;
