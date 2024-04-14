@@ -2,6 +2,8 @@ package me.jkowalc.zephyr.domain.token;
 
 import me.jkowalc.zephyr.util.TextPosition;
 
+import java.util.Objects;
+
 public class Token {
     private final TextPosition startPosition;
     private final TextPosition endPosition;
@@ -10,6 +12,12 @@ public class Token {
     public Token(TextPosition startPosition, TextPosition endPosition, TokenType type) {
         this.startPosition = startPosition;
         this.endPosition = endPosition;
+        this.type = type;
+    }
+
+    public Token(TokenType type) {
+        this.startPosition = null;
+        this.endPosition = null;
         this.type = type;
     }
 
@@ -31,5 +39,18 @@ public class Token {
 
     public TokenType getType() {
         return type;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Token token = (Token) o;
+        return type == token.type;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type);
     }
 }
