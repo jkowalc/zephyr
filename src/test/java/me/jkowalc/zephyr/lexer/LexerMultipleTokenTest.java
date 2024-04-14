@@ -41,4 +41,16 @@ public class LexerMultipleTokenTest {
                 new CommentToken("comment"),
                 new IntegerLiteralToken(123));
     }
+
+    @Test
+    public void testExpressions() throws IOException, LexicalException {
+        testMultipleTokens("1+2",
+                new IntegerLiteralToken(1),
+                new Token(TokenType.PLUS),
+                new IntegerLiteralToken(2));
+        testMultipleTokens("1/2",
+                new IntegerLiteralToken(1),
+                new Token(TokenType.DIVIDE),
+                new IntegerLiteralToken(2));
+    }
 }

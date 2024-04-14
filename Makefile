@@ -5,6 +5,7 @@ build:
 .PHONY: test
 test:
 	./gradlew test
+	./gradlew jacocoTestReport
 
 .PHONY: run-example
 run-example:

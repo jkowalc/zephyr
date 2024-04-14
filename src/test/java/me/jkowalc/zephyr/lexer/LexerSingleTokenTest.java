@@ -7,10 +7,7 @@ import me.jkowalc.zephyr.domain.token.TokenType;
 import me.jkowalc.zephyr.domain.token.literal.FloatLiteralToken;
 import me.jkowalc.zephyr.domain.token.literal.IntegerLiteralToken;
 import me.jkowalc.zephyr.domain.token.literal.StringLiteralToken;
-import me.jkowalc.zephyr.exception.lexical.InvalidEscapeSequenceException;
-import me.jkowalc.zephyr.exception.lexical.InvalidNumberException;
-import me.jkowalc.zephyr.exception.lexical.LexicalException;
-import me.jkowalc.zephyr.exception.lexical.TokenTooLongException;
+import me.jkowalc.zephyr.exception.lexical.*;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -50,11 +47,13 @@ public class LexerSingleTokenTest {
         testSingleToken("0", new IntegerLiteralToken(0));
         testSingleToken("123", new IntegerLiteralToken(123));
         testSingleTokenFloat("123.456", 123.456);
+        testSingleTokenFloat("0.123", 0.123);
     }
     @Test
     public void testNumberTooLong() throws LexicalException, IOException {
         testSingleTokenFloat("1" + "." + "0".repeat(MAX_NUMBER_LENGTH - 2), 1.0);
         assertThrows(TokenTooLongException.class, () -> testSingleTokenFloat("1" + "." + "0".repeat(MAX_NUMBER_LENGTH - 1), 1.0));
+        assertThrows(TokenTooLongException.class, () -> testSingleToken("1" + "0".repeat(MAX_NUMBER_LENGTH), new IntegerLiteralToken(1)));
     }
     @Test
     public void testInvalidNumber(){
@@ -81,6 +80,16 @@ public class LexerSingleTokenTest {
     @Test
     public void testStringEscaping() throws LexicalException, IOException {
         testSingleToken("\"\\\"b\"", new StringLiteralToken("\"b"));
+        testSingleToken("\"\\nb\"", new StringLiteralToken("\nb"));
+        testSingleToken("\"\\tb\"", new StringLiteralToken("\tb"));
+        testSingleToken("\"\\rb\"", new StringLiteralToken("\rb"));
+        testSingleToken("\"\\bb\"", new StringLiteralToken("\bb"));
+        testSingleToken("\"\\fb\"", new StringLiteralToken("\fb"));
+        testSingleToken("\"\\\\b\"", new StringLiteralToken("\\b"));
+    }
+    @Test
+    public void testUnterminatedString() {
+        assertThrows(UnterminatedStringException.class, () -> testSingleToken("\"a", new StringLiteralToken("a")));
     }
     @Test
     public void testInvalidEscaping() {
@@ -108,5 +117,9 @@ public class LexerSingleTokenTest {
         testSingleToken("-", new Token(TokenType.MINUS));
         testSingleToken("->", new Token(TokenType.ARROW));
         testSingleToken("==", new Token(TokenType.EQUALS));
+    }
+    @Test
+    public void InvalidCharacterTest() {
+        assertThrows(InvalidCharacterException.class, () -> testSingleToken("?", new Token(TokenType.EOF)));
     }
 }
