@@ -1,4 +1,4 @@
 main() {
     // komentarz
-    print("Hello World");
+    print("Hello\nWorld");
 }

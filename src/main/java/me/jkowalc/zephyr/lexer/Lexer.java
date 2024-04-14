@@ -77,17 +77,35 @@ public class Lexer {
         if(readFractionalPart()) return new FloatLiteralToken(startPosition, reader.getPosition().subtractColumn(1), buffer.toString());
         else return new IntegerLiteralToken(startPosition, reader.getPosition().subtractColumn(1), buffer.toString());
     }
+    private boolean readEscapeSequence() throws IOException, LexicalException {
+        if(reader.getChar() != '\\') return false;
+        TextPosition escapeStart = reader.getPosition();
+        reader.next();
+        switch(reader.getChar()) {
+            case 'n': buffer.append('\n'); break;
+            case 't': buffer.append('\t'); break;
+            case 'r': buffer.append('\r'); break;
+            case 'b': buffer.append('\b'); break;
+            case 'f': buffer.append('\f'); break;
+            case '"': buffer.append('"'); break;
+            case '\\': buffer.append('\\'); break;
+            default: throw new LexicalException("Invalid escape sequence \\" + getRepresentation(reader.getChar()), escapeStart);
+        }
+        reader.next();
+        return true;
+    }
     private Token readString() throws IOException, LexicalException {
         if(reader.getChar() != '"') return null;
         TextPosition stringStart = reader.getPosition();
         reader.next();
         while(reader.getChar() != '"' && reader.getChar() != Character.UNASSIGNED) {
-            // TODO: escaping
             if(buffer.length() >= MAX_STRING_LENGTH) {
                 throw new LexicalException("String too long, max is " + MAX_STRING_LENGTH, stringStart);
             }
-            buffer.append(reader.getChar());
-            reader.next();
+            if(!readEscapeSequence()) {
+                buffer.append(reader.getChar());
+                reader.next();
+            }
         }
         if(reader.getChar() == Character.UNASSIGNED) {
             throw new LexicalException("Unterminated string", stringStart);
