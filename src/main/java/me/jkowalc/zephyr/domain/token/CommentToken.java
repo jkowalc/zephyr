@@ -2,10 +2,12 @@ package me.jkowalc.zephyr.domain.token;
 
 import me.jkowalc.zephyr.util.TextPosition;
 
-public class IdentifierToken extends Token {
+import static me.jkowalc.zephyr.util.CharacterUtil.getRepresentation;
+
+public class CommentToken extends Token {
     private final String value;
-    public IdentifierToken(TextPosition startPosition, TextPosition endPosition, String value) {
-        super(startPosition, endPosition, TokenType.IDENTIFIER);
+    public CommentToken(TextPosition startPosition, TextPosition endPosition, String value) {
+        super(startPosition, endPosition, TokenType.COMMENT);
         this.value = value;
     }
 
@@ -15,10 +17,10 @@ public class IdentifierToken extends Token {
 
     @Override
     public String toString() {
-        return "IdentifierToken{" +
+        return "CommentToken{" +
                 "startPosition=" + getStartPosition() +
                 ", endPosition=" + getEndPosition() +
-                ", value=\"" + value + '\"' +
+                ", value=\"" + getRepresentation(value) + '\"' +
                 '}';
     }
 }

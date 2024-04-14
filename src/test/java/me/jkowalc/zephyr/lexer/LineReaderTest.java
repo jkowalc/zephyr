@@ -11,29 +11,26 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class LineReaderTest {
     private void assertCharLineColumn(LineReader reader, char c, int line, int column) {
-        assertEquals(c, reader.getCurrentChar());
+        assertEquals(c, reader.getChar());
         assertEquals(new TextPosition(line, column), reader.getPosition());
     }
     @Test
     void standardText() throws IOException {
         LineReader reader = new LineReader(Utils.getStringAsInputStreamReader("ab"));
-        reader.next();
         assertCharLineColumn(reader, 'a', 1, 1);
         reader.next();
         assertCharLineColumn(reader, 'b', 1, 2);
         reader.next();
-        assertEquals(Character.UNASSIGNED, reader.getCurrentChar());
+        assertEquals(Character.UNASSIGNED, reader.getChar());
     }
     @Test
     void asciiText() throws IOException {
         LineReader reader = new LineReader(Utils.getStringAsInputStreamReader("ą"));
-        reader.next();
-        assertEquals('ą', reader.getCurrentChar());
+        assertEquals('ą', reader.getChar());
     }
     @Test
     void newline() throws IOException {
         LineReader reader = new LineReader(Utils.getStringAsInputStreamReader("ab\nc"));
-        reader.next(); // on a now
         reader.next(); // on b now
         reader.next(); // on \n now
         assertCharLineColumn(reader, '\n', 1, 3);
@@ -44,7 +41,6 @@ public class LineReaderTest {
     void doubleNewline() throws IOException {
         LineReader reader = new LineReader(Utils.getStringAsInputStreamReader("a\n\nc"));
         reader.next();
-        reader.next();
         assertCharLineColumn(reader, '\n', 1, 2);
         reader.next();
         assertCharLineColumn(reader, '\n', 2, 1);
@@ -54,7 +50,6 @@ public class LineReaderTest {
     @Test
     void peekTest() throws IOException {
         LineReader reader = new LineReader(Utils.getStringAsInputStreamReader("ab"));
-        reader.next();
         assertCharLineColumn(reader, 'a', 1, 1);
         assertEquals('b', reader.peek());
         assertCharLineColumn(reader, 'a', 1, 1);

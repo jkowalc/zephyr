@@ -8,11 +8,12 @@ import java.io.InputStreamReader;
 public class LineReader {
     private final ZephyrBufferedReader bufferedReader;
     private int currentLine = 1;
-    private int currentColumn = 0;
+    private int currentColumn = 1;
     private char currentChar;
     private boolean resetColumnFlag = false;
-    public LineReader(InputStreamReader inputStreamReader) {
+    public LineReader(InputStreamReader inputStreamReader) throws IOException {
         this.bufferedReader = new CharacterReplacer(inputStreamReader);
+        this.currentChar = bufferedReader.read();
     }
     public TextPosition getPosition() {
         return new TextPosition(currentLine, currentColumn);
@@ -33,7 +34,7 @@ public class LineReader {
         return bufferedReader.peek();
     }
 
-    public char getCurrentChar() {
+    public char getChar() {
         return currentChar;
     }
 }

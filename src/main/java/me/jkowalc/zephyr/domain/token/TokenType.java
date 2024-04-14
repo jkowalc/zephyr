@@ -4,7 +4,8 @@ public enum TokenType {
     INTEGER_LITERAL,
     FLOAT_LITERAL,
     STRING_LITERAL,
-    BOOLEAN_LITERAL,
+    TRUE,
+    FALSE,
     IDENTIFIER,
     STRUCT,
     UNION,
@@ -41,5 +42,6 @@ public enum TokenType {
     SEMICOLON,
     COLON,
     ARROW,
-    EOF
+    EOF,
+    COMMENT
 }

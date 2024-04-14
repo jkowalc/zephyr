@@ -1,57 +1,134 @@
 package me.jkowalc.zephyr.lexer;
 
+import me.jkowalc.zephyr.domain.token.CommentToken;
+import me.jkowalc.zephyr.domain.token.IdentifierToken;
 import me.jkowalc.zephyr.domain.token.Token;
 import me.jkowalc.zephyr.domain.token.TokenType;
+import me.jkowalc.zephyr.domain.token.literal.FloatLiteralToken;
+import me.jkowalc.zephyr.domain.token.literal.IntegerLiteralToken;
+import me.jkowalc.zephyr.domain.token.literal.StringLiteralToken;
 import me.jkowalc.zephyr.exception.LexicalException;
 import me.jkowalc.zephyr.input.LineReader;
+import me.jkowalc.zephyr.util.TextPosition;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import static me.jkowalc.zephyr.util.CharacterUtil.getRepresentation;
+
 public class Lexer {
-    private StringBuilder buffer = new StringBuilder();
+    private final StringBuilder buffer = new StringBuilder();
     private final LineReader reader;
-    public Lexer(InputStreamReader inputStreamReader) {
+    public Lexer(InputStreamReader inputStreamReader) throws IOException {
         this.reader = new LineReader(inputStreamReader);
     }
     private void skipWhitespace() throws IOException {
-        do {
+        while(Character.isWhitespace(reader.getChar())) {
             reader.next();
-        } while (Character.isWhitespace(reader.getCurrentChar()));
+        }
     }
-    private Token readIdentifierOrKeyword() {
-        return null;
+    private Token readIdentifierOrKeyword() throws IOException {
+        // TODO: max length of identifier/keyword
+        if(!Character.isUnicodeIdentifierStart(reader.getChar())) return null;
+        TextPosition tokenStart = reader.getPosition();
+        while(Character.isUnicodeIdentifierPart(reader.getChar())) {
+            buffer.append(reader.getChar());
+            reader.next();
+        }
+        String tokenValue = buffer.toString();
+        TokenType keywordType = KeywordMapper.mapKeyword(tokenValue);
+        if(keywordType != null) {
+            return new Token(tokenStart, reader.getPosition().subtractColumn(1), keywordType);
+        }
+        return new IdentifierToken(tokenStart, reader.getPosition().subtractColumn(1), tokenValue);
     }
-    private Token readNumber() {
-        return null;
+    private boolean readFractionalPart() throws IOException {
+        if(reader.getChar() != '.') return false;
+        buffer.append('.');
+        reader.next();
+        while(Character.isDigit(reader.getChar())) {
+            buffer.append(reader.getChar());
+            reader.next();
+        }
+        return true;
     }
-    private Token readString() {
-        return null;
+    private Token readNumber() throws IOException, LexicalException {
+        if(!Character.isDigit(reader.getChar())) return null;
+        TextPosition startPosition = reader.getPosition();
+        if(reader.getChar() == '0') {
+            buffer.append('0');
+            reader.next();
+            if(readFractionalPart()) return new FloatLiteralToken(startPosition, reader.getPosition().subtractColumn(1), buffer.toString());
+            else if(Character.isDigit(reader.getChar())) throw new LexicalException("Integer literal cannot start with a 0, unless it is 0", reader.getPosition());
+            else return new IntegerLiteralToken(startPosition, reader.getPosition().subtractColumn(1), "0");
+        }
+        while(Character.isDigit(reader.getChar())) {
+            buffer.append(reader.getChar());
+            reader.next();
+        }
+        if(readFractionalPart()) return new FloatLiteralToken(startPosition, reader.getPosition().subtractColumn(1), buffer.toString());
+        else return new IntegerLiteralToken(startPosition, reader.getPosition().subtractColumn(1), buffer.toString());
     }
-    private Token readOperator() {
-        return null;
+    private Token readString() throws IOException, LexicalException {
+        if(reader.getChar() != '"') return null;
+        TextPosition stringStart = reader.getPosition();
+        reader.next();
+        while(reader.getChar() != '"' && reader.getChar() != Character.UNASSIGNED) {
+            // TODO: escaping
+            buffer.append(reader.getChar());
+            reader.next();
+        }
+        if(reader.getChar() == Character.UNASSIGNED) {
+            throw new LexicalException("Unterminated string", stringStart);
+        }
+        reader.next();
+        return new StringLiteralToken(stringStart, reader.getPosition(), buffer.toString());
     }
-    private Token readComment() {
-        return null;
+    private Token readSingleCharOperator() throws IOException {
+        TokenType tokenType = OperatorMapper.mapSingleCharOperator(reader.getChar());
+        if(tokenType == null) return null;
+        TextPosition operatorPosition = reader.getPosition();
+        reader.next();
+        return new Token(operatorPosition, operatorPosition, tokenType);
+    }
+    private Token readDoubleCharOperator() throws IOException {
+        TokenType tokenType = OperatorMapper.mapDoubleCharOperator("" + reader.getChar() + reader.peek());
+        if(tokenType == null) return null;
+        TextPosition operatorPosition = reader.getPosition();
+        reader.next();
+        reader.next();
+        return new Token(operatorPosition, operatorPosition.addColumn(1), tokenType);
+    }
+    private Token readComment() throws IOException {
+        if(reader.getChar() != '/') return null;
+        if(reader.peek() != '/') return null;
+        TextPosition commentStart = reader.getPosition();
+        reader.next(); reader.next();
+        while(reader.getChar() != '\n' && reader.getChar() != Character.UNASSIGNED) {
+            buffer.append(reader.getChar());
+            reader.next();
+        }
+        return new CommentToken(commentStart, reader.getPosition().subtractColumn(1), buffer.toString());
     }
     public Token nextToken() throws IOException, LexicalException {
         buffer.setLength(0);
         skipWhitespace();
         Token token;
-        token = readIdentifierOrKeyword();
-        if(reader.getCurrentChar() == Character.UNASSIGNED) {
-            return new Token(reader.getPosition(), TokenType.EOF);
+        if(reader.getChar() == Character.UNASSIGNED) {
+            return new Token(reader.getPosition(), reader.getPosition(), TokenType.EOF);
         }
+        token = readComment();
+        if (token != null) {return token;}
+        token = readIdentifierOrKeyword();
         if (token != null) {return token;}
         token = readNumber();
         if (token != null) {return token;}
         token = readString();
         if (token != null) {return token;}
-        token = readOperator();
+        token = readDoubleCharOperator();
         if (token != null) {return token;}
-        token = readComment();
+        token = readSingleCharOperator();
         if (token != null) {return token;}
-
-        throw new LexicalException("Invalid character " + reader.getCurrentChar(), reader.getPosition());
+        throw new LexicalException("Invalid character " + getRepresentation(reader.getChar()), reader.getPosition());
     }
 }
