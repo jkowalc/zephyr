@@ -4,7 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class CharacterReplacer implements ZephyrBufferedStream {
+public class CharacterReplacer implements ZephyrBufferedReader {
     private final BufferedReader bufferedReader;
     public CharacterReplacer(InputStreamReader inputStreamReader) {
         this.bufferedReader = new BufferedReader(inputStreamReader);
