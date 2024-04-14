@@ -34,7 +34,7 @@ public class Lexer {
     private Token readIdentifierOrKeyword() throws IOException, LexicalException {
         if(!Character.isUnicodeIdentifierStart(reader.getChar())) return null;
         TextPosition tokenStart = reader.getPosition();
-        while(Character.isUnicodeIdentifierPart(reader.getChar())) {
+        while(Character.isUnicodeIdentifierPart(reader.getChar()) && reader.getChar() != Character.UNASSIGNED) {
             if(buffer.length() >= MAX_IDENTIFIER_LENGTH) {
                 throw new LexicalException("Identifier too long, max is " + MAX_IDENTIFIER_LENGTH, tokenStart);
             }
