@@ -19,10 +19,10 @@ import static me.jkowalc.zephyr.util.CharacterUtil.getRepresentation;
 public class Lexer {
     private final StringBuilder buffer = new StringBuilder();
     private final LineReader reader;
-    private static final int MAX_IDENTIFIER_LENGTH = 100;
-    private static final int MAX_STRING_LENGTH = 400;
-    private static final int MAX_NUMBER_LENGTH = 20;
-    private static final int MAX_COMMENT_LENGTH = 400;
+    public static final int MAX_IDENTIFIER_LENGTH = 100;
+    public static final int MAX_STRING_LENGTH = 400;
+    public static final int MAX_NUMBER_LENGTH = 50;
+    public static final int MAX_COMMENT_LENGTH = 400;
     public Lexer(InputStreamReader inputStreamReader) throws IOException {
         this.reader = new LineReader(inputStreamReader);
     }
@@ -56,26 +56,38 @@ public class Lexer {
             if(buffer.length() >= MAX_NUMBER_LENGTH) throw new TokenTooLongException("Number too long, max is " + MAX_NUMBER_LENGTH, reader.getPosition());
             buffer.append(reader.getChar());
             reader.next();
+            if(reader.getChar() == '.') {
+                throw new InvalidNumberException("Invalid number", reader.getPosition());
+            }
         }
         return true;
     }
     private Token readNumber() throws IOException, LexicalException {
         if(!Character.isDigit(reader.getChar())) return null;
         TextPosition startPosition = reader.getPosition();
-        if(reader.getChar() == '0') {
-            buffer.append('0');
-            reader.next();
-            if(readFractionalPart()) return new FloatLiteralToken(startPosition, reader.getPosition().subtractColumn(1), buffer.toString());
-            else if(Character.isDigit(reader.getChar())) throw new LexicalException("Integer literal cannot start with a 0, unless it is 0", reader.getPosition());
-            else return new IntegerLiteralToken(startPosition, reader.getPosition().subtractColumn(1), "0");
+        try {
+            if (reader.getChar() == '0') {
+                buffer.append('0');
+                reader.next();
+                if (readFractionalPart())
+                    return new FloatLiteralToken(startPosition, reader.getPosition().subtractColumn(1), buffer.toString());
+                else if (Character.isDigit(reader.getChar()))
+                    throw new LexicalException("Integer literal cannot start with a 0, unless it is 0", reader.getPosition());
+                else return new IntegerLiteralToken(startPosition, reader.getPosition().subtractColumn(1), "0");
+            }
+            while (Character.isDigit(reader.getChar())) {
+                if (buffer.length() >= MAX_NUMBER_LENGTH)
+                    throw new TokenTooLongException("Number too long, max is " + MAX_NUMBER_LENGTH, reader.getPosition());
+                buffer.append(reader.getChar());
+                reader.next();
+            }
+            if (readFractionalPart())
+                return new FloatLiteralToken(startPosition, reader.getPosition().subtractColumn(1), buffer.toString());
+            else
+                return new IntegerLiteralToken(startPosition, reader.getPosition().subtractColumn(1), buffer.toString());
+        } catch (NumberFormatException e) {
+            throw new InvalidNumberException("Invalid number", startPosition);
         }
-        while(Character.isDigit(reader.getChar())) {
-            if(buffer.length() >= MAX_NUMBER_LENGTH) throw new TokenTooLongException("Number too long, max is " + MAX_NUMBER_LENGTH, reader.getPosition());
-            buffer.append(reader.getChar());
-            reader.next();
-        }
-        if(readFractionalPart()) return new FloatLiteralToken(startPosition, reader.getPosition().subtractColumn(1), buffer.toString());
-        else return new IntegerLiteralToken(startPosition, reader.getPosition().subtractColumn(1), buffer.toString());
     }
     private boolean readEscapeSequence() throws IOException, LexicalException {
         if(reader.getChar() != '\\') return false;

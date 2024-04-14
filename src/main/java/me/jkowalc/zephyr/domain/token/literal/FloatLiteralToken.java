@@ -8,23 +8,23 @@ import java.util.Objects;
 
 
 public class FloatLiteralToken extends Token {
-    private final double value;
-    public FloatLiteralToken(TextPosition startPosition, TextPosition endPosition, String valueStr) {
+    private final float value;
+    public FloatLiteralToken(TextPosition startPosition, TextPosition endPosition, String valueStr) throws NumberFormatException {
         super(startPosition, endPosition, TokenType.FLOAT_LITERAL);
         this.value = Float.parseFloat(valueStr);
     }
 
-    public FloatLiteralToken(String valueStr) {
+    public FloatLiteralToken(String valueStr) throws NumberFormatException {
         super(null, null, TokenType.FLOAT_LITERAL);
         this.value = Float.parseFloat(valueStr);
     }
 
-    public FloatLiteralToken(double value) {
+    public FloatLiteralToken(float value) {
         super(null, null, TokenType.FLOAT_LITERAL);
         this.value = value;
     }
 
-    public double getValue() {
+    public float getValue() {
         return value;
     }
 
