@@ -6,13 +6,13 @@ import me.jkowalc.zephyr.util.TextPosition;
 
 
 public class FloatLiteralToken extends Token {
-    private final float value;
+    private final double value;
     public FloatLiteralToken(TextPosition startPosition, TextPosition endPosition, String valueStr) {
         super(startPosition, endPosition, TokenType.FLOAT_LITERAL);
         this.value = Float.parseFloat(valueStr);
     }
 
-    public float getValue() {
+    public double getValue() {
         return value;
     }
 

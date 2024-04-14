@@ -19,6 +19,10 @@ import static me.jkowalc.zephyr.util.CharacterUtil.getRepresentation;
 public class Lexer {
     private final StringBuilder buffer = new StringBuilder();
     private final LineReader reader;
+    private static final int MAX_IDENTIFIER_LENGTH = 100;
+    private static final int MAX_STRING_LENGTH = 400;
+    private static final int MAX_NUMBER_LENGTH = 20;
+    private static final int MAX_COMMENT_LENGTH = 400;
     public Lexer(InputStreamReader inputStreamReader) throws IOException {
         this.reader = new LineReader(inputStreamReader);
     }
@@ -27,11 +31,13 @@ public class Lexer {
             reader.next();
         }
     }
-    private Token readIdentifierOrKeyword() throws IOException {
-        // TODO: max length of identifier/keyword
+    private Token readIdentifierOrKeyword() throws IOException, LexicalException {
         if(!Character.isUnicodeIdentifierStart(reader.getChar())) return null;
         TextPosition tokenStart = reader.getPosition();
         while(Character.isUnicodeIdentifierPart(reader.getChar())) {
+            if(buffer.length() >= MAX_IDENTIFIER_LENGTH) {
+                throw new LexicalException("Identifier too long, max is " + MAX_IDENTIFIER_LENGTH, tokenStart);
+            }
             buffer.append(reader.getChar());
             reader.next();
         }
@@ -42,11 +48,12 @@ public class Lexer {
         }
         return new IdentifierToken(tokenStart, reader.getPosition().subtractColumn(1), tokenValue);
     }
-    private boolean readFractionalPart() throws IOException {
+    private boolean readFractionalPart() throws IOException, LexicalException {
         if(reader.getChar() != '.') return false;
         buffer.append('.');
         reader.next();
         while(Character.isDigit(reader.getChar())) {
+            if(buffer.length() >= MAX_NUMBER_LENGTH) throw new LexicalException("Number too long, max is " + MAX_NUMBER_LENGTH, reader.getPosition());
             buffer.append(reader.getChar());
             reader.next();
         }
@@ -63,6 +70,7 @@ public class Lexer {
             else return new IntegerLiteralToken(startPosition, reader.getPosition().subtractColumn(1), "0");
         }
         while(Character.isDigit(reader.getChar())) {
+            if(buffer.length() >= MAX_NUMBER_LENGTH) throw new LexicalException("Number too long, max is " + MAX_NUMBER_LENGTH, reader.getPosition());
             buffer.append(reader.getChar());
             reader.next();
         }
@@ -75,6 +83,9 @@ public class Lexer {
         reader.next();
         while(reader.getChar() != '"' && reader.getChar() != Character.UNASSIGNED) {
             // TODO: escaping
+            if(buffer.length() >= MAX_STRING_LENGTH) {
+                throw new LexicalException("String too long, max is " + MAX_STRING_LENGTH, stringStart);
+            }
             buffer.append(reader.getChar());
             reader.next();
         }
@@ -99,12 +110,15 @@ public class Lexer {
         reader.next();
         return new Token(operatorPosition, operatorPosition.addColumn(1), tokenType);
     }
-    private Token readComment() throws IOException {
+    private Token readComment() throws IOException, LexicalException {
         if(reader.getChar() != '/') return null;
         if(reader.peek() != '/') return null;
         TextPosition commentStart = reader.getPosition();
         reader.next(); reader.next();
         while(reader.getChar() != '\n' && reader.getChar() != Character.UNASSIGNED) {
+            if(buffer.length() >= MAX_COMMENT_LENGTH) {
+                throw new LexicalException("Comment too long, max is " + MAX_COMMENT_LENGTH, commentStart);
+            }
             buffer.append(reader.getChar());
             reader.next();
         }
