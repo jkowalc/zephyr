@@ -21,7 +21,6 @@ public class Lexer {
     private final LineReader reader;
     public static final int MAX_IDENTIFIER_LENGTH = 100;
     public static final int MAX_STRING_LENGTH = 400;
-    public static final int MAX_NUMBER_LENGTH = 50;
     public static final int MAX_COMMENT_LENGTH = 400;
     public Lexer(InputStreamReader inputStreamReader) throws IOException {
         this.reader = new LineReader(inputStreamReader);
@@ -48,46 +47,51 @@ public class Lexer {
         }
         return new IdentifierToken(tokenStart, reader.getPosition().subtractColumn(1), tokenValue);
     }
-    private boolean readFractionalPart() throws IOException, LexicalException {
-        if(reader.getChar() != '.') return false;
-        buffer.append('.');
+    private Float readFractionalPart() throws IOException, LexicalException {
+        if(reader.getChar() != '.') return null;
         reader.next();
+        int number = 0;
+        int fractionalPartLength = 0;
         while(Character.isDigit(reader.getChar())) {
-            if(buffer.length() >= MAX_NUMBER_LENGTH) throw new TokenTooLongException("Number too long, max is " + MAX_NUMBER_LENGTH, reader.getPosition());
-            buffer.append(reader.getChar());
+            int result = number * 10 + (reader.getChar() - '0');
+            if(result < 0) {
+                throw new InvalidNumberException("Fractional part of number is too large", reader.getPosition());
+            }
+            number = result;
+            fractionalPartLength += 1;
             reader.next();
             if(reader.getChar() == '.') {
                 throw new InvalidNumberException("Invalid number", reader.getPosition());
             }
         }
-        return true;
+        return number / (float) Math.pow(10, fractionalPartLength);
     }
     private Token readNumber() throws IOException, LexicalException {
         if(!Character.isDigit(reader.getChar())) return null;
         TextPosition startPosition = reader.getPosition();
-        try {
-            if (reader.getChar() == '0') {
-                buffer.append('0');
-                reader.next();
-                if (readFractionalPart())
-                    return new FloatLiteralToken(startPosition, reader.getPosition().subtractColumn(1), buffer.toString());
-                else if (Character.isDigit(reader.getChar()))
-                    throw new LexicalException("Integer literal cannot start with a 0, unless it is 0", reader.getPosition());
-                else return new IntegerLiteralToken(startPosition, reader.getPosition().subtractColumn(1), "0");
-            }
-            while (Character.isDigit(reader.getChar())) {
-                if (buffer.length() >= MAX_NUMBER_LENGTH)
-                    throw new TokenTooLongException("Number too long, max is " + MAX_NUMBER_LENGTH, reader.getPosition());
-                buffer.append(reader.getChar());
-                reader.next();
-            }
-            if (readFractionalPart())
-                return new FloatLiteralToken(startPosition, reader.getPosition().subtractColumn(1), buffer.toString());
-            else
-                return new IntegerLiteralToken(startPosition, reader.getPosition().subtractColumn(1), buffer.toString());
-        } catch (NumberFormatException e) {
-            throw new InvalidNumberException("Invalid number", startPosition);
+        if (reader.getChar() == '0') {
+            reader.next();
+            Float fractionalPart;
+            if ((fractionalPart = readFractionalPart()) != null)
+                return new FloatLiteralToken(startPosition, reader.getPosition().subtractColumn(1), fractionalPart);
+            else if (Character.isDigit(reader.getChar()))
+                throw new LexicalException("Integer literal cannot have a leading 0", reader.getPosition());
+            else return new IntegerLiteralToken(startPosition, reader.getPosition().subtractColumn(1), 0);
         }
+        int number = 0;
+        while (Character.isDigit(reader.getChar())) {
+            int result = number * 10 + (reader.getChar() - '0');
+            if(result < 0) {
+                throw new InvalidNumberException("Number too large", reader.getPosition());
+            }
+            number = result;
+            reader.next();
+        }
+        Float fractionalPart;
+        if ((fractionalPart = readFractionalPart()) != null)
+            return new FloatLiteralToken(startPosition, reader.getPosition().subtractColumn(1), number + fractionalPart);
+        else
+            return new IntegerLiteralToken(startPosition, reader.getPosition().subtractColumn(1), number);
     }
     private boolean readEscapeSequence() throws IOException, LexicalException {
         if(reader.getChar() != '\\') return false;

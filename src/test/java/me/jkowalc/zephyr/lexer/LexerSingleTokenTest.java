@@ -50,19 +50,12 @@ public class LexerSingleTokenTest {
         testSingleTokenFloat("0.123", 0.123);
     }
     @Test
-    public void testNumberTooLong() throws LexicalException, IOException {
-        testSingleTokenFloat("1" + "." + "0".repeat(MAX_NUMBER_LENGTH - 2), 1.0);
-        assertThrows(TokenTooLongException.class, () -> testSingleTokenFloat("1" + "." + "0".repeat(MAX_NUMBER_LENGTH - 1), 1.0));
-        assertThrows(TokenTooLongException.class, () -> testSingleToken("1" + "0".repeat(MAX_NUMBER_LENGTH), new IntegerLiteralToken(1)));
-    }
-    @Test
-    public void testInvalidNumber(){
-        assertThrows(InvalidNumberException.class, () -> testSingleToken("1.2.3", new IntegerLiteralToken(1)));
-    }
-    @Test
-    public void testInvalidNumberTooLong() {
-        // the number cannot be parsed as integer
-        assertThrows(InvalidNumberException.class, () -> testSingleToken("1" + "0".repeat(MAX_NUMBER_LENGTH-1), new IntegerLiteralToken(1)));
+    public void testInvalidNumber() throws LexicalException, IOException {
+        assertThrows(InvalidNumberException.class, () -> testSingleToken("1.2.3", null));
+        testSingleToken(Integer.toString(Integer.MAX_VALUE), new IntegerLiteralToken(Integer.MAX_VALUE));
+        assertThrows(InvalidNumberException.class, () -> testSingleToken(Long.toString((long) Integer.MAX_VALUE + 1), null));
+        assertThrows(InvalidNumberException.class, () -> testSingleToken("1".repeat(100), null));
+        assertThrows(InvalidNumberException.class, () -> testSingleToken("0." + "1".repeat(100), null));
     }
     @Test
     public void testNumberLeadingZero() {

@@ -9,13 +9,9 @@ import java.util.Objects;
 
 public class IntegerLiteralToken extends Token {
     private final int value;
-    public IntegerLiteralToken(TextPosition startPosition, TextPosition endPosition, String valueStr) throws NumberFormatException {
+    public IntegerLiteralToken(TextPosition startPosition, TextPosition endPosition, int value) {
         super(startPosition, endPosition, TokenType.INTEGER_LITERAL);
-        this.value = Integer.parseInt(valueStr);
-    }
-    public IntegerLiteralToken(String valueStr) throws NumberFormatException {
-        super(null, null, TokenType.INTEGER_LITERAL);
-        this.value = Integer.parseInt(valueStr);
+        this.value = value;
     }
     public IntegerLiteralToken(int value) {
         super(null, null, TokenType.INTEGER_LITERAL);

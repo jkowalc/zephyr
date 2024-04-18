@@ -9,14 +9,9 @@ import java.util.Objects;
 
 public class FloatLiteralToken extends Token {
     private final float value;
-    public FloatLiteralToken(TextPosition startPosition, TextPosition endPosition, String valueStr) throws NumberFormatException {
+    public FloatLiteralToken(TextPosition startPosition, TextPosition endPosition, float value) {
         super(startPosition, endPosition, TokenType.FLOAT_LITERAL);
-        this.value = Float.parseFloat(valueStr);
-    }
-
-    public FloatLiteralToken(String valueStr) throws NumberFormatException {
-        super(null, null, TokenType.FLOAT_LITERAL);
-        this.value = Float.parseFloat(valueStr);
+        this.value = value;
     }
 
     public FloatLiteralToken(float value) {
