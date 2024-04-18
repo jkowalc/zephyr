@@ -157,22 +157,16 @@ public class Lexer {
     public Token nextToken() throws IOException, LexicalException {
         buffer.setLength(0);
         skipWhitespace();
-        Token token;
         if(reader.getChar() == Character.UNASSIGNED) {
             return new Token(reader.getPosition(), reader.getPosition(), TokenType.EOF);
         }
-        token = readComment();
-        if (token != null) {return token;}
-        token = readIdentifierOrKeyword();
-        if (token != null) {return token;}
-        token = readNumber();
-        if (token != null) {return token;}
-        token = readString();
-        if (token != null) {return token;}
-        token = readDoubleCharOperator();
-        if (token != null) {return token;}
-        token = readSingleCharOperator();
-        if (token != null) {return token;}
+        Token token;
+        if((token = readComment()) != null) return token;
+        if((token = readIdentifierOrKeyword()) != null) return token;
+        if((token = readNumber()) != null) return token;
+        if((token = readString()) != null) return token;
+        if((token = readDoubleCharOperator()) != null) return token;
+        if((token = readSingleCharOperator()) != null) return token;
         throw new InvalidCharacterException("Invalid character " + getRepresentation(reader.getChar()), reader.getPosition());
     }
 }
