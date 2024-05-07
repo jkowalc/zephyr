@@ -485,3 +485,11 @@ Przykład:
 ```plaintext
 SyntaxError: Unexpected token "}" at 10:12
 ```
+
+### Uruchomienie
+
+Wymagana jest Java w wersji >= 17.
+
+- `make build` - zbudowanie archiwum JAR
+- `make run-example` - uruchomienie przykładowego programu (examples/hello_world.ze)
+- `make test` - uruchomienie testów i generacja raportu w katalogu `build/reports/jacoco/test/html/index.html`
