@@ -1,7 +1,27 @@
 package me.jkowalc.zephyr.domain.node.expression;
 
 
+import lombok.Getter;
+import me.jkowalc.zephyr.domain.node.Node;
+import me.jkowalc.zephyr.util.TextPosition;
+
 import java.util.List;
 
-public record FunctionCall (String name, List<Expression> parameters) implements Expression {
+@Getter
+public final class FunctionCall extends Node implements Expression {
+    private final String name;
+    private final List<Expression> parameters;
+
+    public FunctionCall(String name, List<Expression> parameters) {
+        super(null, null);
+        this.name = name;
+        this.parameters = parameters;
+    }
+
+    public FunctionCall(TextPosition startPosition, TextPosition endPosition, String name, List<Expression> parameters) {
+        super(startPosition, endPosition);
+        this.name = name;
+        this.parameters = parameters;
+    }
+
 }
