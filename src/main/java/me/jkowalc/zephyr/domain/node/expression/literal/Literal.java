@@ -1,4 +1,6 @@
 package me.jkowalc.zephyr.domain.node.expression.literal;
 
-public interface Literal {
+import me.jkowalc.zephyr.domain.node.expression.Expression;
+
+public interface Literal extends Expression {
 }

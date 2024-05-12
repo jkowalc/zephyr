@@ -1,10 +1,13 @@
 package me.jkowalc.zephyr.domain.node.statement;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import me.jkowalc.zephyr.domain.node.Node;
+import me.jkowalc.zephyr.util.ASTVisitor;
 import me.jkowalc.zephyr.util.TextPosition;
 
 @Getter
+@EqualsAndHashCode(callSuper = false)
 public final class MatchCase extends Node {
     private final String pattern;
     private final String variableName;
@@ -21,5 +24,10 @@ public final class MatchCase extends Node {
         this.pattern = pattern;
         this.variableName = variableName;
         this.body = body;
+    }
+
+    @Override
+    public void accept(ASTVisitor visitor) {
+        visitor.visit(this);
     }
 }

@@ -1,13 +1,16 @@
 package me.jkowalc.zephyr.domain.node.expression;
 
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import me.jkowalc.zephyr.domain.node.Node;
+import me.jkowalc.zephyr.util.ASTVisitor;
 import me.jkowalc.zephyr.util.TextPosition;
 
 import java.util.List;
 
 @Getter
+@EqualsAndHashCode(callSuper = false)
 public final class FunctionCall extends Node implements Expression {
     private final String name;
     private final List<Expression> parameters;
@@ -24,4 +27,8 @@ public final class FunctionCall extends Node implements Expression {
         this.parameters = parameters;
     }
 
+    @Override
+    public void accept(ASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

@@ -1,13 +1,16 @@
 package me.jkowalc.zephyr.domain.node.statement;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import me.jkowalc.zephyr.domain.node.Node;
 import me.jkowalc.zephyr.domain.node.expression.Expression;
+import me.jkowalc.zephyr.util.ASTVisitor;
 import me.jkowalc.zephyr.util.TextPosition;
 
 import java.util.List;
 
 @Getter
+@EqualsAndHashCode(callSuper = false)
 public final class MatchStatement extends Node implements Statement {
     private final Expression expression;
     private final List<MatchCase> cases;
@@ -24,4 +27,8 @@ public final class MatchStatement extends Node implements Statement {
         this.cases = cases;
     }
 
+    @Override
+    public void accept(ASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

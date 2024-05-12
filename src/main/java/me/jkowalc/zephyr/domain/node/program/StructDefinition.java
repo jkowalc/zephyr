@@ -1,12 +1,15 @@
 package me.jkowalc.zephyr.domain.node.program;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import me.jkowalc.zephyr.domain.node.Node;
+import me.jkowalc.zephyr.util.ASTVisitor;
 import me.jkowalc.zephyr.util.TextPosition;
 
 import java.util.List;
 
 @Getter
+@EqualsAndHashCode(callSuper = false)
 public final class StructDefinition extends Node implements TypeDefinition {
     private final String name;
     private final List<StructDefinitionMember> members;
@@ -23,4 +26,8 @@ public final class StructDefinition extends Node implements TypeDefinition {
         this.members = members;
     }
 
+    @Override
+    public void accept(ASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

@@ -1,11 +1,14 @@
 package me.jkowalc.zephyr.domain.node.statement;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import me.jkowalc.zephyr.domain.node.Node;
 import me.jkowalc.zephyr.domain.node.expression.Expression;
+import me.jkowalc.zephyr.util.ASTVisitor;
 import me.jkowalc.zephyr.util.TextPosition;
 
 @Getter
+@EqualsAndHashCode(callSuper = false)
 public final class WhileStatement extends Node implements Statement {
     private final Expression condition;
     private final StatementBlock body;
@@ -22,4 +25,8 @@ public final class WhileStatement extends Node implements Statement {
         this.body = body;
     }
 
+    @Override
+    public void accept(ASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }
