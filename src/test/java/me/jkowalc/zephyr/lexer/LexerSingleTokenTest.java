@@ -110,6 +110,7 @@ public class LexerSingleTokenTest {
         testSingleToken("-", new Token(TokenType.MINUS));
         testSingleToken("->", new Token(TokenType.ARROW));
         testSingleToken("==", new Token(TokenType.EQUALS));
+        testSingleToken("<", new Token(TokenType.LESS));
     }
     @Test
     public void InvalidCharacterTest() {
