@@ -25,8 +25,8 @@ public final class FunctionDefinition extends Node {
         this.body = body;
         this.returnType = returnType;
     }
-    public FunctionDefinition(TextPosition startPosition, TextPosition endPosition, String name, List<VariableDefinition> parameters, StatementBlock body, String returnType) {
-        super(startPosition, endPosition);
+    public FunctionDefinition(TextPosition startPosition, String name, List<VariableDefinition> parameters, StatementBlock body, String returnType) {
+        super(startPosition, body.getEndPosition());
         this.name = name;
         this.parameters = parameters;
         this.body = body;
