@@ -8,6 +8,7 @@ import me.jkowalc.zephyr.domain.node.program.Program;
 import me.jkowalc.zephyr.exception.ZephyrException;
 import me.jkowalc.zephyr.lexer.Lexer;
 import me.jkowalc.zephyr.parser.ASTPrinter;
+import me.jkowalc.zephyr.parser.CommentFilter;
 import me.jkowalc.zephyr.parser.Parser;
 
 import java.io.*;
@@ -40,7 +41,7 @@ public class Main {
             System.exit(1);
         }
         try {
-            Parser parser = new Parser(lexer);
+            Parser parser = new Parser(new CommentFilter(lexer));
             Program program = parser.parseProgram();
             ASTPrinter printer = new ASTPrinter(System.out, 4);
             program.accept(printer);

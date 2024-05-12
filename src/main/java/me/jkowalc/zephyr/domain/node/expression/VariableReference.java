@@ -9,7 +9,7 @@ import me.jkowalc.zephyr.util.TextPosition;
 
 @Getter
 @EqualsAndHashCode(callSuper = false)
-public final class VariableReference extends Node implements Expression {
+public final class VariableReference extends Node implements Expression, Assignable {
     private final String name;
 
     public VariableReference(String name) {

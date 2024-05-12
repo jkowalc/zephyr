@@ -17,9 +17,13 @@ public final class ReturnStatement extends Node implements Statement {
         this.expression = expression;
     }
 
-    public ReturnStatement(TextPosition startPosition, TextPosition endPosition, Expression expression) {
-        super(startPosition, endPosition);
+    public ReturnStatement(TextPosition startPosition, Expression expression) {
+        super(startPosition, expression.getEndPosition());
         this.expression = expression;
+    }
+    public ReturnStatement(TextPosition startPosition, TextPosition endPosition) {
+        super(startPosition, endPosition);
+        this.expression = null;
     }
 
     @Override
