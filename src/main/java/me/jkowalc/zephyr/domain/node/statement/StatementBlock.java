@@ -2,6 +2,7 @@ package me.jkowalc.zephyr.domain.node.statement;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import me.jkowalc.zephyr.domain.node.ElseBlock;
 import me.jkowalc.zephyr.domain.node.Node;
 import me.jkowalc.zephyr.util.ASTVisitor;
 import me.jkowalc.zephyr.util.TextPosition;
@@ -10,7 +11,7 @@ import java.util.List;
 
 @Getter
 @EqualsAndHashCode(callSuper = false)
-public final class StatementBlock extends Node implements Statement {
+public final class StatementBlock extends Node implements Statement, ElseBlock {
     private final List<Statement> statements;
 
     public StatementBlock(List<Statement> statements) {

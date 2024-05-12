@@ -1,6 +1,5 @@
 package me.jkowalc.zephyr.domain.node;
 
-import me.jkowalc.zephyr.util.ASTVisitor;
 import me.jkowalc.zephyr.util.TextPosition;
 
 public abstract class Node implements NodeInterface {
@@ -24,5 +23,4 @@ public abstract class Node implements NodeInterface {
     public TextPosition getEndPosition() {
         return endPosition != null ? endPosition : getDefaultEndPosition();
     }
-    public abstract void accept(ASTVisitor visitor);
 }

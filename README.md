@@ -341,7 +341,7 @@ statement = assignment
 
 assignment = dot_expression, "=", expression, ";";
 
-variable_declaration = type, variable_modifier, "=", expression, ";";
+variable_declaration = type, variable_modifier, identifier, "=", expression, ";";
 variable_modifier = "mut";
 type = builtin_type | identifier;
 
