@@ -339,7 +339,7 @@ statement = assignment
           | function_call_statement
           | block;
 
-assignment = identifier, "=", expression, ";";
+assignment = dot_expression, "=", expression, ";";
 
 variable_declaration = type, variable_modifier, "=", expression, ";";
 variable_modifier = "mut";
@@ -365,18 +365,18 @@ and_term = comparison_expression, {"and", comparison_expression};
 comparison_expression = additive_term, [(">" | "<" | ">=" | "<=" | "==" | "!="), additive_term];
 additive_term = term, {("+" | "-"), term};
 term = factor, {("*" | "/"), factor};
-factor = ["-" | "!"], (dot_expression | literal);
+factor = ["-" | "!"], (dot_expression | factor);
 dot_expression = elementary_expression, {".", elementary_expression};
 
 elementary_expresssion = identifier
                        | "(", expression, ")"
-                       | struct_expression
+                       | literal
                        | function_call;
 
-literal = int_literal | float_literal | string_literal | bool_literal;
+literal = int_literal | float_literal | string_literal | bool_literal | struct_literal;
 
-struct_expression = "{", {struct_member_expression}, "}";
-struct_member_expression = identifier, ":", literal;
+struct_literal = "{", {struct_literal_member}, "}";
+struct_literal_member = identifier, ":", literal;
 
 
 builtin_type = "int" | "bool" | "float" | "string";
