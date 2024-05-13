@@ -459,9 +459,9 @@ Klasa Interpreter przyjmuje w konstruktorze obiekt Program i posiada funkcję ru
 
 ### Opis sposobu testowania
 
-Testowanie za pomocą biblioteki JUnit i wstrzykiwania zależności.
+Testowanie za pomocą biblioteki JUnit i wstrzykiwania zależności.
 
-Testy jednostkowe leksera będą tworzyć strumień z przygotowanego tekstu języka i sprawdzać poprawność zwracanych tokenów z leksera.
+Testy jednostkowe leksera będą tworzyć strumień z przygotowanego tekstu języka i sprawdzać poprawność zwracanych tokenów z leksera.
 
 Testy jednostkowe parsera tworzą mock obiektu leksera, który zwraca spreparowane tokeny. Sprawdzana jest poprawność generowania drzewa, jak i zgłaszanie odpowiednich wyjątków w sytuacjach wyjątkowych.
 
