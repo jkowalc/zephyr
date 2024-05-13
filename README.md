@@ -244,10 +244,10 @@ Do sprawdzenia typu służy dedykowane wyrażenie `match`.
 
 ```zephyr
 struct Result {
-    int result;
+    int result
 }
 struct Error {
-    int errno;
+    int errno
 }
 union Maybe { Result, Error }
 
@@ -329,23 +329,23 @@ parameters = [parameter_definition, {",", parameter_definition}];
 parameter_definition = type, parameter_modifier, identifier, ["=", literal];
 parameter_modifier = "mut", "ref", "mref";
 
-block = "{", {statement}, "}";
+block = "{", {statement, [";"]}, "}";
 statement = assignment
           | variable_declaration
           | return_statement
           | loop
           | conditional_statement
           | match_statement
-          | function_call_statement
+          | function_call
           | block;
 
-assignment = dot_expression, "=", expression, ";";
+assignment = dot_expression, "=", expression;
 
-variable_declaration = type, variable_modifier, identifier, "=", expression, ";";
+variable_declaration = type, variable_modifier, identifier, "=", expression;
 variable_modifier = "mut";
 type = builtin_type | identifier;
 
-return_statement = "return", [expression], ";";
+return_statement = "return", [expression];
 
 loop = "while", "(", expression, ")", block;
 
@@ -356,8 +356,6 @@ conditional_statement = "if", "(", expression, ")", block,
 match_statement = "match", "(", expression, ")", "{", {case_statement}, "}";
 case_statement = "case", "(", type, identifier, ")", block;
 
-(* TODO: possibly refactor statement in grammar *)
-function_call_statement = function_call, ";";
 function_call = identifier, "(", [expression, {",", expression}], ")";
 
 expression = and_term, {"or", and_term};
