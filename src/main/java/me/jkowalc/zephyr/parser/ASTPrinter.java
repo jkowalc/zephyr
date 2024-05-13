@@ -402,12 +402,4 @@ public class ASTPrinter implements ASTVisitor {
         whileStatement.getBody().accept(this);
         indent--;
     }
-
-    @Override
-    public void visit(FunctionCallStatement functionCallStatement) {
-        print("FunctionCallStatement from " + functionCallStatement.getStartPosition() + " to " + functionCallStatement.getEndPosition() + "\n");
-        indent++;
-        functionCallStatement.getFunctionCall().accept(this);
-        indent--;
-    }
 }

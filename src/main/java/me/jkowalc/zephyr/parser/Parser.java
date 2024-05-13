@@ -204,13 +204,12 @@ public class Parser {
     //          | match_statement
     //          | function_call_statement
     //          | block;
-    private StatementBlock parseStatementBlock() throws LexicalException, IOException, SyntaxException {
+    public StatementBlock parseStatementBlock() throws LexicalException, IOException, SyntaxException {
         if(reader.getType() != TokenType.OPEN_BRACE) return null;
         TextPosition startPosition = reader.getToken().getStartPosition();
         reader.next();
         List<Statement> statements = new ArrayList<>();
         do {
-
             Statement statement;
             if ((statement = parseReturnStatement()) != null){
                 statements.add(statement);
@@ -251,7 +250,7 @@ public class Parser {
             return null;
         }
         if(dotExpression instanceof FunctionCall) {
-            return new FunctionCallStatement((FunctionCall) dotExpression);
+            return (FunctionCall) dotExpression;
         }
         if(dotExpression instanceof Assignable && reader.getType() == TokenType.ASSIGNMENT) {
             reader.next();
@@ -260,6 +259,12 @@ public class Parser {
         if(dotExpression instanceof VariableReference) {
             VariableDefinition variableDefinition = parseVariableDefinition(((VariableReference) dotExpression));
             if(variableDefinition != null) {
+                if(variableDefinition.getDefaultValue() == null) {
+                    throw new SyntaxException("All variables must be initialized", variableDefinition.getStartPosition());
+                }
+                if(variableDefinition.isReference()) {
+                    throw new SyntaxException("The ref or mref keyword is not valid in function parameters", variableDefinition.getStartPosition());
+                }
                 return variableDefinition;
             }
         }

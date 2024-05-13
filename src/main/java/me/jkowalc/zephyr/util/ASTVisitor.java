@@ -45,5 +45,4 @@ public interface ASTVisitor {
     void visit(StatementBlock statementBlock);
     void visit(VariableDefinition variableDefinition);
     void visit(WhileStatement whileStatement);
-    void visit(FunctionCallStatement functionCallStatement);
 }

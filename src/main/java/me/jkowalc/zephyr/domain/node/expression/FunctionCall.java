@@ -4,6 +4,7 @@ package me.jkowalc.zephyr.domain.node.expression;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import me.jkowalc.zephyr.domain.node.Node;
+import me.jkowalc.zephyr.domain.node.statement.Statement;
 import me.jkowalc.zephyr.util.ASTVisitor;
 import me.jkowalc.zephyr.util.TextPosition;
 
@@ -11,7 +12,7 @@ import java.util.List;
 
 @Getter
 @EqualsAndHashCode(callSuper = false)
-public final class FunctionCall extends Node implements Expression {
+public final class FunctionCall extends Node implements Expression, Statement {
     private final String name;
     private final List<Expression> parameters;
 
