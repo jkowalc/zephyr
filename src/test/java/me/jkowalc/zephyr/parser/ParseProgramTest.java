@@ -9,6 +9,8 @@ import me.jkowalc.zephyr.domain.token.TokenType;
 import me.jkowalc.zephyr.domain.token.literal.IntegerLiteralToken;
 import me.jkowalc.zephyr.exception.ParserInternalException;
 import me.jkowalc.zephyr.exception.lexical.LexicalException;
+import me.jkowalc.zephyr.exception.syntax.MissingTokenException;
+import me.jkowalc.zephyr.exception.syntax.MultipleDefinitionException;
 import me.jkowalc.zephyr.exception.syntax.SyntaxException;
 import org.junit.jupiter.api.Test;
 
@@ -144,14 +146,14 @@ public class ParseProgramTest {
                 new Token(TokenType.OPEN_BRACE),
                 new Token(TokenType.CLOSE_BRACE)
         ));
-        assertThrows(SyntaxException.class, () -> parser.parseProgram());
+        assertThrows(MissingTokenException.class, () -> parser.parseProgram());
 
         initParser(List.of(
                 new Token(TokenType.STRUCT),
                 new IdentifierToken("A"),
                 new Token(TokenType.CLOSE_BRACE)
         ));
-        assertThrows(SyntaxException.class, () -> parser.parseProgram());
+        assertThrows(MissingTokenException.class, () -> parser.parseProgram());
     }
     @Test
     public void testIncorrectStructMember() throws LexicalException, IOException {
@@ -189,7 +191,7 @@ public class ParseProgramTest {
                 new Token(TokenType.OPEN_BRACE),
                 new Token(TokenType.CLOSE_BRACE)
         ));
-        assertThrows(SyntaxException.class, () -> parser.parseProgram());
+        assertThrows(MultipleDefinitionException.class, () -> parser.parseProgram());
 
         initParser(List.of(
                 new Token(TokenType.UNION),
@@ -201,7 +203,7 @@ public class ParseProgramTest {
                 new Token(TokenType.OPEN_BRACE),
                 new Token(TokenType.CLOSE_BRACE)
         ));
-        assertThrows(SyntaxException.class, () -> parser.parseProgram());
+        assertThrows(MultipleDefinitionException.class, () -> parser.parseProgram());
 
         initParser(List.of(
                 new IdentifierToken("main"),
@@ -215,6 +217,6 @@ public class ParseProgramTest {
                 new Token(TokenType.OPEN_BRACE),
                 new Token(TokenType.CLOSE_BRACE)
         ));
-        assertThrows(SyntaxException.class, () -> parser.parseProgram());
+        assertThrows(MultipleDefinitionException.class, () -> parser.parseProgram());
     }
 }

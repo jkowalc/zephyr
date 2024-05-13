@@ -15,6 +15,7 @@ import me.jkowalc.zephyr.domain.token.literal.IntegerLiteralToken;
 import me.jkowalc.zephyr.domain.token.literal.StringLiteralToken;
 import me.jkowalc.zephyr.exception.ParserInternalException;
 import me.jkowalc.zephyr.exception.lexical.LexicalException;
+import me.jkowalc.zephyr.exception.syntax.MultipleComparisonException;
 import me.jkowalc.zephyr.exception.syntax.SyntaxException;
 import org.junit.jupiter.api.Test;
 
@@ -144,7 +145,7 @@ public class ParseExpressionTest {
                 new Token(TokenType.LESS),
                 new IntegerLiteralToken(3)
         ));
-        assertThrows(SyntaxException.class, () -> parser.parseExpression());
+        assertThrows(MultipleComparisonException.class, () -> parser.parseExpression());
     }
 
     @Test

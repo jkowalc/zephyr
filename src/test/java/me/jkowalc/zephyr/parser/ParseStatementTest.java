@@ -13,6 +13,7 @@ import me.jkowalc.zephyr.domain.token.literal.IntegerLiteralToken;
 import me.jkowalc.zephyr.domain.token.literal.StringLiteralToken;
 import me.jkowalc.zephyr.exception.ParserInternalException;
 import me.jkowalc.zephyr.exception.lexical.LexicalException;
+import me.jkowalc.zephyr.exception.syntax.InvalidModifierException;
 import me.jkowalc.zephyr.exception.syntax.SyntaxException;
 import org.junit.jupiter.api.Test;
 
@@ -75,7 +76,7 @@ public class ParseStatementTest {
                 new Token(TokenType.ASSIGNMENT),
                 new IntegerLiteralToken(1)
         ));
-        assertThrows(SyntaxException.class, () ->
+        assertThrows(InvalidModifierException.class, () ->
             parser.parseStatementBlock()
         );
 
@@ -86,7 +87,7 @@ public class ParseStatementTest {
                 new Token(TokenType.ASSIGNMENT),
                 new IntegerLiteralToken(1)
         ));
-        assertThrows(SyntaxException.class, () ->
+        assertThrows(InvalidModifierException.class, () ->
             parser.parseStatementBlock()
         );
     }
