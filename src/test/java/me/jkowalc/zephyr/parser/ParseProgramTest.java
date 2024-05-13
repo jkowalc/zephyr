@@ -58,6 +58,17 @@ public class ParseProgramTest {
         testFunctionDefinition(new FunctionDefinition("main", List.of(
                 new VariableDefinition("a", "int", false, false, null)
         ), new StatementBlock(List.of()), null));
+
+        initParser(List.of(
+                new IdentifierToken("main"),
+                new Token(TokenType.OPEN_PARENTHESIS),
+                new Token(TokenType.CLOSE_PARENTHESIS),
+                new Token(TokenType.ARROW),
+                new IdentifierToken("int"),
+                new Token(TokenType.OPEN_BRACE),
+                new Token(TokenType.CLOSE_BRACE)
+        ));
+        testFunctionDefinition(new FunctionDefinition("main", List.of(), new StatementBlock(List.of()), "int"));
     }
     @Test
     public void testUnionDefinition() throws LexicalException, IOException, SyntaxException, ParserInternalException {
