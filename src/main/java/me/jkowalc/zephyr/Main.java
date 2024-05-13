@@ -5,6 +5,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.FileConverter;
 import me.jkowalc.zephyr.domain.node.program.Program;
+import me.jkowalc.zephyr.exception.ParserInternalException;
 import me.jkowalc.zephyr.exception.ZephyrException;
 import me.jkowalc.zephyr.lexer.Lexer;
 import me.jkowalc.zephyr.parser.ASTPrinter;
@@ -52,6 +53,10 @@ public class Main {
         }
         catch(ZephyrException e){
             System.err.println(e.toString());
+            System.exit(1);
+        }
+        catch(ParserInternalException e){
+            System.err.println("Internal parser error");
             System.exit(1);
         }
     }

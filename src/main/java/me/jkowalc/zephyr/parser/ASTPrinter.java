@@ -64,13 +64,13 @@ public class ASTPrinter implements ASTVisitor {
     public void visit(FunctionCall functionCall) {
         print("FunctionCall(name=\"" + CharacterUtil.getRepresentation(functionCall.getName())
                 + "\") from " + functionCall.getStartPosition() + " to " + functionCall.getEndPosition() + "\n");
-        if (functionCall.getParameters().isEmpty()) {
+        if (functionCall.getArguments().isEmpty()) {
             print("- Parameters: <empty>\n");
             return;
         }
         print("- Parameters:\n");
         indent++;
-        for (Expression expression : functionCall.getParameters()) {
+        for (Expression expression : functionCall.getArguments()) {
             expression.accept(this);
         }
         indent--;

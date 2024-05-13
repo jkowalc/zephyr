@@ -16,8 +16,9 @@ import me.jkowalc.zephyr.domain.token.TokenType;
 import me.jkowalc.zephyr.domain.token.literal.FloatLiteralToken;
 import me.jkowalc.zephyr.domain.token.literal.IntegerLiteralToken;
 import me.jkowalc.zephyr.domain.token.literal.StringLiteralToken;
+import me.jkowalc.zephyr.exception.ParserInternalException;
 import me.jkowalc.zephyr.exception.lexical.LexicalException;
-import me.jkowalc.zephyr.exception.syntax.SyntaxException;
+import me.jkowalc.zephyr.exception.syntax.*;
 import me.jkowalc.zephyr.lexer.LexerInterface;
 import me.jkowalc.zephyr.util.SimpleMap;
 import me.jkowalc.zephyr.util.TextPosition;
@@ -34,8 +35,14 @@ public class Parser {
         this.reader = new TokenReader(lexer);
     }
 
+    private void MustBe(TokenType type, String message) throws MissingTokenException {
+        if(reader.getType() != type) {
+            throw new MissingTokenException(message, reader.getToken().getStartPosition());
+        }
+    }
+
     // program = {struct_definition | union_definition | function_definition };
-    public Program parseProgram() throws LexicalException, SyntaxException, IOException {
+    public Program parseProgram() throws LexicalException, SyntaxException, IOException, ParserInternalException {
         HashMap<String, TypeDefinition> types = new HashMap<>();
         HashMap<String, FunctionDefinition> functions = new HashMap<>();
         boolean isEnd = false;
@@ -43,7 +50,7 @@ public class Parser {
             StructDefinition structDefinition = parseStructDefinition();
             if (structDefinition != null) {
                 if(types.containsKey(structDefinition.getName())) {
-                    throw new SyntaxException("Type with name " + structDefinition.getName() + " already defined" +
+                    throw new MultipleDefinitionException("Type with name " + structDefinition.getName() + " already defined" +
                             " (previous definition at " + types.get(structDefinition.getName()).getStartPosition() + ")", structDefinition.getStartPosition());
                 }
                 types.put(structDefinition.getName(), structDefinition);
@@ -52,7 +59,7 @@ public class Parser {
             UnionDefinition unionDefinition = parseUnionDefinition();
             if (unionDefinition != null) {
                 if(types.containsKey(unionDefinition.getName())) {
-                    throw new SyntaxException("Type with name " + unionDefinition.getName() + " already defined" +
+                    throw new MultipleDefinitionException("Type with name " + unionDefinition.getName() + " already defined" +
                             " (previous definition at " + types.get(unionDefinition.getName()).getStartPosition() + ")", unionDefinition.getStartPosition());
                 }
                 types.put(unionDefinition.getName(), unionDefinition);
@@ -61,12 +68,13 @@ public class Parser {
             FunctionDefinition functionDefinition = parseFunctionDefinition();
             if (functionDefinition != null) {
                 if(functions.containsKey(functionDefinition.getName())) {
-                    throw new SyntaxException("Function with name " + functionDefinition.getName() + " already defined" +
+                    throw new MultipleDefinitionException("Function with name " + functionDefinition.getName() + " already defined" +
                             " (previous definition at " + functions.get(functionDefinition.getName()).getStartPosition() + ")", functionDefinition.getStartPosition());
                 }
                 functions.put(functionDefinition.getName(), functionDefinition);
                 continue;
             }
+            // EOF token is not required
             isEnd = true;
         }
         return new Program(functions, types);
@@ -77,14 +85,10 @@ public class Parser {
         if(reader.getType() != TokenType.STRUCT) return null;
         TextPosition startPosition = reader.getToken().getStartPosition();
         reader.next();
-        if(reader.getType() != TokenType.IDENTIFIER) {
-            throw new SyntaxException("Expected identifier", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.IDENTIFIER, "Expected identifier");
         IdentifierToken identifierToken = (IdentifierToken) reader.getToken();
         reader.next();
-        if(reader.getType() != TokenType.OPEN_BRACE) {
-            throw new SyntaxException("Expected '{'", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.OPEN_BRACE, "Expected '{'");
         List<StructDefinitionMember> members = new ArrayList<>();
         do {
             reader.next();
@@ -97,9 +101,7 @@ public class Parser {
             }
             members.add(member);
         } while(reader.getType() == TokenType.COMMA);
-        if(reader.getType() != TokenType.CLOSE_BRACE) {
-            throw new SyntaxException("Expected '}'", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.CLOSE_BRACE, "Expected '}'");
         TextPosition endPosition = reader.getToken().getEndPosition();
         reader.next();
         return new StructDefinition(startPosition, endPosition, identifierToken.getValue(), members);
@@ -112,9 +114,7 @@ public class Parser {
         }
         IdentifierToken typeToken = (IdentifierToken) reader.getToken();
         reader.next();
-        if(reader.getType() != TokenType.IDENTIFIER) {
-            throw new SyntaxException("Expected identifier", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.IDENTIFIER, "Expected identifier");
         IdentifierToken identifierToken = (IdentifierToken) reader.getToken();
         reader.next();
         return new StructDefinitionMember(typeToken.getStartPosition(), identifierToken.getEndPosition(), identifierToken.getValue(), typeToken.getValue());
@@ -126,40 +126,30 @@ public class Parser {
         List<String> typeNames = new ArrayList<>();
         TextPosition startPosition = reader.getToken().getStartPosition();
         reader.next();
-        if(reader.getType() != TokenType.IDENTIFIER) {
-            throw new SyntaxException("Expected identifier", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.IDENTIFIER, "Expected identifier");
         IdentifierToken identifierToken = (IdentifierToken) reader.getToken();
         reader.next();
-        if(reader.getType() != TokenType.OPEN_BRACE) {
-            throw new SyntaxException("Expected '{'", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.OPEN_BRACE, "Expected '{'");
         do {
             reader.next();
             if(reader.getType() == TokenType.CLOSE_BRACE) {
                 break;
             }
-            if(reader.getType() != TokenType.IDENTIFIER) {
-                throw new SyntaxException("Expected type identifier", reader.getToken().getStartPosition());
-            }
+            MustBe(TokenType.IDENTIFIER, "Expected type identifier");
             typeNames.add(((IdentifierToken) reader.getToken()).getValue());
             reader.next();
         } while(reader.getType() == TokenType.COMMA);
-        if(reader.getType() != TokenType.CLOSE_BRACE) {
-            throw new SyntaxException("Expected '}'", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.CLOSE_BRACE, "Expected '}'");
         TextPosition endPosition = reader.getToken().getEndPosition();
         reader.next();
         return new UnionDefinition(startPosition, endPosition, identifierToken.getValue(), typeNames);
     }
 
-    private FunctionDefinition parseFunctionDefinition() throws SyntaxException, LexicalException, IOException {
+    private FunctionDefinition parseFunctionDefinition() throws SyntaxException, LexicalException, IOException, ParserInternalException {
         if(reader.getType() != TokenType.IDENTIFIER) return null;
         IdentifierToken identifierToken = (IdentifierToken) reader.getToken();
         reader.next();
-        if(reader.getType() != TokenType.OPEN_PARENTHESIS) {
-            throw new SyntaxException("Expected '('", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.OPEN_PARENTHESIS, "Expected '('");
         List<VariableDefinition> parameters = new ArrayList<>();
         do {
             reader.next();
@@ -175,23 +165,19 @@ public class Parser {
             }
             parameters.add(parameter);
         } while(reader.getType() == TokenType.COMMA);
-        if(reader.getType() != TokenType.CLOSE_PARENTHESIS) {
-            throw new SyntaxException("Expected ')'", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
         reader.next();
         String returnType = null;
         if(reader.getType() == TokenType.ARROW) {
             reader.next();
-            if(reader.getType() != TokenType.IDENTIFIER) {
-                throw new SyntaxException("Expected return type", reader.getToken().getStartPosition());
-            }
+            MustBe(TokenType.IDENTIFIER, "Expected return type");
             IdentifierToken returnTypeToken = (IdentifierToken) reader.getToken();
             returnType = returnTypeToken.getValue();
             reader.next();
         }
         StatementBlock body = parseStatementBlock();
         if(body == null) {
-            throw new SyntaxException("Expected statement block", reader.getToken().getStartPosition());
+            throw new SyntaxException("Expected function body", reader.getToken().getStartPosition());
         }
         return new FunctionDefinition(identifierToken.getStartPosition(), identifierToken.getValue(), parameters, body, returnType);
     }
@@ -204,47 +190,46 @@ public class Parser {
     //          | match_statement
     //          | function_call_statement
     //          | block;
-    public StatementBlock parseStatementBlock() throws LexicalException, IOException, SyntaxException {
+    public StatementBlock parseStatementBlock() throws LexicalException, IOException, SyntaxException, ParserInternalException {
         if(reader.getType() != TokenType.OPEN_BRACE) return null;
         TextPosition startPosition = reader.getToken().getStartPosition();
         reader.next();
         List<Statement> statements = new ArrayList<>();
+        boolean firstStatement = true;
         do {
             Statement statement;
             if ((statement = parseReturnStatement()) != null){
                 statements.add(statement);
-                continue;
             }
-            if ((statement = parseWhileStatement()) != null) {
+            if (statement == null && (statement = parseWhileStatement()) != null) {
                 statements.add(statement);
-                continue;
             }
-            if ((statement = parseIfStatement()) != null) {
+            if (statement == null && (statement = parseIfStatement()) != null) {
                 statements.add(statement);
-                continue;
             }
-            if ((statement = parseMatchStatement()) != null) {
+            if (statement == null && (statement = parseMatchStatement()) != null) {
                 statements.add(statement);
-                continue;
             }
-            if ((statement = parseStatementBlock()) != null) {
+            if (statement == null && (statement = parseStatementBlock()) != null) {
                 statements.add(statement);
-                continue;
             }
-            if ((statement = parseExpressionStatement()) != null) {
+            if (statement == null && (statement = parseExpressionStatement()) != null) {
                 statements.add(statement);
-                continue;
+            }
+            if(!firstStatement && statement == null) {
+                throw new SyntaxException("Statement not recognized", reader.getToken().getStartPosition());
             }
             if(reader.getType() == TokenType.SEMICOLON) {
                 reader.next();
             }
+            firstStatement = false;
         } while(reader.getType() != TokenType.CLOSE_BRACE);
         TextPosition endPosition = reader.getToken().getEndPosition();
         reader.next();
         return new StatementBlock(startPosition, endPosition, statements);
     }
 
-    private Statement parseExpressionStatement() throws LexicalException, SyntaxException, IOException {
+    private Statement parseExpressionStatement() throws LexicalException, SyntaxException, IOException, ParserInternalException {
         Expression dotExpression = parseDotExpression();
         if(dotExpression == null) {
             return null;
@@ -260,10 +245,10 @@ public class Parser {
             VariableDefinition variableDefinition = parseVariableDefinition(((VariableReference) dotExpression));
             if(variableDefinition != null) {
                 if(variableDefinition.getDefaultValue() == null) {
-                    throw new SyntaxException("All variables must be initialized", variableDefinition.getStartPosition());
+                    throw new InvalidModifierException("All variables must be initialized", variableDefinition.getStartPosition());
                 }
                 if(variableDefinition.isReference()) {
-                    throw new SyntaxException("The ref or mref keyword is not valid in function parameters", variableDefinition.getStartPosition());
+                    throw new InvalidModifierException("The ref or mref keyword is not valid in function parameters", variableDefinition.getStartPosition());
                 }
                 return variableDefinition;
             }
@@ -273,7 +258,7 @@ public class Parser {
 
     private final static List<TokenType> modifierTokenTypes = List.of(TokenType.MUT, TokenType.REF, TokenType.MREF);
     // variable_declaration = type, variable_modifier, identifier, "=", expression, ";";
-    private VariableDefinition parseVariableDefinition(VariableReference typeNameExpression) throws LexicalException, IOException, SyntaxException {
+    private VariableDefinition parseVariableDefinition(VariableReference typeNameExpression) throws LexicalException, IOException, SyntaxException, ParserInternalException {
         TextPosition startPosition;
         String typeName;
         if(typeNameExpression == null) {
@@ -313,42 +298,37 @@ public class Parser {
         reader.next();
         Expression defaultValue = parseExpression();
         if(defaultValue == null) {
-            throw new SyntaxException("Expected expression", reader.getToken().getStartPosition());
+            throw new SyntaxException("Expected variable default value", reader.getToken().getStartPosition());
         }
         return new VariableDefinition(startPosition, defaultValue.getEndPosition(), nameToken.getValue(), typeName, isMutable, isReference, defaultValue);
     }
 
     // return_statement = "return", [expression], ";";
-    private ReturnStatement parseReturnStatement() throws LexicalException, IOException, SyntaxException {
+    private ReturnStatement parseReturnStatement() throws LexicalException, IOException, SyntaxException, ParserInternalException {
         if(reader.getType() != TokenType.RETURN) return null;
         Token returnToken = reader.getToken();
         reader.next();
         Expression expression = parseExpression();
-        reader.next();
         if(expression != null) return new ReturnStatement(returnToken.getStartPosition(), expression);
         else return new ReturnStatement(returnToken.getStartPosition(), returnToken.getEndPosition());
     }
 
     // loop = "while", "(", expression, ")", block;
-    private WhileStatement parseWhileStatement() throws LexicalException, IOException, SyntaxException {
+    private WhileStatement parseWhileStatement() throws LexicalException, IOException, SyntaxException, ParserInternalException {
         if(reader.getType() != TokenType.WHILE) return null;
         TextPosition startPosition = reader.getToken().getStartPosition();
         reader.next();
-        if(reader.getType() != TokenType.OPEN_PARENTHESIS) {
-            throw new SyntaxException("Expected '('", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.OPEN_PARENTHESIS, "Expected '('");
         reader.next();
         Expression condition = parseExpression();
         if(condition == null) {
-            throw new SyntaxException("Expected expression", reader.getToken().getStartPosition());
+            throw new SyntaxException("Expected while condition", reader.getToken().getStartPosition());
         }
-        if(reader.getType() != TokenType.CLOSE_PARENTHESIS) {
-            throw new SyntaxException("Expected ')'", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
         reader.next();
         StatementBlock body = parseStatementBlock();
         if(body == null) {
-            throw new SyntaxException("Expected statement block", reader.getToken().getStartPosition());
+            throw new SyntaxException("Expected while body", reader.getToken().getStartPosition());
         }
         return new WhileStatement(startPosition, condition, body);
     }
@@ -356,28 +336,24 @@ public class Parser {
     // conditional_statement = "if", "(", expression, ")", block,
     //                        {"elif", "(", expression, ")", block},
     //                        ["else", "(", expression, ")", block];
-    private IfStatement parseIfStatement() throws LexicalException, IOException, SyntaxException {
+    private IfStatement parseIfStatement() throws LexicalException, IOException, SyntaxException, ParserInternalException {
         if(reader.getType() != TokenType.IF) return null;
         TextPosition startPosition = reader.getToken().getStartPosition();
         reader.next();
         return parseIfPart(startPosition);
     }
-    private IfStatement parseIfPart(TextPosition startPosition) throws SyntaxException, LexicalException, IOException {
-        if(reader.getType() != TokenType.OPEN_PARENTHESIS) {
-            throw new SyntaxException("Expected '('", reader.getToken().getStartPosition());
-        }
+    private IfStatement parseIfPart(TextPosition startPosition) throws SyntaxException, LexicalException, IOException, ParserInternalException {
+        MustBe(TokenType.OPEN_PARENTHESIS, "Expected '('");
         reader.next();
         Expression condition = parseExpression();
         if(condition == null) {
-            throw new SyntaxException("Expected expression", reader.getToken().getStartPosition());
+            throw new SyntaxException("Expected if condition", reader.getToken().getStartPosition());
         }
-        if(reader.getType() != TokenType.CLOSE_PARENTHESIS) {
-            throw new SyntaxException("Expected ')'", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
         reader.next();
         StatementBlock body = parseStatementBlock();
         if(body == null) {
-            throw new SyntaxException("Expected statement block", reader.getToken().getStartPosition());
+            throw new SyntaxException("Expected if body", reader.getToken().getStartPosition());
         }
         if(reader.getType() == TokenType.ELIF) {
             TextPosition nextStartPosition = reader.getToken().getStartPosition();
@@ -388,32 +364,26 @@ public class Parser {
             reader.next();
             StatementBlock elseBlock = parseStatementBlock();
             if(elseBlock == null) {
-                throw new SyntaxException("Expected statement block", reader.getToken().getStartPosition());
+                throw new SyntaxException("Expected else statement block", reader.getToken().getStartPosition());
             }
             return new IfStatement(startPosition, condition, body, elseBlock);
         }
-        throw new SyntaxException("Unexpected token", reader.getToken().getStartPosition());
+        return new IfStatement(startPosition, condition, body, null);
     }
     // match_statement = "match", "(", expression, ")", "{", {case_statement}, "}";
-    private MatchStatement parseMatchStatement() throws LexicalException, IOException, SyntaxException {
+    private MatchStatement parseMatchStatement() throws LexicalException, IOException, SyntaxException, ParserInternalException {
         if(reader.getType() != TokenType.MATCH) return null;
         TextPosition startPosition = reader.getToken().getStartPosition();
         reader.next();
-        if(reader.getType() != TokenType.OPEN_PARENTHESIS) {
-            throw new SyntaxException("Expected '('", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.OPEN_PARENTHESIS, "Expected '('");
         reader.next();
         Expression expression = parseExpression();
         if(expression == null) {
-            throw new SyntaxException("Expected expression", reader.getToken().getStartPosition());
+            throw new SyntaxException("Expected match expression", reader.getToken().getStartPosition());
         }
-        if(reader.getType() != TokenType.CLOSE_PARENTHESIS) {
-            throw new SyntaxException("Expected ')'", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
         reader.next();
-        if(reader.getType() != TokenType.OPEN_BRACE) {
-            throw new SyntaxException("Expected '{'", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.OPEN_BRACE, "Expected '{'");
         reader.next();
         List<MatchCase> cases = new ArrayList<>();
         MatchCase matchCase;
@@ -427,53 +397,42 @@ public class Parser {
             }
             cases.add(matchCase);
         } while(reader.getType() == TokenType.CASE);
-        if(reader.getType() != TokenType.CLOSE_BRACE) {
-            throw new SyntaxException("Expected '}'", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.CLOSE_BRACE, "Expected '}'");
         TextPosition endPosition = reader.getToken().getEndPosition();
-        reader.next();
         return new MatchStatement(startPosition, endPosition, expression, cases);
     }
 
     // case_statement = "case", "(", type, identifier, ")", block;
-    private MatchCase parseCaseStatement() throws LexicalException, IOException, SyntaxException {
+    private MatchCase parseCaseStatement() throws LexicalException, IOException, SyntaxException, ParserInternalException {
         if(reader.getType() != TokenType.CASE) return null;
         TextPosition startPosition = reader.getToken().getStartPosition();
         reader.next();
-        if(reader.getType() != TokenType.OPEN_PARENTHESIS) {
-            throw new SyntaxException("Expected '('", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.OPEN_PARENTHESIS, "Expected '('");
         reader.next();
-        if(reader.getType() != TokenType.IDENTIFIER) {
-            throw new SyntaxException("Expected type identifier", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.IDENTIFIER, "Expected type identifier");
         String pattern = ((IdentifierToken) reader.getToken()).getValue();
         reader.next();
-        if(reader.getType() != TokenType.IDENTIFIER) {
-            throw new SyntaxException("Expected variable name", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.IDENTIFIER, "Expected variable name");
         String variableName = ((IdentifierToken) reader.getToken()).getValue();
         reader.next();
-        if(reader.getType() != TokenType.CLOSE_PARENTHESIS) {
-            throw new SyntaxException("Expected ')'", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
         reader.next();
         StatementBlock body = parseStatementBlock();
         if(body == null) {
-            throw new SyntaxException("Expected statement block", reader.getToken().getStartPosition());
+            throw new SyntaxException("Expected case body", reader.getToken().getStartPosition());
         }
         return new MatchCase(startPosition, pattern, variableName, body);
     }
 
     // function_call = identifier, "(", [expression, {",", expression}], ")";
-    private Expression parseFunctionCallOrVariableReference() throws LexicalException, IOException, SyntaxException {
+    private Expression parseFunctionCallOrVariableReference() throws LexicalException, IOException, SyntaxException, ParserInternalException {
         if(reader.getType() != TokenType.IDENTIFIER) return null;
         IdentifierToken identifierToken = (IdentifierToken) reader.getToken();
         reader.next();
         if(reader.getType() != TokenType.OPEN_PARENTHESIS) {
             return new VariableReference(identifierToken.getStartPosition(), identifierToken.getEndPosition(), identifierToken.getValue());
         }
-        List<Expression> parameters = new ArrayList<>();
+        List<Expression> arguments = new ArrayList<>();
         do {
             reader.next();
             if(reader.getType() == TokenType.CLOSE_PARENTHESIS) {
@@ -481,20 +440,18 @@ public class Parser {
             }
             Expression expression = parseExpression();
             if(expression == null) {
-                throw new SyntaxException("Expected expression", reader.getToken().getStartPosition());
+                throw new SyntaxException("Expected argument", reader.getToken().getStartPosition());
             }
-            parameters.add(expression);
+            arguments.add(expression);
         } while(reader.getType() == TokenType.COMMA);
-        if(reader.getType() != TokenType.CLOSE_PARENTHESIS) {
-            throw new SyntaxException("Expected ')'", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
         TextPosition endPosition = reader.getToken().getEndPosition();
         reader.next();
-        return new FunctionCall(identifierToken.getStartPosition(), endPosition, identifierToken.getValue(), parameters);
+        return new FunctionCall(identifierToken.getStartPosition(), endPosition, identifierToken.getValue(), arguments);
     }
 
     // expression = and_term, {"or", and_term};
-    public Expression parseExpression() throws LexicalException, IOException, SyntaxException {
+    public Expression parseExpression() throws LexicalException, IOException, SyntaxException, ParserInternalException {
         Expression left = parseAndTerm();
         if(left == null) return null;
         while(reader.getType() == TokenType.OR) {
@@ -505,7 +462,7 @@ public class Parser {
     }
 
     // and_term = comparison_expression, {"and", comparison_expression};
-    private Expression parseAndTerm() throws LexicalException, IOException, SyntaxException {
+    private Expression parseAndTerm() throws LexicalException, IOException, SyntaxException, ParserInternalException {
         Expression left = parseComparisonExpression();
         if(left == null) return null;
         while(reader.getType() == TokenType.AND) {
@@ -516,7 +473,7 @@ public class Parser {
     }
 
     // comparison_expression = additive_term, [(">" | "<" | ">=" | "<=" | "==" | "!="), additive_term];
-    private Expression parseComparisonExpression() throws LexicalException, IOException, SyntaxException {
+    private Expression parseComparisonExpression() throws LexicalException, IOException, SyntaxException, ParserInternalException {
         List<TokenType> comparisonOperators = List.of(TokenType.GREATER, TokenType.LESS, TokenType.GREATER_EQUALS, TokenType.LESS_EQUALS, TokenType.EQUALS, TokenType.NOT_EQUALS);
         Expression left = parseAdditiveTerm();
         if(left == null) return null;
@@ -530,17 +487,17 @@ public class Parser {
                 case LESS_EQUALS -> new LessEqualExpression(left, parseAdditiveTerm());
                 case EQUALS -> new EqualExpression(left, parseAdditiveTerm());
                 case NOT_EQUALS -> new NotEqualExpression(left, parseAdditiveTerm());
-                default -> throw new SyntaxException("Unexpected token", reader.getToken().getStartPosition());
+                default -> throw new ParserInternalException();
             };
         }
         if(comparisonOperators.contains(reader.getType())) {
-            throw new SyntaxException("Multiple comparison expressions are not allowed", reader.getToken().getStartPosition());
+            throw new MultipleComparisonException("Multiple comparison expressions are not allowed", reader.getToken().getStartPosition());
         }
         return left;
     }
 
     // additive_term = term, {("+" | "-"), term};
-    private Expression parseAdditiveTerm() throws LexicalException, IOException, SyntaxException {
+    private Expression parseAdditiveTerm() throws LexicalException, IOException, SyntaxException, ParserInternalException {
         Expression left = parseTerm();
         if(left == null) return null;
         while(reader.getType() == TokenType.PLUS || reader.getType() == TokenType.MINUS) {
@@ -549,14 +506,14 @@ public class Parser {
             left = switch (operator) {
                 case PLUS -> new AddExpression(left, parseTerm());
                 case MINUS -> new SubtractExpression(left, parseTerm());
-                default -> throw new SyntaxException("Unexpected token", reader.getToken().getStartPosition());
+                default -> throw new ParserInternalException();
             };
         }
         return left;
     }
 
     // term = factor, {("*" | "/"), factor};
-    private Expression parseTerm() throws LexicalException, IOException, SyntaxException {
+    private Expression parseTerm() throws LexicalException, IOException, SyntaxException, ParserInternalException {
         Expression left = parseFactor();
         if(left == null) return null;
         while(reader.getType() == TokenType.MULTIPLY || reader.getType() == TokenType.DIVIDE) {
@@ -565,28 +522,34 @@ public class Parser {
             left = switch (operator) {
                 case MULTIPLY -> new MultiplyExpression(left, parseFactor());
                 case DIVIDE -> new DivideExpression(left, parseFactor());
-                default -> throw new SyntaxException("Unexpected token", reader.getToken().getStartPosition());
+                default -> throw new ParserInternalException();
             };
         }
         return left;
     }
     // factor = ["-" | "!"], (dot_expression | factor);
-    private Expression parseFactor() throws LexicalException, IOException, SyntaxException {
+    private Expression parseFactor() throws LexicalException, IOException, SyntaxException, ParserInternalException {
         if(reader.getType() == TokenType.MINUS) {
             reader.next();
             Expression factor = parseFactor();
-            return factor != null ? new NegationExpression(parseFactor()) : null;
+            if(factor == null) {
+                throw new SyntaxException("Expected expression after '-'", reader.getToken().getStartPosition());
+            }
+            return new NegationExpression(factor);
         }
         if(reader.getType() == TokenType.NOT) {
             reader.next();
             Expression factor = parseFactor();
-            return factor != null ? new NotExpression(parseFactor()) : null;
+            if(factor == null) {
+                throw new SyntaxException("Expected expression after '!'", reader.getToken().getStartPosition());
+            }
+            return new NotExpression(factor);
         }
         return parseDotExpression();
     }
 
     // dot_expression = elementary_expression, {".", elementary_expression};
-    private Expression parseDotExpression() throws LexicalException, IOException, SyntaxException {
+    private Expression parseDotExpression() throws LexicalException, IOException, SyntaxException, ParserInternalException {
         Expression left = parseElementaryExpression();
         if(left == null) return null;
         if(left instanceof StringLiteral || left instanceof IntegerLiteral || left instanceof FloatLiteral || left instanceof BooleanLiteral) {
@@ -599,7 +562,7 @@ public class Parser {
             reader.next();
             Expression right = parseElementaryExpression();
             if(!(right instanceof VariableReference)) {
-                throw new SyntaxException("Expected identifier", reader.getToken().getStartPosition());
+                throw new SyntaxException("Field must be an identifier", reader.getToken().getStartPosition());
             }
             left = new DotExpression(right.getEndPosition(), left, ((VariableReference) right).getName());
         }
@@ -610,14 +573,12 @@ public class Parser {
     //                       | "(", expression, ")"
     //                       | literal
     //                       | function_call;
-    private Expression parseElementaryExpression() throws LexicalException, IOException, SyntaxException {
+    private Expression parseElementaryExpression() throws LexicalException, IOException, SyntaxException, ParserInternalException {
         Expression expression;
         if(reader.getType() == TokenType.OPEN_PARENTHESIS) {
             reader.next();
             expression = parseExpression();
-            if (reader.getType() != TokenType.CLOSE_PARENTHESIS) {
-                throw new SyntaxException("Expected ')'", reader.getToken().getStartPosition());
-            }
+            MustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
             reader.next();
             return expression;
         }
@@ -673,20 +634,14 @@ public class Parser {
         IdentifierToken identifierToken;
         do {
             reader.next();
-            if(reader.getType() != TokenType.IDENTIFIER) {
-                throw new SyntaxException("Expected identifier", reader.getToken().getStartPosition());
-            }
+            MustBe(TokenType.IDENTIFIER, "Expected struct member name");
             identifierToken = (IdentifierToken) reader.getToken();
             reader.next();
-            if(reader.getType() != TokenType.COLON) {
-                throw new SyntaxException("Expected ':'", reader.getToken().getStartPosition());
-            }
+            MustBe(TokenType.COLON, "Expected ':'");
             reader.next();
             fields.put(identifierToken.getValue(), parseLiteral());
         } while (reader.getType() == TokenType.COMMA);
-        if(reader.getType() != TokenType.CLOSE_BRACE) {
-            throw new SyntaxException("Expected '}'", reader.getToken().getStartPosition());
-        }
+        MustBe(TokenType.CLOSE_BRACE, "Expected '}'");
         TextPosition endPosition = reader.getToken().getEndPosition();
         reader.next();
         return new StructLiteral(startPosition, endPosition, fields);

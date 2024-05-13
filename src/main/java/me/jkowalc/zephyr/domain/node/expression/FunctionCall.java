@@ -14,18 +14,18 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = false)
 public final class FunctionCall extends Node implements Expression, Statement {
     private final String name;
-    private final List<Expression> parameters;
+    private final List<Expression> arguments;
 
-    public FunctionCall(String name, List<Expression> parameters) {
+    public FunctionCall(String name, List<Expression> arguments) {
         super(null, null);
         this.name = name;
-        this.parameters = parameters;
+        this.arguments = arguments;
     }
 
-    public FunctionCall(TextPosition startPosition, TextPosition endPosition, String name, List<Expression> parameters) {
+    public FunctionCall(TextPosition startPosition, TextPosition endPosition, String name, List<Expression> arguments) {
         super(startPosition, endPosition);
         this.name = name;
-        this.parameters = parameters;
+        this.arguments = arguments;
     }
 
     @Override
