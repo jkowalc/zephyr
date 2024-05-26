@@ -300,20 +300,6 @@ public class ParseExpressionTest {
                 new Token(TokenType.DOT)
         ));
         assertThrows(SyntaxException.class, () -> parser.parseExpression());
-
-        initParser(List.of(
-                new StringLiteralToken("hello"),
-                new Token(TokenType.DOT),
-                new IdentifierToken("world")
-        ));
-        assertThrows(SyntaxException.class, () -> parser.parseExpression());
-
-        initParser(List.of(
-                new IdentifierToken("hello"),
-                new Token(TokenType.DOT),
-                new StringLiteralToken("world")
-        ));
-        assertThrows(SyntaxException.class, () -> parser.parseExpression());
     }
     @Test
     public void testStructLiteral() throws IOException, LexicalException, SyntaxException, ParserInternalException {

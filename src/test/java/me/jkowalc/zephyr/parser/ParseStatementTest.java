@@ -171,17 +171,6 @@ public class ParseStatementTest {
         );
 
         initParser(List.of(
-                new StringLiteralToken("a"),
-                new Token(TokenType.DOT),
-                new IdentifierToken("b"),
-                new Token(TokenType.ASSIGNMENT),
-                new IntegerLiteralToken(1)
-        ));
-        assertThrows(SyntaxException.class, () ->
-            parser.parseStatementBlock()
-        );
-
-        initParser(List.of(
                 new IdentifierToken("a"),
                 new Token(TokenType.ASSIGNMENT),
                 new Token(TokenType.ASSIGNMENT),

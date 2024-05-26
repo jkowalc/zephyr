@@ -552,17 +552,11 @@ public class Parser {
     private Expression parseDotExpression() throws LexicalException, IOException, SyntaxException, ParserInternalException {
         Expression left = parseElementaryExpression();
         if(left == null) return null;
-        if(left instanceof StringLiteral || left instanceof IntegerLiteral || left instanceof FloatLiteral || left instanceof BooleanLiteral) {
-            if(reader.getType() == TokenType.DOT) {
-                throw new SyntaxException("Only structs can have fields", reader.getToken().getStartPosition());
-            }
-            return left;
-        }
         while(reader.getType() == TokenType.DOT) {
             reader.next();
             Expression right = parseElementaryExpression();
-            if(!(right instanceof VariableReference)) {
-                throw new SyntaxException("Field must be an identifier", reader.getToken().getStartPosition());
+            if(right == null) {
+                throw new SyntaxException("Expected expression after '.'", reader.getToken().getStartPosition());
             }
             left = new DotExpression(right.getEndPosition(), left, ((VariableReference) right).getName());
         }
