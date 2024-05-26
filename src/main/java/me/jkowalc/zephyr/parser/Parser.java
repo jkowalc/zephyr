@@ -213,7 +213,7 @@ public class Parser {
             if (statement == null && (statement = parseStatementBlock()) != null) {
                 statements.add(statement);
             }
-            if (statement == null && (statement = parseExpressionStatement()) != null) {
+            if (statement == null && (statement = parseIdentifierStatement()) != null) {
                 statements.add(statement);
             }
             if(!firstStatement && statement == null) {
@@ -229,51 +229,60 @@ public class Parser {
         return new StatementBlock(startPosition, endPosition, statements);
     }
 
-    private Statement parseExpressionStatement() throws LexicalException, SyntaxException, IOException, ParserInternalException {
-        Expression dotExpression = parseDotExpression();
-        if(dotExpression == null) {
+    // assignment = identifier, {".", identifier}, "=", expression;
+    private AssignmentStatement parseAssignment(IdentifierToken identifierToken) throws LexicalException, IOException, SyntaxException, ParserInternalException {
+        Assignable left = new VariableReference(identifierToken.getStartPosition(), identifierToken.getEndPosition(), identifierToken.getValue());
+        while(reader.getType() == TokenType.DOT) {
+            reader.next();
+            MustBe(TokenType.IDENTIFIER, "Expected identifier");
+            left = new DotExpression(reader.getToken().getEndPosition(), (Expression) left, ((IdentifierToken) reader.getToken()).getValue());
+            reader.next();
+        }
+        MustBe(TokenType.ASSIGNMENT, "Expected '='");
+        reader.next();
+        Expression right = parseExpression();
+        if(right == null) {
+            throw new SyntaxException("Expected expression after assignment", reader.getToken().getStartPosition());
+        }
+        return new AssignmentStatement(left, right);
+    }
+
+    // Parse any statement that starts with an identifier. This can be an assignment, variable declaration or function call.
+    private Statement parseIdentifierStatement() throws LexicalException, SyntaxException, IOException, ParserInternalException {
+        if(reader.getType() != TokenType.IDENTIFIER) {
             return null;
         }
-        if(dotExpression instanceof FunctionCall) {
-            return (FunctionCall) dotExpression;
-        }
-        if(dotExpression instanceof Assignable && reader.getType() == TokenType.ASSIGNMENT) {
-            reader.next();
-            return new AssignmentStatement((Assignable) dotExpression, parseExpression());
-        }
-        if(dotExpression instanceof VariableReference) {
-            VariableDefinition variableDefinition = parseVariableDefinition(((VariableReference) dotExpression));
-            if(variableDefinition != null) {
-                if(variableDefinition.getDefaultValue() == null) {
-                    throw new InvalidModifierException("All variables must be initialized", variableDefinition.getStartPosition());
-                }
-                if(variableDefinition.isReference()) {
-                    throw new InvalidModifierException("The ref or mref keyword is not valid in function parameters", variableDefinition.getStartPosition());
-                }
-                return variableDefinition;
+        IdentifierToken identifierToken = (IdentifierToken) reader.getToken();
+        reader.next();
+        Statement statement;
+        if((statement = parseVariableDefinition(identifierToken)) != null) {
+            VariableDefinition variableDefinition = (VariableDefinition) statement;
+            if(variableDefinition.getDefaultValue() == null) {
+                throw new InvalidModifierException("All variables must be initialized", variableDefinition.getStartPosition());
             }
+            if(variableDefinition.isReference()) {
+                throw new InvalidModifierException("The ref or mref keyword is not valid in function parameters", variableDefinition.getStartPosition());
+            }
+            return variableDefinition;
         }
-        throw new SyntaxException("Unexpected token", reader.getToken().getStartPosition());
+        if((statement = parseFunctionCall(identifierToken)) != null) return statement;
+        return parseAssignment(identifierToken);
     }
 
     private final static List<TokenType> modifierTokenTypes = List.of(TokenType.MUT, TokenType.REF, TokenType.MREF);
     // variable_declaration = type, variable_modifier, identifier, "=", expression, ";";
-    private VariableDefinition parseVariableDefinition(VariableReference typeNameExpression) throws LexicalException, IOException, SyntaxException, ParserInternalException {
-        TextPosition startPosition;
-        String typeName;
-        if(typeNameExpression == null) {
+    private VariableDefinition parseVariableDefinition(IdentifierToken typeNameIdentifier) throws LexicalException, IOException, SyntaxException, ParserInternalException {
+        IdentifierToken typeToken;
+        if(typeNameIdentifier == null) {
             if(reader.getType() != TokenType.IDENTIFIER) {
                 return null;
             }
-            IdentifierToken typeToken = (IdentifierToken) reader.getToken();
-            typeName = typeToken.getValue();
-            startPosition = typeToken.getStartPosition();
+            typeToken = (IdentifierToken) reader.getToken();
             reader.next();
         } else {
             // type is already parsed
             if(!(modifierTokenTypes.contains(reader.getType()) || reader.getType() == TokenType.IDENTIFIER)) return null;
-            typeName = typeNameExpression.getName();
-            startPosition = typeNameExpression.getStartPosition();
+            typeToken = typeNameIdentifier;
         }
 
         boolean isMutable = false;
@@ -293,14 +302,14 @@ public class Parser {
         IdentifierToken nameToken = (IdentifierToken) reader.getToken();
         reader.next();
         if(reader.getType() != TokenType.ASSIGNMENT) {
-            return new VariableDefinition(startPosition, nameToken.getEndPosition(), nameToken.getValue(), typeName, isMutable, isReference, null);
+            return new VariableDefinition(typeToken.getStartPosition(), nameToken.getEndPosition(), nameToken.getValue(), typeToken.getValue(), isMutable, isReference, null);
         }
         reader.next();
         Expression defaultValue = parseExpression();
         if(defaultValue == null) {
             throw new SyntaxException("Expected variable default value", reader.getToken().getStartPosition());
         }
-        return new VariableDefinition(startPosition, defaultValue.getEndPosition(), nameToken.getValue(), typeName, isMutable, isReference, defaultValue);
+        return new VariableDefinition(typeToken.getStartPosition(), defaultValue.getEndPosition(), nameToken.getValue(), typeToken.getValue(), isMutable, isReference, defaultValue);
     }
 
     // return_statement = "return", [expression], ";";
@@ -425,12 +434,9 @@ public class Parser {
     }
 
     // function_call = identifier, "(", [expression, {",", expression}], ")";
-    private Expression parseFunctionCallOrVariableReference() throws LexicalException, IOException, SyntaxException, ParserInternalException {
-        if(reader.getType() != TokenType.IDENTIFIER) return null;
-        IdentifierToken identifierToken = (IdentifierToken) reader.getToken();
-        reader.next();
+    private FunctionCall parseFunctionCall(IdentifierToken identifierToken) throws LexicalException, IOException, SyntaxException, ParserInternalException {
         if(reader.getType() != TokenType.OPEN_PARENTHESIS) {
-            return new VariableReference(identifierToken.getStartPosition(), identifierToken.getEndPosition(), identifierToken.getValue());
+            return null;
         }
         List<Expression> arguments = new ArrayList<>();
         do {
@@ -448,6 +454,19 @@ public class Parser {
         TextPosition endPosition = reader.getToken().getEndPosition();
         reader.next();
         return new FunctionCall(identifierToken.getStartPosition(), endPosition, identifierToken.getValue(), arguments);
+    }
+
+    // function_call = identifier, "(", [expression, {",", expression}], ")";
+    // variable reference is just an identifier
+    private Expression parseFunctionCallOrVariableReference() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+        if(reader.getType() != TokenType.IDENTIFIER) return null;
+        IdentifierToken identifierToken = (IdentifierToken) reader.getToken();
+        reader.next();
+        FunctionCall functionCall = parseFunctionCall(identifierToken);
+        if(functionCall == null) {
+            return new VariableReference(identifierToken.getStartPosition(), identifierToken.getEndPosition(), identifierToken.getValue());
+        }
+        return functionCall;
     }
 
     // expression = and_term, {"or", and_term};

@@ -339,9 +339,9 @@ statement = assignment
           | function_call
           | block;
 
-assignment = dot_expression, "=", expression;
+assignment = identifier, {".", identifier}, "=", expression;
 
-variable_declaration = type, variable_modifier, identifier, "=", expression;
+variable_declaration = type, [variable_modifier], identifier, "=", expression;
 variable_modifier = "mut";
 type = builtin_type | identifier;
 
