@@ -41,6 +41,14 @@ public class Parser {
         }
     }
 
+    private StatementBlock MustBeBlock(String message) throws LexicalException, SyntaxException, ParserInternalException, IOException {
+        StatementBlock block = parseStatementBlock();
+        if(block == null) {
+            throw new SyntaxException(message, reader.getToken().getStartPosition());
+        }
+        return block;
+    }
+
     // program = {struct_definition | union_definition | function_definition };
     public Program parseProgram() throws LexicalException, SyntaxException, IOException, ParserInternalException {
         HashMap<String, TypeDefinition> types = new HashMap<>();
@@ -175,10 +183,7 @@ public class Parser {
             returnType = returnTypeToken.getValue();
             reader.next();
         }
-        StatementBlock body = parseStatementBlock();
-        if(body == null) {
-            throw new SyntaxException("Expected function body", reader.getToken().getStartPosition());
-        }
+        StatementBlock body = MustBeBlock("Expected function body");
         return new FunctionDefinition(identifierToken.getStartPosition(), identifierToken.getValue(), parameters, body, returnType);
     }
 
@@ -319,7 +324,7 @@ public class Parser {
         reader.next();
         Expression expression = parseExpression();
         if(expression != null) return new ReturnStatement(returnToken.getStartPosition(), expression);
-        else return new ReturnStatement(returnToken.getStartPosition(), returnToken.getEndPosition());
+        return new ReturnStatement(returnToken.getStartPosition(), returnToken.getEndPosition());
     }
 
     // loop = "while", "(", expression, ")", block;
@@ -335,10 +340,7 @@ public class Parser {
         }
         MustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
         reader.next();
-        StatementBlock body = parseStatementBlock();
-        if(body == null) {
-            throw new SyntaxException("Expected while body", reader.getToken().getStartPosition());
-        }
+        StatementBlock body = MustBeBlock("Expected while body");
         return new WhileStatement(startPosition, condition, body);
     }
 
@@ -360,10 +362,7 @@ public class Parser {
         }
         MustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
         reader.next();
-        StatementBlock body = parseStatementBlock();
-        if(body == null) {
-            throw new SyntaxException("Expected if body", reader.getToken().getStartPosition());
-        }
+        StatementBlock body = MustBeBlock("Expected if body");
         if(reader.getType() == TokenType.ELIF) {
             TextPosition nextStartPosition = reader.getToken().getStartPosition();
             reader.next();
@@ -371,10 +370,7 @@ public class Parser {
         }
         if(reader.getType() == TokenType.ELSE) {
             reader.next();
-            StatementBlock elseBlock = parseStatementBlock();
-            if(elseBlock == null) {
-                throw new SyntaxException("Expected else statement block", reader.getToken().getStartPosition());
-            }
+            StatementBlock elseBlock = MustBeBlock("Expected else body");
             return new IfStatement(startPosition, condition, body, elseBlock);
         }
         return new IfStatement(startPosition, condition, body, null);
@@ -426,10 +422,7 @@ public class Parser {
         reader.next();
         MustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
         reader.next();
-        StatementBlock body = parseStatementBlock();
-        if(body == null) {
-            throw new SyntaxException("Expected case body", reader.getToken().getStartPosition());
-        }
+        StatementBlock body = MustBeBlock("Expected case body");
         return new MatchCase(startPosition, pattern, variableName, body);
     }
 
