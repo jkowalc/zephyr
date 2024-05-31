@@ -5,6 +5,8 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.FileConverter;
 import me.jkowalc.zephyr.domain.node.program.Program;
+import me.jkowalc.zephyr.domain.token.Token;
+import me.jkowalc.zephyr.domain.token.TokenType;
 import me.jkowalc.zephyr.exception.ParserInternalException;
 import me.jkowalc.zephyr.exception.ZephyrException;
 import me.jkowalc.zephyr.lexer.Lexer;
@@ -44,6 +46,11 @@ public class Main {
         try {
             Parser parser = new Parser(new CommentFilter(lexer));
             Program program = parser.parseProgram();
+            if(parser.nextNotParsed().getType() != TokenType.EOF){
+                Token next = parser.nextNotParsed();
+                System.err.println("Unexpected " + next.getClass().getSimpleName() + " at " + next.getStartPosition());
+                System.exit(1);
+            }
             ASTPrinter printer = new ASTPrinter(System.out, 4);
             program.accept(printer);
         }

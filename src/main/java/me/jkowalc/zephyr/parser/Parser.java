@@ -84,8 +84,13 @@ public class Parser {
             }
             // EOF token is not required
             isEnd = true;
+            reader.next();
         }
         return new Program(functions, types);
+    }
+
+    public Token nextNotParsed() {
+        return reader.getToken();
     }
 
     // struct_definition = "struct", identifier, "{", struct_members, "}";
