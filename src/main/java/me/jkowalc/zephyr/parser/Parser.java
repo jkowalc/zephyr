@@ -192,6 +192,31 @@ public class Parser {
         return new FunctionDefinition(identifierToken.getStartPosition(), identifierToken.getValue(), parameters, body, returnType);
     }
 
+    // block = "{", {statement, [";"]}, "}";
+    public StatementBlock parseStatementBlock() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+        if(reader.getType() != TokenType.OPEN_BRACE) return null;
+        TextPosition startPosition = reader.getToken().getStartPosition();
+        List<Statement> statements = new ArrayList<>();
+        reader.next();
+        Statement statement;
+        do {
+            if((statement = parseStatement()) != null) {
+                statements.add(statement);
+            }
+            if(reader.getType() == TokenType.SEMICOLON) {
+                reader.next();
+                if(reader.getType() == TokenType.SEMICOLON) {
+                    throw new SyntaxException("Missing statement before ';'", reader.getToken().getStartPosition());
+                }
+            }
+
+        } while(statement != null);
+        MustBe(TokenType.CLOSE_BRACE, "Expected '}'");
+        TextPosition endPosition = reader.getToken().getEndPosition();
+        reader.next();
+        return new StatementBlock(startPosition, endPosition, statements);
+    }
+
     // statement = assignment
     //          | variable_declaration
     //          | return_statement
@@ -200,43 +225,15 @@ public class Parser {
     //          | match_statement
     //          | function_call_statement
     //          | block;
-    public StatementBlock parseStatementBlock() throws LexicalException, IOException, SyntaxException, ParserInternalException {
-        if(reader.getType() != TokenType.OPEN_BRACE) return null;
-        TextPosition startPosition = reader.getToken().getStartPosition();
-        reader.next();
-        List<Statement> statements = new ArrayList<>();
-        boolean firstStatement = true;
-        do {
-            Statement statement;
-            if ((statement = parseReturnStatement()) != null){
-                statements.add(statement);
-            }
-            if (statement == null && (statement = parseWhileStatement()) != null) {
-                statements.add(statement);
-            }
-            if (statement == null && (statement = parseIfStatement()) != null) {
-                statements.add(statement);
-            }
-            if (statement == null && (statement = parseMatchStatement()) != null) {
-                statements.add(statement);
-            }
-            if (statement == null && (statement = parseStatementBlock()) != null) {
-                statements.add(statement);
-            }
-            if (statement == null && (statement = parseIdentifierStatement()) != null) {
-                statements.add(statement);
-            }
-            if(!firstStatement && statement == null) {
-                throw new SyntaxException("Statement not recognized", reader.getToken().getStartPosition());
-            }
-            if(reader.getType() == TokenType.SEMICOLON) {
-                reader.next();
-            }
-            firstStatement = false;
-        } while(reader.getType() != TokenType.CLOSE_BRACE);
-        TextPosition endPosition = reader.getToken().getEndPosition();
-        reader.next();
-        return new StatementBlock(startPosition, endPosition, statements);
+    private Statement parseStatement() throws LexicalException, SyntaxException, ParserInternalException, IOException {
+        Statement statement;
+        if ((statement = parseReturnStatement()) != null) return statement;
+        if ((statement = parseWhileStatement()) != null) return statement;
+        if ((statement = parseIfStatement()) != null) return statement;
+        if ((statement = parseMatchStatement()) != null) return statement;
+        if ((statement = parseStatementBlock()) != null) return statement;
+        if ((statement = parseIdentifierStatement()) != null) return statement;
+        return null;
     }
 
     // assignment = identifier, {".", identifier}, "=", expression;

@@ -290,4 +290,28 @@ public class ParseStatementTest {
                 new AssignmentStatement(new VariableReference("a"), new IntegerLiteral(1))
         )));
     }
+    @Test
+    public void testDoubleSemicolon() throws LexicalException, IOException {
+        initParser(List.of(
+                new IdentifierToken("a"),
+                new Token(TokenType.ASSIGNMENT),
+                new IntegerLiteralToken(1),
+                new Token(TokenType.SEMICOLON),
+                new Token(TokenType.SEMICOLON)
+        ));
+        assertThrows(SyntaxException.class, () ->
+            parser.parseStatementBlock()
+        );
+        initParser(List.of(
+                new IdentifierToken("a"),
+                new Token(TokenType.ASSIGNMENT),
+                new IntegerLiteralToken(1),
+                new Token(TokenType.SEMICOLON),
+                new Token(TokenType.SEMICOLON),
+                new Token(TokenType.SEMICOLON)
+        ));
+        assertThrows(SyntaxException.class, () ->
+            parser.parseStatementBlock()
+        );
+    }
 }
