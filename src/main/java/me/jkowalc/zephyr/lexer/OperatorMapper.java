@@ -21,7 +21,9 @@ public class OperatorMapper {
             entry('(', TokenType.OPEN_PARENTHESIS),
             entry(')', TokenType.CLOSE_PARENTHESIS),
             entry('{', TokenType.OPEN_BRACE),
-            entry('}', TokenType.CLOSE_BRACE)
+            entry('}', TokenType.CLOSE_BRACE),
+            entry('>', TokenType.GREATER),
+            entry('<', TokenType.LESS)
     );
     private static final Map<String, TokenType> doubleCharOperators = Map.ofEntries(
             entry("==", TokenType.EQUALS),

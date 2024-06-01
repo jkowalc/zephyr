@@ -4,10 +4,15 @@ package me.jkowalc.zephyr;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.FileConverter;
+import me.jkowalc.zephyr.domain.node.program.Program;
 import me.jkowalc.zephyr.domain.token.Token;
 import me.jkowalc.zephyr.domain.token.TokenType;
-import me.jkowalc.zephyr.exception.lexical.LexicalException;
+import me.jkowalc.zephyr.exception.ParserInternalException;
+import me.jkowalc.zephyr.exception.ZephyrException;
 import me.jkowalc.zephyr.lexer.Lexer;
+import me.jkowalc.zephyr.parser.ASTPrinter;
+import me.jkowalc.zephyr.parser.CommentFilter;
+import me.jkowalc.zephyr.parser.Parser;
 
 import java.io.*;
 
@@ -38,16 +43,28 @@ public class Main {
             System.err.println("IO Error");
             System.exit(1);
         }
-        Token token;
         try {
-            do {
-                token = lexer.nextToken();
-                System.out.println(token);
-            } while (token.getType() != TokenType.EOF);
-        } catch (LexicalException e) {
-            System.out.println(e.toString());
-        } catch (IOException e) {
-            System.out.println("IO Error");
+            Parser parser = new Parser(new CommentFilter(lexer));
+            Program program = parser.parseProgram();
+            if(parser.nextNotParsed().getType() != TokenType.EOF){
+                Token next = parser.nextNotParsed();
+                System.err.println("Unexpected " + next.getClass().getSimpleName() + " at " + next.getStartPosition());
+                System.exit(1);
+            }
+            ASTPrinter printer = new ASTPrinter(System.out, 4);
+            program.accept(printer);
+        }
+        catch(IOException e){
+            System.err.println("IO Error");
+            System.exit(1);
+        }
+        catch(ZephyrException e){
+            System.err.println(e.toString());
+            System.exit(1);
+        }
+        catch(ParserInternalException e){
+            System.err.println("Internal parser error");
+            System.exit(1);
         }
     }
 }

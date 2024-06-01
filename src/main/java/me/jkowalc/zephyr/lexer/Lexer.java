@@ -16,7 +16,7 @@ import java.io.InputStreamReader;
 
 import static me.jkowalc.zephyr.util.CharacterUtil.getRepresentation;
 
-public class Lexer {
+public class Lexer implements LexerInterface {
     private final StringBuilder buffer = new StringBuilder();
     private final LineReader reader;
     public static final int MAX_IDENTIFIER_LENGTH = 100;

@@ -244,10 +244,10 @@ Do sprawdzenia typu służy dedykowane wyrażenie `match`.
 
 ```zephyr
 struct Result {
-    int result;
+    int result
 }
 struct Error {
-    int errno;
+    int errno
 }
 union Maybe { Result, Error }
 
@@ -317,35 +317,36 @@ fib(int n) -> int {
 ```ebnf
 program = {struct_definition | union_definition | function_definition };
 
-struct_definition = "struct", identifier, "{", struct_members, "}";
-struct_members = type, identifier, {",", type, identifier};
+struct_definition = "struct", identifier, struct_members;
+struct_members = "{", [struct_member, {",", struct_member}, [","]], "}";
+struct_member = type, identifier;
 
-union_definition = "union", identifier, "{", union_members, "}";
-union_members = type, {",", type};
+union_definition = "union", identifier, union_members;
+union_members = "{", [type, {",", type}, [","]], "}";
 
-function_definition = identifier, "(", parameters, ")", ["->", type], block;
+function_definition = identifier, parameters, ["->", type], block;
 
-parameters = [parameter_definition, {",", parameter_definition}];
+parameters = "(", [parameter_definition, {",", parameter_definition}], ")";
 parameter_definition = type, parameter_modifier, identifier, ["=", literal];
 parameter_modifier = "mut", "ref", "mref";
 
-block = "{", {statement}, "}";
+block = "{", {statement, [";"]}, "}";
 statement = assignment
           | variable_declaration
           | return_statement
           | loop
           | conditional_statement
           | match_statement
-          | function_call_statement
+          | function_call
           | block;
 
-assignment = identifier, "=", expression, ";";
+assignment = identifier, {".", identifier}, "=", expression;
 
-variable_declaration = type, variable_modifier, "=", expression, ";";
+variable_declaration = type, [variable_modifier], identifier, "=", expression;
 variable_modifier = "mut";
 type = builtin_type | identifier;
 
-return_statement = "return", [expression], ";";
+return_statement = "return", [expression];
 
 loop = "while", "(", expression, ")", block;
 
@@ -356,27 +357,26 @@ conditional_statement = "if", "(", expression, ")", block,
 match_statement = "match", "(", expression, ")", "{", {case_statement}, "}";
 case_statement = "case", "(", type, identifier, ")", block;
 
-(* TODO: possibly refactor statement in grammar *)
-function_call_statement = function_call, ";";
-function_call = identifier, "(", [expression, {",", expression}], ")";
+function_call = identifier, arguments;
+arguments = "(", [expression, {",", expression}], ")"
 
 expression = and_term, {"or", and_term};
 and_term = comparison_expression, {"and", comparison_expression};
 comparison_expression = additive_term, [(">" | "<" | ">=" | "<=" | "==" | "!="), additive_term];
 additive_term = term, {("+" | "-"), term};
 term = factor, {("*" | "/"), factor};
-factor = ["-" | "!"], (dot_expression | literal);
+factor = ["-" | "!"], (dot_expression | factor);
 dot_expression = elementary_expression, {".", elementary_expression};
 
 elementary_expresssion = identifier
                        | "(", expression, ")"
-                       | struct_expression
+                       | literal
                        | function_call;
 
-literal = int_literal | float_literal | string_literal | bool_literal;
+literal = int_literal | float_literal | string_literal | bool_literal | struct_literal;
 
-struct_expression = "{", {struct_member_expression}, "}";
-struct_member_expression = identifier, ":", literal;
+struct_literal = "{", {struct_literal_member}, "}";
+struct_literal_member = identifier, ":", literal;
 
 
 builtin_type = "int" | "bool" | "float" | "string";
@@ -461,9 +461,9 @@ Klasa Interpreter przyjmuje w konstruktorze obiekt Program i posiada funkcję ru
 
 ### Opis sposobu testowania
 
-Testowanie za pomocą biblioteki JUnit i wstrzykiwania zależności.
+Testowanie za pomocą biblioteki JUnit i wstrzykiwania zależności.
 
-Testy jednostkowe leksera będą tworzyć strumień z przygotowanego tekstu języka i sprawdzać poprawność zwracanych tokenów z leksera.
+Testy jednostkowe leksera będą tworzyć strumień z przygotowanego tekstu języka i sprawdzać poprawność zwracanych tokenów z leksera.
 
 Testy jednostkowe parsera tworzą mock obiektu leksera, który zwraca spreparowane tokeny. Sprawdzana jest poprawność generowania drzewa, jak i zgłaszanie odpowiednich wyjątków w sytuacjach wyjątkowych.
 
