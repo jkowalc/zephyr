@@ -110,7 +110,6 @@ public class ParseStatementTest {
                 new IntegerLiteral(1)
         )));
 
-        // Although not recommended, leaving a trailing comma is allowed
         initParser(List.of(
                 new IdentifierToken("foo"),
                 new Token(TokenType.OPEN_PARENTHESIS),
@@ -118,9 +117,9 @@ public class ParseStatementTest {
                 new Token(TokenType.COMMA),
                 new Token(TokenType.CLOSE_PARENTHESIS)
         ));
-        testStatement(new FunctionCall("foo", List.of(
-                new IntegerLiteral(1)
-        )));
+        assertThrows(SyntaxException.class, () ->
+            parser.parseStatementBlock()
+        );
     }
     @Test
     public void testReturnStatement() throws LexicalException, IOException, SyntaxException, ParserInternalException {

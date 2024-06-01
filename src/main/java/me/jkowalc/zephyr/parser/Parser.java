@@ -20,6 +20,7 @@ import me.jkowalc.zephyr.exception.ParserInternalException;
 import me.jkowalc.zephyr.exception.lexical.LexicalException;
 import me.jkowalc.zephyr.exception.syntax.*;
 import me.jkowalc.zephyr.lexer.LexerInterface;
+import me.jkowalc.zephyr.util.Pair;
 import me.jkowalc.zephyr.util.SimpleMap;
 import me.jkowalc.zephyr.util.TextPosition;
 
@@ -35,13 +36,13 @@ public class Parser {
         this.reader = new TokenReader(lexer);
     }
 
-    private void MustBe(TokenType type, String message) throws MissingTokenException {
+    private void mustBe(TokenType type, String message) throws MissingTokenException {
         if(reader.getType() != type) {
             throw new MissingTokenException(message, reader.getToken().getStartPosition());
         }
     }
 
-    private StatementBlock MustBeBlock(String message) throws LexicalException, SyntaxException, ParserInternalException, IOException {
+    private StatementBlock mustBeBlock(String message) throws LexicalException, SyntaxException, ParserInternalException, IOException {
         StatementBlock block = parseStatementBlock();
         if(block == null) {
             throw new SyntaxException(message, reader.getToken().getStartPosition());
@@ -98,10 +99,10 @@ public class Parser {
         if(reader.getType() != TokenType.STRUCT) return null;
         TextPosition startPosition = reader.getToken().getStartPosition();
         reader.next();
-        MustBe(TokenType.IDENTIFIER, "Expected identifier");
+        mustBe(TokenType.IDENTIFIER, "Expected identifier");
         IdentifierToken identifierToken = (IdentifierToken) reader.getToken();
         reader.next();
-        MustBe(TokenType.OPEN_BRACE, "Expected '{'");
+        mustBe(TokenType.OPEN_BRACE, "Expected '{'");
         List<StructDefinitionMember> members = new ArrayList<>();
         do {
             reader.next();
@@ -114,7 +115,7 @@ public class Parser {
             }
             members.add(member);
         } while(reader.getType() == TokenType.COMMA);
-        MustBe(TokenType.CLOSE_BRACE, "Expected '}'");
+        mustBe(TokenType.CLOSE_BRACE, "Expected '}'");
         TextPosition endPosition = reader.getToken().getEndPosition();
         reader.next();
         return new StructDefinition(startPosition, endPosition, identifierToken.getValue(), members);
@@ -127,7 +128,7 @@ public class Parser {
         }
         IdentifierToken typeToken = (IdentifierToken) reader.getToken();
         reader.next();
-        MustBe(TokenType.IDENTIFIER, "Expected identifier");
+        mustBe(TokenType.IDENTIFIER, "Expected identifier");
         IdentifierToken identifierToken = (IdentifierToken) reader.getToken();
         reader.next();
         return new StructDefinitionMember(typeToken.getStartPosition(), identifierToken.getEndPosition(), identifierToken.getValue(), typeToken.getValue());
@@ -139,57 +140,71 @@ public class Parser {
         List<String> typeNames = new ArrayList<>();
         TextPosition startPosition = reader.getToken().getStartPosition();
         reader.next();
-        MustBe(TokenType.IDENTIFIER, "Expected identifier");
+        mustBe(TokenType.IDENTIFIER, "Expected identifier");
         IdentifierToken identifierToken = (IdentifierToken) reader.getToken();
         reader.next();
-        MustBe(TokenType.OPEN_BRACE, "Expected '{'");
+        mustBe(TokenType.OPEN_BRACE, "Expected '{'");
         do {
             reader.next();
             if(reader.getType() == TokenType.CLOSE_BRACE) {
                 break;
             }
-            MustBe(TokenType.IDENTIFIER, "Expected type identifier");
+            mustBe(TokenType.IDENTIFIER, "Expected type identifier");
             typeNames.add(((IdentifierToken) reader.getToken()).getValue());
             reader.next();
         } while(reader.getType() == TokenType.COMMA);
-        MustBe(TokenType.CLOSE_BRACE, "Expected '}'");
+        mustBe(TokenType.CLOSE_BRACE, "Expected '}'");
         TextPosition endPosition = reader.getToken().getEndPosition();
         reader.next();
         return new UnionDefinition(startPosition, endPosition, identifierToken.getValue(), typeNames);
     }
 
+    private VariableDefinition mustBeParameter() throws LexicalException, SyntaxException, ParserInternalException, IOException {
+        VariableDefinition parameter = parseVariableDefinition(null);
+        if(parameter == null) {
+            throw new SyntaxException("Expected parameter", reader.getToken().getStartPosition());
+        }
+        return parameter;
+    }
+    // parameters = "(", [parameter_definition, {",", parameter_definition}], ")";
+    // parameter_definition = type, parameter_modifier, identifier, ["=", literal];
+    // parameter_modifier = "mut", "ref", "mref";
+    private List<VariableDefinition> parseParameters() throws LexicalException, SyntaxException, ParserInternalException, IOException {
+        mustBe(TokenType.OPEN_PARENTHESIS, "Expected '('");
+        reader.next();
+        if(reader.getType() == TokenType.CLOSE_PARENTHESIS) {
+            reader.next();
+            return new ArrayList<>();
+        }
+        List<VariableDefinition> parameters = new ArrayList<>();
+        parameters.add(mustBeParameter());
+        while(reader.getType() == TokenType.COMMA) {
+            reader.next();
+            parameters.add(mustBeParameter());
+        }
+        mustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
+        reader.next();
+        return parameters;
+    }
+
+    // function_definition = identifier, parameters, ["->", type], block;
     private FunctionDefinition parseFunctionDefinition() throws SyntaxException, LexicalException, IOException, ParserInternalException {
         if(reader.getType() != TokenType.IDENTIFIER) return null;
         IdentifierToken identifierToken = (IdentifierToken) reader.getToken();
         reader.next();
-        MustBe(TokenType.OPEN_PARENTHESIS, "Expected '('");
-        List<VariableDefinition> parameters = new ArrayList<>();
-        do {
-            reader.next();
-            if(reader.getType() == TokenType.CLOSE_PARENTHESIS) {
-                break;
-            }
-            VariableDefinition parameter = parseVariableDefinition(null);
-            if(parameter == null && !parameters.isEmpty()) {
-                throw new SyntaxException("Expected parameter", reader.getToken().getStartPosition());
-            }
-            if(parameter == null) {
-                break;
-            }
-            parameters.add(parameter);
-        } while(reader.getType() == TokenType.COMMA);
-        MustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
-        reader.next();
-        String returnType = null;
-        if(reader.getType() == TokenType.ARROW) {
-            reader.next();
-            MustBe(TokenType.IDENTIFIER, "Expected return type");
-            IdentifierToken returnTypeToken = (IdentifierToken) reader.getToken();
-            returnType = returnTypeToken.getValue();
-            reader.next();
-        }
-        StatementBlock body = MustBeBlock("Expected function body");
+        List<VariableDefinition> parameters = parseParameters();
+        String returnType = parseFunctionReturnType();
+        StatementBlock body = mustBeBlock("Expected function body");
         return new FunctionDefinition(identifierToken.getStartPosition(), identifierToken.getValue(), parameters, body, returnType);
+    }
+
+    private String parseFunctionReturnType() throws LexicalException, IOException, MissingTokenException {
+        if(reader.getType() != TokenType.ARROW) return null;
+        reader.next();
+        mustBe(TokenType.IDENTIFIER, "Expected return type");
+        IdentifierToken returnTypeToken = (IdentifierToken) reader.getToken();
+        reader.next();
+        return returnTypeToken.getValue();
     }
 
     // block = "{", {statement, [";"]}, "}";
@@ -211,7 +226,7 @@ public class Parser {
             }
 
         } while(statement != null);
-        MustBe(TokenType.CLOSE_BRACE, "Expected '}'");
+        mustBe(TokenType.CLOSE_BRACE, "Expected '}'");
         TextPosition endPosition = reader.getToken().getEndPosition();
         reader.next();
         return new StatementBlock(startPosition, endPosition, statements);
@@ -241,11 +256,11 @@ public class Parser {
         Assignable left = new VariableReference(identifierToken.getStartPosition(), identifierToken.getEndPosition(), identifierToken.getValue());
         while(reader.getType() == TokenType.DOT) {
             reader.next();
-            MustBe(TokenType.IDENTIFIER, "Expected identifier");
+            mustBe(TokenType.IDENTIFIER, "Expected identifier");
             left = new DotExpression(reader.getToken().getEndPosition(), (Expression) left, ((IdentifierToken) reader.getToken()).getValue());
             reader.next();
         }
-        MustBe(TokenType.ASSIGNMENT, "Expected '='");
+        mustBe(TokenType.ASSIGNMENT, "Expected '='");
         reader.next();
         Expression right = parseExpression();
         if(right == null) {
@@ -334,15 +349,15 @@ public class Parser {
         if(reader.getType() != TokenType.WHILE) return null;
         TextPosition startPosition = reader.getToken().getStartPosition();
         reader.next();
-        MustBe(TokenType.OPEN_PARENTHESIS, "Expected '('");
+        mustBe(TokenType.OPEN_PARENTHESIS, "Expected '('");
         reader.next();
         Expression condition = parseExpression();
         if(condition == null) {
             throw new SyntaxException("Expected while condition", reader.getToken().getStartPosition());
         }
-        MustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
+        mustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
         reader.next();
-        StatementBlock body = MustBeBlock("Expected while body");
+        StatementBlock body = mustBeBlock("Expected while body");
         return new WhileStatement(startPosition, condition, body);
     }
 
@@ -356,15 +371,15 @@ public class Parser {
         return parseIfPart(startPosition);
     }
     private IfStatement parseIfPart(TextPosition startPosition) throws SyntaxException, LexicalException, IOException, ParserInternalException {
-        MustBe(TokenType.OPEN_PARENTHESIS, "Expected '('");
+        mustBe(TokenType.OPEN_PARENTHESIS, "Expected '('");
         reader.next();
         Expression condition = parseExpression();
         if(condition == null) {
             throw new SyntaxException("Expected if condition", reader.getToken().getStartPosition());
         }
-        MustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
+        mustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
         reader.next();
-        StatementBlock body = MustBeBlock("Expected if body");
+        StatementBlock body = mustBeBlock("Expected if body");
         if(reader.getType() == TokenType.ELIF) {
             TextPosition nextStartPosition = reader.getToken().getStartPosition();
             reader.next();
@@ -372,7 +387,7 @@ public class Parser {
         }
         if(reader.getType() == TokenType.ELSE) {
             reader.next();
-            StatementBlock elseBlock = MustBeBlock("Expected else body");
+            StatementBlock elseBlock = mustBeBlock("Expected else body");
             return new IfStatement(startPosition, condition, body, elseBlock);
         }
         return new IfStatement(startPosition, condition, body, null);
@@ -382,15 +397,15 @@ public class Parser {
         if(reader.getType() != TokenType.MATCH) return null;
         TextPosition startPosition = reader.getToken().getStartPosition();
         reader.next();
-        MustBe(TokenType.OPEN_PARENTHESIS, "Expected '('");
+        mustBe(TokenType.OPEN_PARENTHESIS, "Expected '('");
         reader.next();
         Expression expression = parseExpression();
         if(expression == null) {
             throw new SyntaxException("Expected match expression", reader.getToken().getStartPosition());
         }
-        MustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
+        mustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
         reader.next();
-        MustBe(TokenType.OPEN_BRACE, "Expected '{'");
+        mustBe(TokenType.OPEN_BRACE, "Expected '{'");
         reader.next();
         List<MatchCase> cases = new ArrayList<>();
         MatchCase matchCase;
@@ -404,7 +419,7 @@ public class Parser {
             }
             cases.add(matchCase);
         } while(reader.getType() == TokenType.CASE);
-        MustBe(TokenType.CLOSE_BRACE, "Expected '}'");
+        mustBe(TokenType.CLOSE_BRACE, "Expected '}'");
         TextPosition endPosition = reader.getToken().getEndPosition();
         return new MatchStatement(startPosition, endPosition, expression, cases);
     }
@@ -414,41 +429,54 @@ public class Parser {
         if(reader.getType() != TokenType.CASE) return null;
         TextPosition startPosition = reader.getToken().getStartPosition();
         reader.next();
-        MustBe(TokenType.OPEN_PARENTHESIS, "Expected '('");
+        mustBe(TokenType.OPEN_PARENTHESIS, "Expected '('");
         reader.next();
-        MustBe(TokenType.IDENTIFIER, "Expected type identifier");
+        mustBe(TokenType.IDENTIFIER, "Expected type identifier");
         String pattern = ((IdentifierToken) reader.getToken()).getValue();
         reader.next();
-        MustBe(TokenType.IDENTIFIER, "Expected variable name");
+        mustBe(TokenType.IDENTIFIER, "Expected variable name");
         String variableName = ((IdentifierToken) reader.getToken()).getValue();
         reader.next();
-        MustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
+        mustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
         reader.next();
-        StatementBlock body = MustBeBlock("Expected case body");
+        StatementBlock body = mustBeBlock("Expected case body");
         return new MatchCase(startPosition, pattern, variableName, body);
     }
 
-    // function_call = identifier, "(", [expression, {",", expression}], ")";
-    private FunctionCall parseFunctionCall(IdentifierToken identifierToken) throws LexicalException, IOException, SyntaxException, ParserInternalException {
-        if(reader.getType() != TokenType.OPEN_PARENTHESIS) {
-            return null;
+    private Expression mustBeExpression(String message) throws LexicalException, SyntaxException, ParserInternalException, IOException {
+        Expression expression = parseExpression();
+        if(expression == null) {
+            throw new SyntaxException(message, reader.getToken().getStartPosition());
+        }
+        return expression;
+    }
+
+    // arguments = "(", [expression, {",", expression}], ")";
+    private Pair<List<Expression>,TextPosition> parseArguments() throws LexicalException, SyntaxException, ParserInternalException, IOException {
+        if(reader.getType() != TokenType.OPEN_PARENTHESIS) return null;
+        reader.next();
+        if(reader.getType() == TokenType.CLOSE_PARENTHESIS) {
+            TextPosition endPosition = reader.getToken().getEndPosition();
+            reader.next();
+            return new Pair<>(new ArrayList<>(), endPosition);
         }
         List<Expression> arguments = new ArrayList<>();
-        do {
+        arguments.add(mustBeExpression("Expected argument"));
+        while(reader.getType() == TokenType.COMMA) {
             reader.next();
-            if(reader.getType() == TokenType.CLOSE_PARENTHESIS) {
-                break;
-            }
-            Expression expression = parseExpression();
-            if(expression == null) {
-                throw new SyntaxException("Expected argument", reader.getToken().getStartPosition());
-            }
-            arguments.add(expression);
-        } while(reader.getType() == TokenType.COMMA);
-        MustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
+            arguments.add(mustBeExpression("Expected argument"));
+        }
+        mustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
         TextPosition endPosition = reader.getToken().getEndPosition();
         reader.next();
-        return new FunctionCall(identifierToken.getStartPosition(), endPosition, identifierToken.getValue(), arguments);
+        return new Pair<>(arguments, endPosition);
+    }
+
+    // function_call = identifier, arguments;
+    private FunctionCall parseFunctionCall(IdentifierToken identifierToken) throws LexicalException, IOException, SyntaxException, ParserInternalException {
+        Pair<List<Expression>, TextPosition> arguments = parseArguments();
+        if(arguments == null) return null;
+        return new FunctionCall(identifierToken.getStartPosition(), arguments.second(), identifierToken.getValue(), arguments.first());
     }
 
     // function_call = identifier, "(", [expression, {",", expression}], ")";
@@ -586,7 +614,7 @@ public class Parser {
         if(reader.getType() == TokenType.OPEN_PARENTHESIS) {
             reader.next();
             expression = parseExpression();
-            MustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
+            mustBe(TokenType.CLOSE_PARENTHESIS, "Expected ')'");
             reader.next();
             return expression;
         }
@@ -642,14 +670,14 @@ public class Parser {
         IdentifierToken identifierToken;
         do {
             reader.next();
-            MustBe(TokenType.IDENTIFIER, "Expected struct member name");
+            mustBe(TokenType.IDENTIFIER, "Expected struct member name");
             identifierToken = (IdentifierToken) reader.getToken();
             reader.next();
-            MustBe(TokenType.COLON, "Expected ':'");
+            mustBe(TokenType.COLON, "Expected ':'");
             reader.next();
             fields.put(identifierToken.getValue(), parseLiteral());
         } while (reader.getType() == TokenType.COMMA);
-        MustBe(TokenType.CLOSE_BRACE, "Expected '}'");
+        mustBe(TokenType.CLOSE_BRACE, "Expected '}'");
         TextPosition endPosition = reader.getToken().getEndPosition();
         reader.next();
         return new StructLiteral(startPosition, endPosition, fields);

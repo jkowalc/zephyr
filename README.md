@@ -323,9 +323,9 @@ struct_members = type, identifier, {",", type, identifier};
 union_definition = "union", identifier, "{", union_members, "}";
 union_members = type, {",", type};
 
-function_definition = identifier, "(", parameters, ")", ["->", type], block;
+function_definition = identifier, parameters, ["->", type], block;
 
-parameters = [parameter_definition, {",", parameter_definition}];
+parameters = "(", [parameter_definition, {",", parameter_definition}], ")";
 parameter_definition = type, parameter_modifier, identifier, ["=", literal];
 parameter_modifier = "mut", "ref", "mref";
 
@@ -356,7 +356,8 @@ conditional_statement = "if", "(", expression, ")", block,
 match_statement = "match", "(", expression, ")", "{", {case_statement}, "}";
 case_statement = "case", "(", type, identifier, ")", block;
 
-function_call = identifier, "(", [expression, {",", expression}], ")";
+function_call = identifier, arguments;
+arguments = "(", [expression, {",", expression}], ")"
 
 expression = and_term, {"or", and_term};
 and_term = comparison_expression, {"and", comparison_expression};
