@@ -100,6 +100,17 @@ public class ParseProgramTest {
                 new Token(TokenType.CLOSE_BRACE)
         ));
         testTypeDefinition(new UnionDefinition("A", List.of("int")));
+
+        initParser(List.of(
+                new Token(TokenType.UNION),
+                new IdentifierToken("A"),
+                new Token(TokenType.OPEN_BRACE),
+                new IdentifierToken("int"),
+                new Token(TokenType.COMMA),
+                new IdentifierToken("a"),
+                new Token(TokenType.CLOSE_BRACE)
+        ));
+        testTypeDefinition(new UnionDefinition("A", List.of("int", "a")));
     }
     @Test
     public void testStructDefinition() throws LexicalException, IOException, SyntaxException, ParserInternalException {
@@ -153,7 +164,7 @@ public class ParseProgramTest {
                 new IdentifierToken("A"),
                 new Token(TokenType.CLOSE_BRACE)
         ));
-        assertThrows(MissingTokenException.class, () -> parser.parseProgram());
+        assertThrows(SyntaxException.class, () -> parser.parseProgram());
     }
     @Test
     public void testIncorrectStructMember() throws LexicalException, IOException {

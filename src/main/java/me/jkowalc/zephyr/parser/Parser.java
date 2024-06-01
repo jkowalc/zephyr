@@ -94,7 +94,39 @@ public class Parser {
         return reader.getToken();
     }
 
-    // struct_definition = "struct", identifier, "{", struct_members, "}";
+    // struct_members = "{", [struct_member, {",", struct_member}, [","]], "}";
+    private Pair<List<StructDefinitionMember>, TextPosition> parseStructMembers() throws LexicalException, SyntaxException, IOException {
+        if(reader.getType() != TokenType.OPEN_BRACE) {
+            return null;
+        }
+        reader.next();
+        if(reader.getType() == TokenType.CLOSE_BRACE) {
+            TextPosition endPosition = reader.getToken().getEndPosition();
+            reader.next();
+            return new Pair<>(new ArrayList<>(), endPosition);
+        }
+        List<StructDefinitionMember> members = new ArrayList<>();
+        StructDefinitionMember member = parseStructDefinitionMember();
+        if(member == null) {
+            throw new SyntaxException("Expected struct member", reader.getToken().getStartPosition());
+        }
+        members.add(member);
+        while(member != null && reader.getType() == TokenType.COMMA) {
+            reader.next();
+            if((member = parseStructDefinitionMember()) != null) {
+                members.add(member);
+            }
+        }
+        if(reader.getType() == TokenType.COMMA) {
+            reader.next();
+        }
+        mustBe(TokenType.CLOSE_BRACE, "Expected '}'");
+        TextPosition endPosition = reader.getToken().getEndPosition();
+        reader.next();
+        return new Pair<>(members, endPosition);
+    }
+
+    // struct_definition = "struct", identifier, struct_members;
     private StructDefinition parseStructDefinition() throws LexicalException, IOException, SyntaxException {
         if(reader.getType() != TokenType.STRUCT) return null;
         TextPosition startPosition = reader.getToken().getStartPosition();
@@ -102,26 +134,14 @@ public class Parser {
         mustBe(TokenType.IDENTIFIER, "Expected identifier");
         IdentifierToken identifierToken = (IdentifierToken) reader.getToken();
         reader.next();
-        mustBe(TokenType.OPEN_BRACE, "Expected '{'");
-        List<StructDefinitionMember> members = new ArrayList<>();
-        do {
-            reader.next();
-            if(reader.getType() == TokenType.CLOSE_BRACE) {
-                break;
-            }
-            StructDefinitionMember member = parseStructDefinitionMember();
-            if(member == null) {
-                throw new SyntaxException("Expected struct member", reader.getToken().getStartPosition());
-            }
-            members.add(member);
-        } while(reader.getType() == TokenType.COMMA);
-        mustBe(TokenType.CLOSE_BRACE, "Expected '}'");
-        TextPosition endPosition = reader.getToken().getEndPosition();
-        reader.next();
-        return new StructDefinition(startPosition, endPosition, identifierToken.getValue(), members);
+        Pair<List<StructDefinitionMember>, TextPosition> members = parseStructMembers();
+        if(members == null) {
+            throw new SyntaxException("Expected struct members", reader.getToken().getStartPosition());
+        }
+        return new StructDefinition(startPosition, members.second(), identifierToken.getValue(), members.first());
     }
 
-    // struct_members = type, identifier, {",", type, identifier};
+    // struct_member = type, identifier;
     private StructDefinitionMember parseStructDefinitionMember() throws LexicalException, IOException, SyntaxException {
         if(reader.getType() != TokenType.IDENTIFIER) {
             return null;
@@ -134,29 +154,51 @@ public class Parser {
         return new StructDefinitionMember(typeToken.getStartPosition(), identifierToken.getEndPosition(), identifierToken.getValue(), typeToken.getValue());
     }
 
-    // union_definition = "union", identifier, "{", union_members, "}";
-    private UnionDefinition parseUnionDefinition() throws LexicalException, IOException, SyntaxException {
-        if(reader.getType() != TokenType.UNION) return null;
+    // union_members = "{", type, {",", type}, [","], "}";
+    private Pair<List<String>,TextPosition> parseUnionMembers() throws SyntaxException, LexicalException, IOException {
+        if(reader.getType() != TokenType.OPEN_BRACE) {
+            return null;
+        }
+        reader.next();
+        if(reader.getType() == TokenType.CLOSE_BRACE) {
+            TextPosition endPosition = reader.getToken().getEndPosition();
+            reader.next();
+            return new Pair<>(new ArrayList<>(), endPosition);
+        }
         List<String> typeNames = new ArrayList<>();
-        TextPosition startPosition = reader.getToken().getStartPosition();
+        mustBe(TokenType.IDENTIFIER, "Expected type identifier");
+        Token shouldBeIdentifier = reader.getToken();
         reader.next();
-        mustBe(TokenType.IDENTIFIER, "Expected identifier");
-        IdentifierToken identifierToken = (IdentifierToken) reader.getToken();
-        reader.next();
-        mustBe(TokenType.OPEN_BRACE, "Expected '{'");
-        do {
+        typeNames.add(((IdentifierToken) shouldBeIdentifier).getValue());
+        while(shouldBeIdentifier.getType() == TokenType.IDENTIFIER && reader.getType() == TokenType.COMMA) {
             reader.next();
-            if(reader.getType() == TokenType.CLOSE_BRACE) {
-                break;
+            shouldBeIdentifier = reader.getToken();
+            if(shouldBeIdentifier.getType() == TokenType.IDENTIFIER) {
+                typeNames.add(((IdentifierToken) shouldBeIdentifier).getValue());
+                reader.next();
             }
-            mustBe(TokenType.IDENTIFIER, "Expected type identifier");
-            typeNames.add(((IdentifierToken) reader.getToken()).getValue());
+        }
+        if(reader.getType() == TokenType.COMMA) {
             reader.next();
-        } while(reader.getType() == TokenType.COMMA);
+        }
         mustBe(TokenType.CLOSE_BRACE, "Expected '}'");
         TextPosition endPosition = reader.getToken().getEndPosition();
         reader.next();
-        return new UnionDefinition(startPosition, endPosition, identifierToken.getValue(), typeNames);
+        return new Pair<>(typeNames, endPosition);
+    }
+    // union_definition = "union", identifier, union_members;
+    private UnionDefinition parseUnionDefinition() throws LexicalException, IOException, SyntaxException {
+        if(reader.getType() != TokenType.UNION) return null;
+        TextPosition startPosition = reader.getToken().getStartPosition();
+        reader.next();
+        mustBe(TokenType.IDENTIFIER, "Expected identifier");
+        IdentifierToken identifier = (IdentifierToken) reader.getToken();
+        reader.next();
+        Pair<List<String>, TextPosition> members = parseUnionMembers();
+        if(members == null) {
+            throw new SyntaxException("Expected union members", reader.getToken().getStartPosition());
+        }
+        return new UnionDefinition(startPosition, members.second(), identifier.getValue(), members.first());
     }
 
     private VariableDefinition mustBeParameter() throws LexicalException, SyntaxException, ParserInternalException, IOException {

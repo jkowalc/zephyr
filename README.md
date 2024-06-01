@@ -317,11 +317,12 @@ fib(int n) -> int {
 ```ebnf
 program = {struct_definition | union_definition | function_definition };
 
-struct_definition = "struct", identifier, "{", struct_members, "}";
-struct_members = type, identifier, {",", type, identifier};
+struct_definition = "struct", identifier, struct_members;
+struct_members = "{", [struct_member, {",", struct_member}, [","]], "}";
+struct_member = type, identifier;
 
-union_definition = "union", identifier, "{", union_members, "}";
-union_members = type, {",", type};
+union_definition = "union", identifier, union_members;
+union_members = "{", [type, {",", type}, [","]], "}";
 
 function_definition = identifier, parameters, ["->", type], block;
 
