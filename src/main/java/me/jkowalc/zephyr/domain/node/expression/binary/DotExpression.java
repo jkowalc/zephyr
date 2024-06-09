@@ -32,4 +32,7 @@ public final class DotExpression extends Node implements Assignable, Expression 
     public void accept(ASTVisitor visitor) throws ZephyrException {
         visitor.visit(this);
     }
+    public String toString() {
+        return value.toString() + "." + field;
+    }
 }

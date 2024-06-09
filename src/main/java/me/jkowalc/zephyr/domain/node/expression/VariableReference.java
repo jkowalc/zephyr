@@ -26,4 +26,7 @@ public final class VariableReference extends Node implements Expression, Assigna
     public void accept(ASTVisitor visitor) throws ZephyrException {
         visitor.visit(this);
     }
+    public String toString() {
+        return name;
+    }
 }
