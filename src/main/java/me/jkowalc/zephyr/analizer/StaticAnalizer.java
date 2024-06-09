@@ -1,7 +1,9 @@
 package me.jkowalc.zephyr.analizer;
 
+import me.jkowalc.zephyr.BuiltinFunctionManager;
+import me.jkowalc.zephyr.domain.CustomFunctionRepresentation;
+import me.jkowalc.zephyr.domain.FunctionRepresentation;
 import me.jkowalc.zephyr.domain.node.expression.Assignable;
-import me.jkowalc.zephyr.domain.node.expression.Expression;
 import me.jkowalc.zephyr.domain.node.expression.FunctionCall;
 import me.jkowalc.zephyr.domain.node.expression.VariableReference;
 import me.jkowalc.zephyr.domain.node.expression.binary.*;
@@ -20,12 +22,12 @@ import me.jkowalc.zephyr.util.ASTVisitor;
 import me.jkowalc.zephyr.util.EphemeralValue;
 import me.jkowalc.zephyr.util.SimpleMap;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class StaticAnalizer implements ASTVisitor {
-    private Program program;
+    private Map<String, FunctionRepresentation> functions;
 
     private ScopedContext<Type> context;
 
@@ -33,15 +35,22 @@ public class StaticAnalizer implements ASTVisitor {
 
     EphemeralValue<Type> returnType;
 
-    EphemeralValue<List<Type>> argumentTypes;
-
     @Override
     public void visit(Program program) throws ZephyrException {
-        this.program = program;
+        this.functions = new HashMap<>();
+        functions.putAll(BuiltinFunctionManager.BUILTIN_FUNCTIONS);
+        for(Map.Entry<String, FunctionDefinition> function : program.getFunctions().entrySet()) {
+            if(BuiltinFunctionManager.BUILTIN_FUNCTIONS.containsKey(function.getKey())) {
+                throw new FunctionAlreadyDefinedException(function.getKey(), true, function.getValue().getStartPosition());
+            }
+            if(functions.containsKey(function.getKey())) {
+                throw new FunctionAlreadyDefinedException(function.getKey(), false, function.getValue().getStartPosition());
+            }
+            functions.put(function.getKey(), new CustomFunctionRepresentation(function.getValue()));
+        }
         this.typeChecker = new TypeChecker(program.getTypes());
         this.context = new ScopedContext<>();
         this.returnType = new EphemeralValue<>(null);
-        this.argumentTypes = new EphemeralValue<>(null);
         for(FunctionDefinition functionDefinition : program.getFunctions().values()) {
             functionDefinition.accept(this);
             this.returnType.get();
@@ -53,20 +62,12 @@ public class StaticAnalizer implements ASTVisitor {
         context.createScope();
         if(functionDefinition.getName().equals("main")) {
             String mainReturnType = functionDefinition.getReturnType();
-            if(mainReturnType != null && !mainReturnType.equals("int")) {
+            if(!(mainReturnType == null || mainReturnType.equals("int"))) {
                 throw new AnalizerException("Main function must return int or void", functionDefinition.getStartPosition());
             }
         }
-        List<Type> argumentTypes = this.argumentTypes.get();
-        assert functionDefinition.getParameters().size() == argumentTypes.size();
-        for (int i = 0; i < functionDefinition.getParameters().size(); i++) {
-            VariableDefinition parameter = functionDefinition.getParameters().get(i);
-            Type argumentType = argumentTypes.get(i);
+        for(VariableDefinition parameter : functionDefinition.getParameters()) {
             parameter.accept(this);
-            // TODO: Change into full parameter type checking
-            if(!argumentType.getCategory().equals(returnType.get().getCategory())) {
-                throw new AnalizerException("Argument type mismatch", parameter.getStartPosition());
-            }
         }
         Type returnType = null;
         try {
@@ -88,6 +89,9 @@ public class StaticAnalizer implements ASTVisitor {
         context.createLocalScope();
         try {
             for(Statement statement : statementBlock.getStatements()) {
+                if(statement instanceof VariableDefinition variableDefinition && variableDefinition.getDefaultValue() == null) {
+                    throw new VariableNotInitializedException(variableDefinition.getName(), variableDefinition.getStartPosition());
+                }
                 statement.accept(this);
             }
         } finally {
@@ -97,17 +101,24 @@ public class StaticAnalizer implements ASTVisitor {
 
     @Override
     public void visit(FunctionCall functionCall) throws ZephyrException {
-        List<Type> parameterTypes = new ArrayList<>();
-        for(Expression argument : functionCall.getArguments()) {
-            argument.accept(this);
-            parameterTypes.add(returnType.get());
-        }
-        argumentTypes.set(parameterTypes);
-        FunctionDefinition functionDefinition = this.program.getFunctions().get(functionCall.getName());
-        if(functionDefinition == null) {
+        FunctionRepresentation representation = functions.get(functionCall.getName());
+        if(representation == null){
             throw new FunctionNotDefinedException(functionCall.getName(), functionCall.getStartPosition());
         }
-        functionDefinition.accept(this);
+        List<Type> parameterTypes = representation.getParameterTypes();
+        int argumentCount = functionCall.getArguments().size();
+        if(argumentCount != parameterTypes.size()) {
+            throw new InvalidArgumentCountException(functionCall.getName(), parameterTypes.size(), argumentCount, functionCall.getStartPosition());
+        }
+        for(int i = 0; i < argumentCount; i++) {
+            functionCall.getArguments().get(i).accept(this);
+            Type argumentType = returnType.get();
+            Type parameterType = parameterTypes.get(i);
+            if(!argumentType.getCategory().equals(parameterType.getCategory())) {
+                throw new AnalizerException("Argument type mismatch", functionCall.getStartPosition());
+            }
+        }
+        returnType.set(representation.getReturnType());
     }
 
     @Override
@@ -308,11 +319,13 @@ public class StaticAnalizer implements ASTVisitor {
     public void visit(VariableDefinition variableDefinition) throws ZephyrException {
         TypeCategory variableCategory = TypeCategory.fromString(variableDefinition.getTypeName());
         Type variableType = new Type(variableCategory, variableDefinition.isMutable(), variableDefinition.isReference());
-        variableDefinition.getDefaultValue().accept(this);
-        Type defaultValueType = returnType.get();
-        // TODO: Change into full variable type checking
-        if(!variableType.getCategory().equals(defaultValueType.getCategory())) {
-            throw new AnalizerException("Variable type mismatch", variableDefinition.getStartPosition());
+        if(variableDefinition.getDefaultValue() != null) {
+            variableDefinition.getDefaultValue().accept(this);
+            Type defaultValueType = returnType.get();
+            // TODO: Change into full variable type checking
+            if(!variableType.getCategory().equals(defaultValueType.getCategory())) {
+                throw new AnalizerException("Variable type mismatch", variableDefinition.getStartPosition());
+            }
         }
         try {
             context.add(variableDefinition.getName(), variableType);

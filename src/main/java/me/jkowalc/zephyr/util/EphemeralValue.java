@@ -13,4 +13,7 @@ public class EphemeralValue<T> {
     public T get() {
         return set(null);
     }
+    public void ignore() {
+        set(null);
+    }
 }

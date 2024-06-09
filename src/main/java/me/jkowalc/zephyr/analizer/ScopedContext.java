@@ -30,9 +30,9 @@ public class ScopedContext<T> {
         scopes.add(new Scope<>(null, values));
     }
     public void createLocalScope() {
-        scopes.add(new Scope<>(scopes.getFirst(), null));
+        scopes.add(new Scope<>(scopes.getLast(), null));
     }
     public void createLocalScope(Map<String, T> values) {
-        scopes.add(new Scope<>(scopes.getFirst(), values));
+        scopes.add(new Scope<>(scopes.getLast(), values));
     }
 }
