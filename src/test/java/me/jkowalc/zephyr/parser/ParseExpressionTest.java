@@ -13,7 +13,6 @@ import me.jkowalc.zephyr.domain.token.TokenType;
 import me.jkowalc.zephyr.domain.token.literal.FloatLiteralToken;
 import me.jkowalc.zephyr.domain.token.literal.IntegerLiteralToken;
 import me.jkowalc.zephyr.domain.token.literal.StringLiteralToken;
-import me.jkowalc.zephyr.exception.ParserInternalException;
 import me.jkowalc.zephyr.exception.lexical.LexicalException;
 import me.jkowalc.zephyr.exception.syntax.MultipleComparisonException;
 import me.jkowalc.zephyr.exception.syntax.SyntaxException;
@@ -34,7 +33,7 @@ public class ParseExpressionTest {
     }
 
     @Test
-    public void testLiteral() throws IOException, LexicalException, SyntaxException, ParserInternalException {
+    public void testLiteral() throws IOException, LexicalException, SyntaxException {
         initParser(List.of(
                 new IntegerLiteralToken(123)
         ));
@@ -54,7 +53,7 @@ public class ParseExpressionTest {
     }
 
     @Test
-    public void testStandardOperators() throws IOException, LexicalException, SyntaxException, ParserInternalException {
+    public void testStandardOperators() throws IOException, LexicalException, SyntaxException {
         initParser(List.of(
                 new IntegerLiteralToken(1),
                 new Token(TokenType.OR),
@@ -149,7 +148,7 @@ public class ParseExpressionTest {
     }
 
     @Test
-    public void testPrecedence() throws IOException, LexicalException, SyntaxException, ParserInternalException {
+    public void testPrecedence() throws IOException, LexicalException, SyntaxException {
         initParser(List.of(
                 new IntegerLiteralToken(1),
                 new Token(TokenType.PLUS),
@@ -191,7 +190,7 @@ public class ParseExpressionTest {
     }
 
     @Test
-    public void testLinking() throws IOException, LexicalException, SyntaxException, ParserInternalException {
+    public void testLinking() throws IOException, LexicalException, SyntaxException {
         initParser(List.of(
                 new IntegerLiteralToken(1),
                 new Token(TokenType.PLUS),
@@ -220,7 +219,7 @@ public class ParseExpressionTest {
     }
 
     @Test
-    public void testParentheses() throws IOException, LexicalException, SyntaxException, ParserInternalException {
+    public void testParentheses() throws IOException, LexicalException, SyntaxException {
         initParser(List.of(
                 new IntegerLiteralToken(2),
                 new Token(TokenType.MULTIPLY),
@@ -237,7 +236,7 @@ public class ParseExpressionTest {
         assertEquals(expected, parser.parseExpression());
     }
     @Test
-    public void testFunctionCall() throws IOException, LexicalException, SyntaxException, ParserInternalException {
+    public void testFunctionCall() throws IOException, LexicalException, SyntaxException {
         initParser(List.of(
                 new IdentifierToken("hello"),
                 new Token(TokenType.OPEN_PARENTHESIS),
@@ -254,7 +253,7 @@ public class ParseExpressionTest {
         assertEquals(expected, actual);
     }
     @Test
-    public void testVariableReference() throws IOException, LexicalException, SyntaxException, ParserInternalException {
+    public void testVariableReference() throws IOException, LexicalException, SyntaxException {
         initParser(List.of(
                 new IdentifierToken("hello")
         ));
@@ -263,7 +262,7 @@ public class ParseExpressionTest {
         assertEquals(expected, actual);
     }
     @Test
-    public void testDotExpression() throws IOException, LexicalException, SyntaxException, ParserInternalException {
+    public void testDotExpression() throws IOException, LexicalException, SyntaxException {
         initParser(List.of(
                 new IdentifierToken("hello"),
                 new Token(TokenType.DOT),
@@ -302,7 +301,7 @@ public class ParseExpressionTest {
         assertThrows(SyntaxException.class, () -> parser.parseExpression());
     }
     @Test
-    public void testStructLiteral() throws IOException, LexicalException, SyntaxException, ParserInternalException {
+    public void testStructLiteral() throws IOException, LexicalException, SyntaxException {
         initParser(List.of(
                 new Token(TokenType.OPEN_BRACE),
                 new IdentifierToken("hello"),
@@ -324,7 +323,7 @@ public class ParseExpressionTest {
         assertEquals(expected, actual);
     }
     @Test
-    public void testEmbeddedStruct() throws IOException, LexicalException, SyntaxException, ParserInternalException {
+    public void testEmbeddedStruct() throws IOException, LexicalException, SyntaxException {
         initParser(List.of(
                 new Token(TokenType.OPEN_BRACE),
                 new IdentifierToken("hello"),
@@ -362,7 +361,7 @@ public class ParseExpressionTest {
         assertThrows(SyntaxException.class, () -> parser.parseExpression());
     }
     @Test
-    public void testUnary() throws IOException, LexicalException, SyntaxException, ParserInternalException {
+    public void testUnary() throws IOException, LexicalException, SyntaxException {
         initParser(List.of(
                 new Token(TokenType.MINUS),
                 new IntegerLiteralToken(1)

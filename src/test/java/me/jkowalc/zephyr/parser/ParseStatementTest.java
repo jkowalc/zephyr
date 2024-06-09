@@ -11,7 +11,6 @@ import me.jkowalc.zephyr.domain.token.Token;
 import me.jkowalc.zephyr.domain.token.TokenType;
 import me.jkowalc.zephyr.domain.token.literal.IntegerLiteralToken;
 import me.jkowalc.zephyr.domain.token.literal.StringLiteralToken;
-import me.jkowalc.zephyr.exception.ParserInternalException;
 import me.jkowalc.zephyr.exception.lexical.LexicalException;
 import me.jkowalc.zephyr.exception.syntax.InvalidModifierException;
 import me.jkowalc.zephyr.exception.syntax.SyntaxException;
@@ -33,13 +32,13 @@ public class ParseStatementTest {
         tokensCopy.addLast(new Token(TokenType.CLOSE_BRACE));
         this.parser = new Parser(new MockLexer(tokensCopy));
     }
-    private void testStatement(Statement expected) throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    private void testStatement(Statement expected) throws LexicalException, IOException, SyntaxException{
         StatementBlock block = parser.parseStatementBlock();
         assertEquals(1, block.getStatements().size());
         assertEquals(expected, block.getStatements().getFirst());
     }
     @Test
-    public void testVariableDefinition() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    public void testVariableDefinition() throws LexicalException, IOException, SyntaxException {
         initParser(List.of(
                 new IdentifierToken("int"),
                 new IdentifierToken("a"),
@@ -92,7 +91,7 @@ public class ParseStatementTest {
         );
     }
     @Test
-    public void testFunctionCallStatement() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    public void testFunctionCallStatement() throws LexicalException, IOException, SyntaxException {
         initParser(List.of(
                 new IdentifierToken("foo"),
                 new Token(TokenType.OPEN_PARENTHESIS),
@@ -122,7 +121,7 @@ public class ParseStatementTest {
         );
     }
     @Test
-    public void testReturnStatement() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    public void testReturnStatement() throws LexicalException, IOException, SyntaxException {
         initParser(List.of(
                 new Token(TokenType.RETURN)
         ));
@@ -142,7 +141,7 @@ public class ParseStatementTest {
         testStatement(new ReturnStatement(new IntegerLiteral(1)));
     }
     @Test
-    public void testAssignmentStatement() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    public void testAssignmentStatement() throws LexicalException, IOException, SyntaxException {
         initParser(List.of(
                 new IdentifierToken("a"),
                 new Token(TokenType.ASSIGNMENT),
@@ -180,7 +179,7 @@ public class ParseStatementTest {
         );
     }
     @Test
-    public void testIfStatement() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    public void testIfStatement() throws LexicalException, IOException, SyntaxException {
         initParser(List.of(
                 new Token(TokenType.IF),
                 new Token(TokenType.OPEN_PARENTHESIS),
@@ -229,7 +228,7 @@ public class ParseStatementTest {
         testStatement(ifStatement);
     }
     @Test
-    public void testWhileStatement() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    public void testWhileStatement() throws LexicalException, IOException, SyntaxException {
         initParser(List.of(
                 new Token(TokenType.WHILE),
                 new Token(TokenType.OPEN_PARENTHESIS),
@@ -246,7 +245,7 @@ public class ParseStatementTest {
         ))));
     }
     @Test
-    public void testMatchStatement() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    public void testMatchStatement() throws LexicalException, IOException, SyntaxException {
         initParser(List.of(
                 new Token(TokenType.MATCH),
                 new Token(TokenType.OPEN_PARENTHESIS),
@@ -271,7 +270,7 @@ public class ParseStatementTest {
         )))));
     }
     @Test
-    public void testEmbeddedStatementBlock() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    public void testEmbeddedStatementBlock() throws LexicalException, IOException, SyntaxException {
         initParser(List.of(
                 new Token(TokenType.OPEN_BRACE),
                 new Token(TokenType.CLOSE_BRACE)

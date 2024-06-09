@@ -12,7 +12,6 @@ import me.jkowalc.zephyr.domain.node.expression.literal.StringLiteral;
 import me.jkowalc.zephyr.domain.node.expression.literal.StructLiteral;
 import me.jkowalc.zephyr.domain.node.program.*;
 import me.jkowalc.zephyr.domain.node.statement.*;
-import me.jkowalc.zephyr.exception.ParserInternalException;
 import me.jkowalc.zephyr.exception.lexical.LexicalException;
 import me.jkowalc.zephyr.exception.syntax.SyntaxException;
 import me.jkowalc.zephyr.lexer.Lexer;
@@ -34,7 +33,7 @@ public class ParserLexerTest {
         this.parser = new Parser(new CommentFilter(lexer));
     }
     @Test
-    public void testComment() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    public void testComment() throws LexicalException, IOException, SyntaxException {
         initTest("main() {\n// comment\n print(\"hello print\") // comment 2 \n}");
         Program program = parser.parseProgram();
         Program expected = new Program(Map.of(
@@ -48,7 +47,7 @@ public class ParserLexerTest {
         assertEquals(expected, program);
     }
     @Test
-    public void testFibonacci() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    public void testFibonacci() throws LexicalException, IOException, SyntaxException {
         String input = """
                 fib(int n) -> int {
                     if(n <= 1) {
@@ -105,7 +104,7 @@ public class ParserLexerTest {
         assertEquals(expected, program);
     }
     @Test
-    public void testStructsUnions() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    public void testStructsUnions() throws LexicalException, IOException, SyntaxException {
         String input = """
                 struct SomeStruct {
                     int a,

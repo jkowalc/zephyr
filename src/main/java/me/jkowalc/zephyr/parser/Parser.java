@@ -16,7 +16,7 @@ import me.jkowalc.zephyr.domain.token.TokenType;
 import me.jkowalc.zephyr.domain.token.literal.FloatLiteralToken;
 import me.jkowalc.zephyr.domain.token.literal.IntegerLiteralToken;
 import me.jkowalc.zephyr.domain.token.literal.StringLiteralToken;
-import me.jkowalc.zephyr.exception.ParserInternalException;
+import me.jkowalc.zephyr.exception.ZephyrInternalException;
 import me.jkowalc.zephyr.exception.lexical.LexicalException;
 import me.jkowalc.zephyr.exception.syntax.*;
 import me.jkowalc.zephyr.lexer.LexerInterface;
@@ -42,7 +42,7 @@ public class Parser {
         }
     }
 
-    private StatementBlock mustBeBlock(String message) throws LexicalException, SyntaxException, ParserInternalException, IOException {
+    private StatementBlock mustBeBlock(String message) throws LexicalException, SyntaxException, IOException {
         StatementBlock block = parseStatementBlock();
         if(block == null) {
             throw new SyntaxException(message, reader.getToken().getStartPosition());
@@ -51,7 +51,7 @@ public class Parser {
     }
 
     // program = {struct_definition | union_definition | function_definition };
-    public Program parseProgram() throws LexicalException, SyntaxException, IOException, ParserInternalException {
+    public Program parseProgram() throws LexicalException, SyntaxException, IOException {
         HashMap<String, TypeDefinition> types = new HashMap<>();
         HashMap<String, FunctionDefinition> functions = new HashMap<>();
         boolean isEnd = false;
@@ -201,7 +201,7 @@ public class Parser {
         return new UnionDefinition(startPosition, members.second(), identifier.getValue(), members.first());
     }
 
-    private VariableDefinition mustBeParameter() throws LexicalException, SyntaxException, ParserInternalException, IOException {
+    private VariableDefinition mustBeParameter() throws LexicalException, SyntaxException, IOException {
         VariableDefinition parameter = parseVariableDefinition(null);
         if(parameter == null) {
             throw new SyntaxException("Expected parameter", reader.getToken().getStartPosition());
@@ -211,7 +211,7 @@ public class Parser {
     // parameters = "(", [parameter_definition, {",", parameter_definition}], ")";
     // parameter_definition = type, parameter_modifier, identifier, ["=", literal];
     // parameter_modifier = "mut", "ref", "mref";
-    private List<VariableDefinition> parseParameters() throws LexicalException, SyntaxException, ParserInternalException, IOException {
+    private List<VariableDefinition> parseParameters() throws LexicalException, SyntaxException, IOException {
         mustBe(TokenType.OPEN_PARENTHESIS, "Expected '('");
         reader.next();
         if(reader.getType() == TokenType.CLOSE_PARENTHESIS) {
@@ -230,7 +230,7 @@ public class Parser {
     }
 
     // function_definition = identifier, parameters, ["->", type], block;
-    private FunctionDefinition parseFunctionDefinition() throws SyntaxException, LexicalException, IOException, ParserInternalException {
+    private FunctionDefinition parseFunctionDefinition() throws SyntaxException, LexicalException, IOException {
         if(reader.getType() != TokenType.IDENTIFIER) return null;
         IdentifierToken identifierToken = (IdentifierToken) reader.getToken();
         reader.next();
@@ -250,7 +250,7 @@ public class Parser {
     }
 
     // block = "{", {statement, [";"]}, "}";
-    public StatementBlock parseStatementBlock() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    public StatementBlock parseStatementBlock() throws LexicalException, IOException, SyntaxException {
         if(reader.getType() != TokenType.OPEN_BRACE) return null;
         TextPosition startPosition = reader.getToken().getStartPosition();
         List<Statement> statements = new ArrayList<>();
@@ -282,7 +282,7 @@ public class Parser {
     //          | match_statement
     //          | function_call_statement
     //          | block;
-    private Statement parseStatement() throws LexicalException, SyntaxException, ParserInternalException, IOException {
+    private Statement parseStatement() throws LexicalException, SyntaxException, IOException {
         Statement statement;
         if ((statement = parseReturnStatement()) != null) return statement;
         if ((statement = parseWhileStatement()) != null) return statement;
@@ -294,7 +294,7 @@ public class Parser {
     }
 
     // assignment = identifier, {".", identifier}, "=", expression;
-    private AssignmentStatement parseAssignment(IdentifierToken identifierToken) throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    private AssignmentStatement parseAssignment(IdentifierToken identifierToken) throws LexicalException, IOException, SyntaxException {
         Assignable left = new VariableReference(identifierToken.getStartPosition(), identifierToken.getEndPosition(), identifierToken.getValue());
         while(reader.getType() == TokenType.DOT) {
             reader.next();
@@ -312,7 +312,7 @@ public class Parser {
     }
 
     // Parse any statement that starts with an identifier. This can be an assignment, variable declaration or function call.
-    private Statement parseIdentifierStatement() throws LexicalException, SyntaxException, IOException, ParserInternalException {
+    private Statement parseIdentifierStatement() throws LexicalException, SyntaxException, IOException {
         if(reader.getType() != TokenType.IDENTIFIER) {
             return null;
         }
@@ -335,7 +335,7 @@ public class Parser {
 
     private final static List<TokenType> modifierTokenTypes = List.of(TokenType.MUT, TokenType.REF, TokenType.MREF);
     // variable_declaration = type, variable_modifier, identifier, "=", expression, ";";
-    private VariableDefinition parseVariableDefinition(IdentifierToken typeNameIdentifier) throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    private VariableDefinition parseVariableDefinition(IdentifierToken typeNameIdentifier) throws LexicalException, IOException, SyntaxException {
         IdentifierToken typeToken;
         if(typeNameIdentifier == null) {
             if(reader.getType() != TokenType.IDENTIFIER) {
@@ -377,7 +377,7 @@ public class Parser {
     }
 
     // return_statement = "return", [expression], ";";
-    private ReturnStatement parseReturnStatement() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    private ReturnStatement parseReturnStatement() throws LexicalException, IOException, SyntaxException {
         if(reader.getType() != TokenType.RETURN) return null;
         Token returnToken = reader.getToken();
         reader.next();
@@ -387,7 +387,7 @@ public class Parser {
     }
 
     // loop = "while", "(", expression, ")", block;
-    private WhileStatement parseWhileStatement() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    private WhileStatement parseWhileStatement() throws LexicalException, IOException, SyntaxException {
         if(reader.getType() != TokenType.WHILE) return null;
         TextPosition startPosition = reader.getToken().getStartPosition();
         reader.next();
@@ -406,13 +406,13 @@ public class Parser {
     // conditional_statement = "if", "(", expression, ")", block,
     //                        {"elif", "(", expression, ")", block},
     //                        ["else", "(", expression, ")", block];
-    private IfStatement parseIfStatement() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    private IfStatement parseIfStatement() throws LexicalException, IOException, SyntaxException {
         if(reader.getType() != TokenType.IF) return null;
         TextPosition startPosition = reader.getToken().getStartPosition();
         reader.next();
         return parseIfPart(startPosition);
     }
-    private IfStatement parseIfPart(TextPosition startPosition) throws SyntaxException, LexicalException, IOException, ParserInternalException {
+    private IfStatement parseIfPart(TextPosition startPosition) throws SyntaxException, LexicalException, IOException {
         mustBe(TokenType.OPEN_PARENTHESIS, "Expected '('");
         reader.next();
         Expression condition = parseExpression();
@@ -435,7 +435,7 @@ public class Parser {
         return new IfStatement(startPosition, condition, body, null);
     }
     // match_statement = "match", "(", expression, ")", "{", {case_statement}, "}";
-    private MatchStatement parseMatchStatement() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    private MatchStatement parseMatchStatement() throws LexicalException, IOException, SyntaxException {
         if(reader.getType() != TokenType.MATCH) return null;
         TextPosition startPosition = reader.getToken().getStartPosition();
         reader.next();
@@ -467,7 +467,7 @@ public class Parser {
     }
 
     // case_statement = "case", "(", type, identifier, ")", block;
-    private MatchCase parseCaseStatement() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    private MatchCase parseCaseStatement() throws LexicalException, IOException, SyntaxException {
         if(reader.getType() != TokenType.CASE) return null;
         TextPosition startPosition = reader.getToken().getStartPosition();
         reader.next();
@@ -485,7 +485,7 @@ public class Parser {
         return new MatchCase(startPosition, pattern, variableName, body);
     }
 
-    private Expression mustBeExpression(String message) throws LexicalException, SyntaxException, ParserInternalException, IOException {
+    private Expression mustBeExpression(String message) throws LexicalException, SyntaxException, IOException {
         Expression expression = parseExpression();
         if(expression == null) {
             throw new SyntaxException(message, reader.getToken().getStartPosition());
@@ -494,7 +494,7 @@ public class Parser {
     }
 
     // arguments = "(", [expression, {",", expression}], ")";
-    private Pair<List<Expression>,TextPosition> parseArguments() throws LexicalException, SyntaxException, ParserInternalException, IOException {
+    private Pair<List<Expression>,TextPosition> parseArguments() throws LexicalException, SyntaxException, IOException {
         if(reader.getType() != TokenType.OPEN_PARENTHESIS) return null;
         reader.next();
         if(reader.getType() == TokenType.CLOSE_PARENTHESIS) {
@@ -515,7 +515,7 @@ public class Parser {
     }
 
     // function_call = identifier, arguments;
-    private FunctionCall parseFunctionCall(IdentifierToken identifierToken) throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    private FunctionCall parseFunctionCall(IdentifierToken identifierToken) throws LexicalException, IOException, SyntaxException {
         Pair<List<Expression>, TextPosition> arguments = parseArguments();
         if(arguments == null) return null;
         return new FunctionCall(identifierToken.getStartPosition(), arguments.second(), identifierToken.getValue(), arguments.first());
@@ -523,7 +523,7 @@ public class Parser {
 
     // function_call = identifier, "(", [expression, {",", expression}], ")";
     // variable reference is just an identifier
-    private Expression parseFunctionCallOrVariableReference() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    private Expression parseFunctionCallOrVariableReference() throws LexicalException, IOException, SyntaxException {
         if(reader.getType() != TokenType.IDENTIFIER) return null;
         IdentifierToken identifierToken = (IdentifierToken) reader.getToken();
         reader.next();
@@ -535,7 +535,7 @@ public class Parser {
     }
 
     // expression = and_term, {"or", and_term};
-    public Expression parseExpression() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    public Expression parseExpression() throws LexicalException, IOException, SyntaxException {
         Expression left = parseAndTerm();
         if(left == null) return null;
         while(reader.getType() == TokenType.OR) {
@@ -546,7 +546,7 @@ public class Parser {
     }
 
     // and_term = comparison_expression, {"and", comparison_expression};
-    private Expression parseAndTerm() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    private Expression parseAndTerm() throws LexicalException, IOException, SyntaxException {
         Expression left = parseComparisonExpression();
         if(left == null) return null;
         while(reader.getType() == TokenType.AND) {
@@ -557,7 +557,7 @@ public class Parser {
     }
 
     // comparison_expression = additive_term, [(">" | "<" | ">=" | "<=" | "==" | "!="), additive_term];
-    private Expression parseComparisonExpression() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    private Expression parseComparisonExpression() throws LexicalException, IOException, SyntaxException {
         List<TokenType> comparisonOperators = List.of(TokenType.GREATER, TokenType.LESS, TokenType.GREATER_EQUALS, TokenType.LESS_EQUALS, TokenType.EQUALS, TokenType.NOT_EQUALS);
         Expression left = parseAdditiveTerm();
         if(left == null) return null;
@@ -571,7 +571,7 @@ public class Parser {
                 case LESS_EQUALS -> new LessEqualExpression(left, parseAdditiveTerm());
                 case EQUALS -> new EqualExpression(left, parseAdditiveTerm());
                 case NOT_EQUALS -> new NotEqualExpression(left, parseAdditiveTerm());
-                default -> throw new ParserInternalException();
+                default -> throw new ZephyrInternalException();
             };
         }
         if(comparisonOperators.contains(reader.getType())) {
@@ -581,7 +581,7 @@ public class Parser {
     }
 
     // additive_term = term, {("+" | "-"), term};
-    private Expression parseAdditiveTerm() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    private Expression parseAdditiveTerm() throws LexicalException, IOException, SyntaxException {
         Expression left = parseTerm();
         if(left == null) return null;
         while(reader.getType() == TokenType.PLUS || reader.getType() == TokenType.MINUS) {
@@ -590,14 +590,14 @@ public class Parser {
             left = switch (operator) {
                 case PLUS -> new AddExpression(left, parseTerm());
                 case MINUS -> new SubtractExpression(left, parseTerm());
-                default -> throw new ParserInternalException();
+                default -> throw new ZephyrInternalException();
             };
         }
         return left;
     }
 
     // term = factor, {("*" | "/"), factor};
-    private Expression parseTerm() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    private Expression parseTerm() throws LexicalException, IOException, SyntaxException {
         Expression left = parseFactor();
         if(left == null) return null;
         while(reader.getType() == TokenType.MULTIPLY || reader.getType() == TokenType.DIVIDE) {
@@ -606,13 +606,13 @@ public class Parser {
             left = switch (operator) {
                 case MULTIPLY -> new MultiplyExpression(left, parseFactor());
                 case DIVIDE -> new DivideExpression(left, parseFactor());
-                default -> throw new ParserInternalException();
+                default -> throw new ZephyrInternalException();
             };
         }
         return left;
     }
     // factor = ["-" | "!"], (dot_expression | factor);
-    private Expression parseFactor() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    private Expression parseFactor() throws LexicalException, IOException, SyntaxException {
         if(reader.getType() == TokenType.MINUS) {
             TextPosition minusPosition = reader.getToken().getStartPosition();
             reader.next();
@@ -635,7 +635,7 @@ public class Parser {
     }
 
     // dot_expression = elementary_expression, {".", elementary_expression};
-    private Expression parseDotExpression() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    private Expression parseDotExpression() throws LexicalException, IOException, SyntaxException {
         Expression left = parseElementaryExpression();
         if(left == null) return null;
         while(reader.getType() == TokenType.DOT) {
@@ -653,7 +653,7 @@ public class Parser {
     //                       | "(", expression, ")"
     //                       | literal
     //                       | function_call;
-    private Expression parseElementaryExpression() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    private Expression parseElementaryExpression() throws LexicalException, IOException, SyntaxException {
         Expression expression;
         if(reader.getType() == TokenType.OPEN_PARENTHESIS) {
             reader.next();

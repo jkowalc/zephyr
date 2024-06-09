@@ -7,7 +7,6 @@ import me.jkowalc.zephyr.domain.token.IdentifierToken;
 import me.jkowalc.zephyr.domain.token.Token;
 import me.jkowalc.zephyr.domain.token.TokenType;
 import me.jkowalc.zephyr.domain.token.literal.IntegerLiteralToken;
-import me.jkowalc.zephyr.exception.ParserInternalException;
 import me.jkowalc.zephyr.exception.lexical.LexicalException;
 import me.jkowalc.zephyr.exception.syntax.MissingTokenException;
 import me.jkowalc.zephyr.exception.syntax.MultipleDefinitionException;
@@ -25,20 +24,20 @@ public class ParseProgramTest {
     private void initParser(List<Token> tokens) throws LexicalException, IOException {
         parser = new Parser(new MockLexer(tokens));
     }
-    private void testFunctionDefinition(FunctionDefinition expected) throws LexicalException, SyntaxException, IOException, ParserInternalException {
+    private void testFunctionDefinition(FunctionDefinition expected) throws LexicalException, SyntaxException, IOException {
         Program program = parser.parseProgram();
         assertEquals(1, program.getFunctions().size());
         assertEquals(0, program.getTypes().size());
         assertEquals(expected, program.getFunctions().values().toArray()[0]);
     }
-    private void testTypeDefinition(TypeDefinition expected) throws LexicalException, SyntaxException, IOException, ParserInternalException {
+    private void testTypeDefinition(TypeDefinition expected) throws LexicalException, SyntaxException, IOException {
         Program program = parser.parseProgram();
         assertEquals(0, program.getFunctions().size());
         assertEquals(1, program.getTypes().size());
         assertEquals(expected, program.getTypes().values().toArray()[0]);
     }
     @Test
-    public void testFunctionDefinition() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    public void testFunctionDefinition() throws LexicalException, IOException, SyntaxException {
         initParser(List.of(
                 new IdentifierToken("main"),
                 new Token(TokenType.OPEN_PARENTHESIS),
@@ -73,7 +72,7 @@ public class ParseProgramTest {
         testFunctionDefinition(new FunctionDefinition("main", List.of(), new StatementBlock(List.of()), "int"));
     }
     @Test
-    public void testUnionDefinition() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    public void testUnionDefinition() throws LexicalException, IOException, SyntaxException {
         initParser(List.of(
                 new Token(TokenType.UNION),
                 new IdentifierToken("A"),
@@ -113,7 +112,7 @@ public class ParseProgramTest {
         testTypeDefinition(new UnionDefinition("A", List.of("int", "a")));
     }
     @Test
-    public void testStructDefinition() throws LexicalException, IOException, SyntaxException, ParserInternalException {
+    public void testStructDefinition() throws LexicalException, IOException, SyntaxException {
         initParser(List.of(
                 new Token(TokenType.STRUCT),
                 new IdentifierToken("A"),
