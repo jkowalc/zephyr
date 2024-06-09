@@ -8,12 +8,11 @@ import java.util.Map;
 
 public class Scope<T> {
     private final Scope<T> parent;
-    private final Map<String, T> values = new SimpleMap<>();
-    public Scope(Scope<T> parent) {
+    private final Map<String, T> values;
+    public Scope(Scope<T> parent, Map<String, T> values) {
         this.parent = parent;
-    }
-    public Scope() {
-        this.parent = null;
+        if(values == null) this.values = new SimpleMap<>();
+        else this.values = values;
     }
     public void add(String name, T value) throws VariableAlreadyDefinedException {
         if(values.containsKey(name)) {

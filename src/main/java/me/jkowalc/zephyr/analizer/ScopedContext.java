@@ -5,11 +5,12 @@ import me.jkowalc.zephyr.exception.VariableNotDefinedException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class ScopedContext<T> {
     private final List<Scope<T>> scopes = new ArrayList<>();
     public ScopedContext() {
-        scopes.add(new Scope<>());
+        scopes.add(new Scope<>(null, null));
     }
 
     public void rollback() {
@@ -23,9 +24,15 @@ public class ScopedContext<T> {
         return scopes.getLast().get(name);
     }
     public void createScope() {
-        scopes.add(new Scope<>());
+        scopes.add(new Scope<>(null, null));
+    }
+    public void createScope(Map<String, T> values) {
+        scopes.add(new Scope<>(null, values));
     }
     public void createLocalScope() {
-        scopes.add(new Scope<>(scopes.isEmpty() ? null : scopes.getFirst()));
+        scopes.add(new Scope<>(scopes.getFirst(), null));
+    }
+    public void createLocalScope(Map<String, T> values) {
+        scopes.add(new Scope<>(scopes.getFirst(), values));
     }
 }
