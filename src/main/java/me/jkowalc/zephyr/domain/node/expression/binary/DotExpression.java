@@ -6,6 +6,7 @@ import lombok.Getter;
 import me.jkowalc.zephyr.domain.node.Node;
 import me.jkowalc.zephyr.domain.node.expression.Assignable;
 import me.jkowalc.zephyr.domain.node.expression.Expression;
+import me.jkowalc.zephyr.exception.ZephyrException;
 import me.jkowalc.zephyr.util.ASTVisitor;
 import me.jkowalc.zephyr.util.TextPosition;
 
@@ -28,7 +29,7 @@ public final class DotExpression extends Node implements Assignable, Expression 
     }
 
     @Override
-    public void accept(ASTVisitor visitor) {
+    public void accept(ASTVisitor visitor) throws ZephyrException {
         visitor.visit(this);
     }
 }

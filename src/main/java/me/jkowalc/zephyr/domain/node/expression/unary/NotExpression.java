@@ -2,6 +2,7 @@ package me.jkowalc.zephyr.domain.node.expression.unary;
 
 import lombok.Getter;
 import me.jkowalc.zephyr.domain.node.expression.Expression;
+import me.jkowalc.zephyr.exception.ZephyrException;
 import me.jkowalc.zephyr.util.ASTVisitor;
 import me.jkowalc.zephyr.util.TextPosition;
 
@@ -15,7 +16,7 @@ public final class NotExpression extends DefaultUnaryExpression {
     }
 
     @Override
-    public void accept(ASTVisitor visitor) {
+    public void accept(ASTVisitor visitor) throws ZephyrException {
         visitor.visit(this);
     }
 }

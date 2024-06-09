@@ -614,20 +614,22 @@ public class Parser {
     // factor = ["-" | "!"], (dot_expression | factor);
     private Expression parseFactor() throws LexicalException, IOException, SyntaxException, ParserInternalException {
         if(reader.getType() == TokenType.MINUS) {
+            TextPosition minusPosition = reader.getToken().getStartPosition();
             reader.next();
             Expression factor = parseFactor();
             if(factor == null) {
                 throw new SyntaxException("Expected expression after '-'", reader.getToken().getStartPosition());
             }
-            return new NegationExpression(factor);
+            return new NegationExpression(minusPosition, factor);
         }
         if(reader.getType() == TokenType.NOT) {
+            TextPosition notPosition = reader.getToken().getStartPosition();
             reader.next();
             Expression factor = parseFactor();
             if(factor == null) {
                 throw new SyntaxException("Expected expression after '!'", reader.getToken().getStartPosition());
             }
-            return new NotExpression(factor);
+            return new NotExpression(notPosition, factor);
         }
         return parseDotExpression();
     }
