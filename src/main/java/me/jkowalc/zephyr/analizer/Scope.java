@@ -20,6 +20,9 @@ public class Scope<T> {
         }
         values.put(name, value);
     }
+    public void set(String name, T value) {
+        values.put(name, value);
+    }
     public T get(String name) throws VariableNotDefinedException {
         if(values.containsKey(name)) {
             return values.get(name);

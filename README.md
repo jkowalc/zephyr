@@ -134,7 +134,7 @@ a = 7 // ok
 - Przeciążanie funkcji nie jest możliwe
 
 ```zephyr
-do_something(int a, int b = 5) -> int {
+do_something(int a, int b) -> int {
     return a + b;
 }
 ```

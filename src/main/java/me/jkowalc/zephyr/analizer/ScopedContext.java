@@ -23,6 +23,9 @@ public class ScopedContext<T> {
     public T get(String name) throws VariableNotDefinedException {
         return scopes.getLast().get(name);
     }
+    public void set(String name, T value) {
+        scopes.getLast().set(name, value);
+    }
     public void createScope() {
         scopes.add(new Scope<>(null, null));
     }

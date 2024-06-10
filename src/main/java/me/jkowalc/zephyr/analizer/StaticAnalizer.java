@@ -1,5 +1,6 @@
 package me.jkowalc.zephyr.analizer;
 
+import lombok.Getter;
 import me.jkowalc.zephyr.BuiltinFunctionManager;
 import me.jkowalc.zephyr.domain.CustomFunctionRepresentation;
 import me.jkowalc.zephyr.domain.FunctionRepresentation;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 public class StaticAnalizer implements ASTVisitor {
+    @Getter
     private Map<String, FunctionRepresentation> functions;
 
     private ScopedContext<StaticType> context;
@@ -59,6 +61,7 @@ public class StaticAnalizer implements ASTVisitor {
         this.context = new ScopedContext<>();
         this.returnType = new EphemeralValue<>(null);
         this.expectedReturnType = null;
+        this.lastFunctionStatement = new EphemeralValue<>(null);
         for(FunctionDefinition functionDefinition : program.getFunctions().values()) {
             functionDefinition.accept(this);
             this.returnType.ignore();
@@ -80,8 +83,10 @@ public class StaticAnalizer implements ASTVisitor {
         this.expectedReturnType = StaticType.fromString(functionDefinition.getReturnType());
         functionDefinition.getBody().accept(this);
         Statement lastStatement = this.lastFunctionStatement.get();
-        if(lastStatement == null || (!(lastStatement instanceof ReturnStatement && expectedReturnType.getCategory() != TypeCategory.VOID)))
+        boolean endedWithoutReturn = !(lastStatement instanceof ReturnStatement);
+        if(endedWithoutReturn && expectedReturnType.getCategory() != TypeCategory.VOID) {
             throw new NonConvertibleTypeException(expectedReturnType, new StaticType(TypeCategory.VOID), functionDefinition.getStartPosition());
+        }
         context.rollback();
     }
 

@@ -5,7 +5,7 @@ import me.jkowalc.zephyr.domain.type.StaticType;
 
 import java.util.List;
 
-public record BuiltinFunctionSignature(List<StaticType> parameterTypes, StaticType returnType) implements FunctionRepresentation {
+public record BuiltinFunctionSignature(String name, List<StaticType> parameterTypes, StaticType returnType) implements FunctionRepresentation {
     @Override
     public StaticType getReturnType() {
         return returnType;

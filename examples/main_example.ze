@@ -1,23 +1,8 @@
-struct Result {
-    int result
-}
-struct Error {
-    int errno
-}
-union Maybe { Result, Error }
-
-do_something() -> Maybe {
-    return {result: 1};
-}
-
 main() {
-    Maybe maybe = do_something();
-    match(maybe) {
-        case (Result res) {
-            print("Result: " + res.result);
-        }
-        case (Error err) {
-            print("Error: " + err.errno);
-        }
+    bool mut b = true;
+    while(b) {
+        print(b);
+        b = false;
+        print(b);
     }
 }
