@@ -1,5 +1,6 @@
 package me.jkowalc.zephyr.analizer;
 
+import me.jkowalc.zephyr.domain.TypeCheckerResult;
 import me.jkowalc.zephyr.domain.node.program.StructDefinition;
 import me.jkowalc.zephyr.domain.node.program.StructDefinitionMember;
 import me.jkowalc.zephyr.domain.node.program.TypeDefinition;

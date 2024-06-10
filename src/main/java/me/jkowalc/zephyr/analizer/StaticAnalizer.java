@@ -4,6 +4,7 @@ import lombok.Getter;
 import me.jkowalc.zephyr.BuiltinFunctionManager;
 import me.jkowalc.zephyr.domain.CustomFunctionRepresentation;
 import me.jkowalc.zephyr.domain.FunctionRepresentation;
+import me.jkowalc.zephyr.domain.TypeCheckerResult;
 import me.jkowalc.zephyr.domain.node.expression.Assignable;
 import me.jkowalc.zephyr.domain.node.expression.Expression;
 import me.jkowalc.zephyr.domain.node.expression.FunctionCall;

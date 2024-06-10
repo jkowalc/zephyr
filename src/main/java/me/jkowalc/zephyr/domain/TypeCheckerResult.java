@@ -1,4 +1,4 @@
-package me.jkowalc.zephyr.analizer;
+package me.jkowalc.zephyr.domain;
 
 public enum TypeCheckerResult {
     SUCCESS,
