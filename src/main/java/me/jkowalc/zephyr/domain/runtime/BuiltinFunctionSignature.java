@@ -1,18 +1,18 @@
 package me.jkowalc.zephyr.domain.runtime;
 
 import me.jkowalc.zephyr.domain.FunctionRepresentation;
-import me.jkowalc.zephyr.domain.type.Type;
+import me.jkowalc.zephyr.domain.type.StaticType;
 
 import java.util.List;
 
-public record BuiltinFunctionSignature(List<Type> parameterTypes, Type returnType) implements FunctionRepresentation {
+public record BuiltinFunctionSignature(List<StaticType> parameterTypes, StaticType returnType) implements FunctionRepresentation {
     @Override
-    public Type getReturnType() {
+    public StaticType getReturnType() {
         return returnType;
     }
 
     @Override
-    public List<Type> getParameterTypes() {
+    public List<StaticType> getParameterTypes() {
         return parameterTypes;
     }
 }

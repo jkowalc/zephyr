@@ -8,7 +8,7 @@ public enum TypeCategory {
     VOID,
     NAMED_TYPE,
     STRUCT,
-    ANY;
+    ANY_BUILTIN;
 
     public static TypeCategory fromString(String type) {
         return switch (type) {

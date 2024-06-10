@@ -4,6 +4,7 @@ import me.jkowalc.zephyr.BuiltinFunctionManager;
 import me.jkowalc.zephyr.domain.CustomFunctionRepresentation;
 import me.jkowalc.zephyr.domain.FunctionRepresentation;
 import me.jkowalc.zephyr.domain.node.expression.Assignable;
+import me.jkowalc.zephyr.domain.node.expression.Expression;
 import me.jkowalc.zephyr.domain.node.expression.FunctionCall;
 import me.jkowalc.zephyr.domain.node.expression.VariableReference;
 import me.jkowalc.zephyr.domain.node.expression.binary.*;
@@ -12,12 +13,11 @@ import me.jkowalc.zephyr.domain.node.expression.unary.NegationExpression;
 import me.jkowalc.zephyr.domain.node.expression.unary.NotExpression;
 import me.jkowalc.zephyr.domain.node.program.*;
 import me.jkowalc.zephyr.domain.node.statement.*;
-import me.jkowalc.zephyr.domain.type.StructType;
-import me.jkowalc.zephyr.domain.type.Type;
+import me.jkowalc.zephyr.domain.type.StructStaticType;
+import me.jkowalc.zephyr.domain.type.StaticType;
 import me.jkowalc.zephyr.domain.type.TypeCategory;
 import me.jkowalc.zephyr.exception.*;
 import me.jkowalc.zephyr.exception.analizer.*;
-import me.jkowalc.zephyr.exception.runtime.ReturnSignal;
 import me.jkowalc.zephyr.util.ASTVisitor;
 import me.jkowalc.zephyr.util.EphemeralValue;
 import me.jkowalc.zephyr.util.SimpleMap;
@@ -29,11 +29,15 @@ import java.util.Map;
 public class StaticAnalizer implements ASTVisitor {
     private Map<String, FunctionRepresentation> functions;
 
-    private ScopedContext<Type> context;
+    private ScopedContext<StaticType> context;
 
     private TypeChecker typeChecker;
 
-    EphemeralValue<Type> returnType;
+    EphemeralValue<StaticType> returnType;
+
+    StaticType expectedReturnType;
+
+    EphemeralValue<Statement> lastFunctionStatement;
 
     @Override
     public void visit(Program program) throws ZephyrException {
@@ -48,12 +52,16 @@ public class StaticAnalizer implements ASTVisitor {
             }
             functions.put(function.getKey(), new CustomFunctionRepresentation(function.getValue()));
         }
+        if(!functions.containsKey("main")) {
+            throw new MainFunctionNotDefinedException(program.getStartPosition());
+        }
         this.typeChecker = new TypeChecker(program.getTypes());
         this.context = new ScopedContext<>();
         this.returnType = new EphemeralValue<>(null);
+        this.expectedReturnType = null;
         for(FunctionDefinition functionDefinition : program.getFunctions().values()) {
             functionDefinition.accept(this);
-            this.returnType.get();
+            this.returnType.ignore();
         }
     }
 
@@ -69,34 +77,25 @@ public class StaticAnalizer implements ASTVisitor {
         for(VariableDefinition parameter : functionDefinition.getParameters()) {
             parameter.accept(this);
         }
-        Type returnType = null;
-        try {
-            functionDefinition.getBody().accept(this);
-        } catch(ReturnSignal ignored) {
-            returnType = this.returnType.get();
-        }
-        if(returnType == null) returnType = new Type(TypeCategory.VOID, false);
-        TypeCategory expectedReturnTypeCategory = TypeCategory.fromString(functionDefinition.getReturnType());
-        // TODO: Change into full return type checking
-        if(!returnType.getCategory().equals(expectedReturnTypeCategory)) {
-            throw new AnalizerException("Return type mismatch", functionDefinition.getStartPosition());
-        }
+        this.expectedReturnType = StaticType.fromString(functionDefinition.getReturnType());
+        functionDefinition.getBody().accept(this);
+        Statement lastStatement = this.lastFunctionStatement.get();
+        if(lastStatement == null || (!(lastStatement instanceof ReturnStatement && expectedReturnType.getCategory() != TypeCategory.VOID)))
+            throw new NonConvertibleTypeException(expectedReturnType, new StaticType(TypeCategory.VOID), functionDefinition.getStartPosition());
         context.rollback();
     }
 
     @Override
     public void visit(StatementBlock statementBlock) throws ZephyrException {
         context.createLocalScope();
-        try {
-            for(Statement statement : statementBlock.getStatements()) {
-                if(statement instanceof VariableDefinition variableDefinition && variableDefinition.getDefaultValue() == null) {
-                    throw new VariableNotInitializedException(variableDefinition.getName(), variableDefinition.getStartPosition());
-                }
-                statement.accept(this);
+        for(Statement statement : statementBlock.getStatements()) {
+            if(statement instanceof VariableDefinition variableDefinition && variableDefinition.getDefaultValue() == null) {
+                throw new VariableNotInitializedException(variableDefinition.getName(), variableDefinition.getStartPosition());
             }
-        } finally {
-            context.rollback();
+            statement.accept(this);
         }
+        lastFunctionStatement.set(statementBlock.getStatements().getLast());
+        context.rollback();
     }
 
     @Override
@@ -105,17 +104,26 @@ public class StaticAnalizer implements ASTVisitor {
         if(representation == null){
             throw new FunctionNotDefinedException(functionCall.getName(), functionCall.getStartPosition());
         }
-        List<Type> parameterTypes = representation.getParameterTypes();
+        List<StaticType> parameterTypes = representation.getParameterTypes();
         int argumentCount = functionCall.getArguments().size();
         if(argumentCount != parameterTypes.size()) {
             throw new InvalidArgumentCountException(functionCall.getName(), parameterTypes.size(), argumentCount, functionCall.getStartPosition());
         }
         for(int i = 0; i < argumentCount; i++) {
             functionCall.getArguments().get(i).accept(this);
-            Type argumentType = returnType.get();
-            Type parameterType = parameterTypes.get(i);
-            if(!argumentType.getCategory().equals(parameterType.getCategory())) {
-                throw new AnalizerException("Argument type mismatch", functionCall.getStartPosition());
+            StaticType argumentType = returnType.get();
+            StaticType parameterType = parameterTypes.get(i);
+            TypeCheckerResult result;
+            try {
+                result = typeChecker.checkType(argumentType, parameterType);
+            } catch(TypeNotDefinedException e) {
+                throw new TypeNotDefinedAnalizerException(e.getName(), functionCall.getArguments().get(i).getStartPosition());
+            }
+            if(result.equals(TypeCheckerResult.ERROR)) {
+                throw new NonConvertibleTypeException(parameterType, argumentType, functionCall.getArguments().get(i).getStartPosition());
+            }
+            if(result.equals(TypeCheckerResult.CONVERTIBLE) && parameterType.isReference()) {
+                throw new ConvertiblePassedByReferenceException(functionCall.getArguments().get(i).getStartPosition());
             }
         }
         returnType.set(representation.getReturnType());
@@ -134,7 +142,7 @@ public class StaticAnalizer implements ASTVisitor {
     public void visit(DotExpression dotExpression) throws ZephyrException {
         dotExpression.getValue().accept(this);
         try {
-            Type type = typeChecker.getFieldType(returnType.get(), dotExpression.getField());
+            StaticType type = typeChecker.getFieldType(returnType.get(), dotExpression.getField());
             if(type == null) {
                 throw new InvalidFieldAccessException((Assignable) dotExpression.getValue(), dotExpression.getField(), dotExpression.getStartPosition());
             }
@@ -145,7 +153,11 @@ public class StaticAnalizer implements ASTVisitor {
     }
 
     @Override
-    public void visit(AddExpression addExpression) {
+    public void visit(AddExpression addExpression) throws ZephyrException {
+        addExpression.getLeft().accept(this);
+        StaticType leftType = returnType.get();
+        addExpression.getRight().accept(this);
+        StaticType rightType = returnType.get();
     }
 
     @Override
@@ -210,37 +222,37 @@ public class StaticAnalizer implements ASTVisitor {
 
     @Override
     public void visit(NotExpression notExpression) {
-        returnType.set(new Type(TypeCategory.BOOL));
+        returnType.set(new StaticType(TypeCategory.BOOL));
     }
 
     @Override
     public void visit(BooleanLiteral booleanLiteral) {
-        returnType.set(new Type(TypeCategory.BOOL));
+        returnType.set(new StaticType(TypeCategory.BOOL));
     }
 
     @Override
     public void visit(IntegerLiteral integerLiteral) {
-        returnType.set(new Type(TypeCategory.INT));
+        returnType.set(new StaticType(TypeCategory.INT));
     }
 
     @Override
     public void visit(FloatLiteral floatLiteral) {
-        returnType.set(new Type(TypeCategory.FLOAT));
+        returnType.set(new StaticType(TypeCategory.FLOAT));
     }
 
     @Override
     public void visit(StringLiteral stringLiteral) {
-        returnType.set(new Type(TypeCategory.STRING));
+        returnType.set(new StaticType(TypeCategory.STRING));
     }
 
     @Override
     public void visit(StructLiteral structLiteral) throws ZephyrException {
-        Map<String, Type> fields = new SimpleMap<>();
+        Map<String, StaticType> fields = new SimpleMap<>();
         for(Map.Entry<String, Literal> entry : structLiteral.getFields().entrySet()) {
             entry.getValue().accept(this);
             fields.put(entry.getKey(), returnType.get());
         }
-        returnType.set(new StructType(fields));
+        returnType.set(new StructStaticType(fields));
     }
 
     @Override
@@ -261,25 +273,39 @@ public class StaticAnalizer implements ASTVisitor {
     @Override
     public void visit(AssignmentStatement assignmentStatement) throws ZephyrException {
         assignmentStatement.getTarget().accept(this);
-        Type targetType = returnType.get();
+        StaticType targetType = returnType.get();
         if(!targetType.isMutable())
             throw new ImmutableVariableException(assignmentStatement.getTarget(), assignmentStatement.getStartPosition());
         assignmentStatement.getValue().accept(this);
-        Type valueType = returnType.get();
-        // TODO: Change into full assignment type checking
-        if(!targetType.getCategory().equals(valueType.getCategory())) {
-            throw new AnalizerException("Assignment type mismatch", assignmentStatement.getStartPosition());
+        StaticType valueType = returnType.get();
+        TypeCheckerResult result;
+        try {
+            result = typeChecker.checkType(valueType, targetType);
+        } catch(TypeNotDefinedException e) {
+            throw new TypeNotDefinedAnalizerException(e.getName(), assignmentStatement.getStartPosition());
+        }
+        if(result.equals(TypeCheckerResult.ERROR)) {
+            throw new NonConvertibleTypeException(targetType, valueType, assignmentStatement.getStartPosition());
+        }
+    }
+
+    private void checkCondition(Expression condition) throws ZephyrException {
+        condition.accept(this);
+        StaticType conditionType = returnType.get();
+        TypeCheckerResult result;
+        try {
+            result = typeChecker.checkType(conditionType, new StaticType(TypeCategory.BOOL));
+        } catch(TypeNotDefinedException e) {
+            throw new TypeNotDefinedAnalizerException(e.getName(), condition.getStartPosition());
+        }
+        if(result.equals(TypeCheckerResult.ERROR)) {
+            throw new NonConvertibleTypeException(new StaticType(TypeCategory.BOOL), conditionType, condition.getStartPosition());
         }
     }
 
     @Override
     public void visit(IfStatement ifStatement) throws ZephyrException {
-        ifStatement.getCondition().accept(this);
-        Type conditionType = returnType.get();
-        // TODO: Change into full condition type checking
-        if(!conditionType.getCategory().equals(TypeCategory.BOOL)) {
-            throw new AnalizerException("Condition must be boolean", ifStatement.getStartPosition());
-        }
+        checkCondition(ifStatement.getCondition());
         ifStatement.getBody().accept(this);
     }
 
@@ -287,7 +313,7 @@ public class StaticAnalizer implements ASTVisitor {
     public void visit(MatchStatement matchStatement) throws ZephyrException {
         // check if the expression can be evaluated, ignore the result
         matchStatement.getExpression().accept(this);
-        this.returnType.get();
+        this.returnType.ignore();
         for(MatchCase matchCase : matchStatement.getCases()) {
             matchCase.accept(this);
         }
@@ -297,7 +323,7 @@ public class StaticAnalizer implements ASTVisitor {
     public void visit(MatchCase matchCase) throws ZephyrException {
         context.createLocalScope();
         try {
-            context.add(matchCase.getVariableName(), new Type(TypeCategory.fromString(matchCase.getPattern()), false));
+            context.add(matchCase.getVariableName(), StaticType.fromString(matchCase.getPattern()));
         } catch(VariableAlreadyDefinedException ignored) {
             throw new ZephyrInternalException();
         }
@@ -307,24 +333,30 @@ public class StaticAnalizer implements ASTVisitor {
 
     @Override
     public void visit(ReturnStatement returnStatement) throws ZephyrException {
+        StaticType gotReturnType = null;
         if(returnStatement.getExpression() == null) {
-            returnType.set(new Type(TypeCategory.VOID, false));
-            throw new ReturnSignal();
+            gotReturnType = new StaticType(TypeCategory.VOID);
+        } else {
+            returnStatement.getExpression().accept(this);
+            gotReturnType = returnType.get();
         }
-        returnStatement.getExpression().accept(this);
-        throw new ReturnSignal();
+        // TODO: check return type
     }
 
     @Override
     public void visit(VariableDefinition variableDefinition) throws ZephyrException {
-        TypeCategory variableCategory = TypeCategory.fromString(variableDefinition.getTypeName());
-        Type variableType = new Type(variableCategory, variableDefinition.isMutable(), variableDefinition.isReference());
+        StaticType variableType = StaticType.fromString(variableDefinition.getTypeName(), variableDefinition.isMutable(), variableDefinition.isReference());
         if(variableDefinition.getDefaultValue() != null) {
             variableDefinition.getDefaultValue().accept(this);
-            Type defaultValueType = returnType.get();
-            // TODO: Change into full variable type checking
-            if(!variableType.getCategory().equals(defaultValueType.getCategory())) {
-                throw new AnalizerException("Variable type mismatch", variableDefinition.getStartPosition());
+            StaticType defaultValueType = returnType.get();
+            TypeCheckerResult result;
+            try {
+                result = typeChecker.checkType(defaultValueType, variableType);
+            } catch (TypeNotDefinedException e) {
+                throw new TypeNotDefinedAnalizerException(e.getName(), variableDefinition.getDefaultValue().getStartPosition());
+            }
+            if(result.equals(TypeCheckerResult.ERROR)) {
+                throw new NonConvertibleTypeException(variableType, defaultValueType, variableDefinition.getDefaultValue().getStartPosition());
             }
         }
         try {
@@ -336,12 +368,7 @@ public class StaticAnalizer implements ASTVisitor {
 
     @Override
     public void visit(WhileStatement whileStatement) throws ZephyrException {
-        whileStatement.getCondition().accept(this);
-        Type conditionType = returnType.get();
-        // TODO: Change into full condition type checking
-        if(!conditionType.getCategory().equals(TypeCategory.BOOL)) {
-            throw new AnalizerException("Condition must be boolean", whileStatement.getStartPosition());
-        }
+        checkCondition(whileStatement.getCondition());
         whileStatement.getBody().accept(this);
     }
 }

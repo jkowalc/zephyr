@@ -1,7 +1,7 @@
 package me.jkowalc.zephyr.domain;
 
 import me.jkowalc.zephyr.domain.node.program.FunctionDefinition;
-import me.jkowalc.zephyr.domain.type.Type;
+import me.jkowalc.zephyr.domain.type.StaticType;
 import me.jkowalc.zephyr.domain.type.TypeCategory;
 
 import java.util.List;
@@ -9,16 +9,16 @@ import java.util.List;
 
 public record CustomFunctionRepresentation(FunctionDefinition functionDefinition) implements FunctionRepresentation {
     @Override
-    public Type getReturnType() {
+    public StaticType getReturnType() {
         return functionDefinition.getReturnType() == null
-                ? new Type(TypeCategory.VOID)
-                : new Type(TypeCategory.fromString(functionDefinition.getReturnType()));
+                ? new StaticType(TypeCategory.VOID)
+                : new StaticType(TypeCategory.fromString(functionDefinition.getReturnType()));
     }
 
     @Override
-    public List<Type> getParameterTypes() {
+    public List<StaticType> getParameterTypes() {
         return functionDefinition.getParameters().stream().map(parameter ->
-            new Type(TypeCategory.fromString(parameter.getTypeName()), parameter.isMutable(), parameter.isReference())
+            new StaticType(TypeCategory.fromString(parameter.getTypeName()), parameter.isMutable(), parameter.isReference())
         ).toList();
     }
 }

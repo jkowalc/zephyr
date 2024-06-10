@@ -5,10 +5,10 @@ import lombok.Getter;
 import java.util.Map;
 
 @Getter
-public class StructType extends Type {
-    private final Map<String, Type> fields;
+public class StructStaticType extends StaticType {
+    private final Map<String, StaticType> fields;
 
-    public StructType(Map<String, Type> fields) {
+    public StructStaticType(Map<String, StaticType> fields) {
         super(TypeCategory.STRUCT, false);
         this.fields = fields;
     }
