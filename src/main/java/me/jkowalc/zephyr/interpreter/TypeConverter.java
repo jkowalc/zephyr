@@ -32,7 +32,7 @@ public class TypeConverter {
             case FLOAT:
                 assert value instanceof FloatValue;
                 FloatValue floatValue = (FloatValue) value;
-                switch(value.getType()) {
+                switch(target) {
                     case INT:
                         return new IntegerValue((int) Math.floor(floatValue.value()));
                     case BOOL:
@@ -43,7 +43,7 @@ public class TypeConverter {
             case BOOL:
                 assert value instanceof BooleanValue;
                 BooleanValue booleanValue = (BooleanValue) value;
-                switch(value.getType()) {
+                switch(target) {
                     case INT:
                         return new IntegerValue(booleanValue.value() ? 1 : 0);
                     case FLOAT:
@@ -52,7 +52,7 @@ public class TypeConverter {
             case STRING:
                 assert value instanceof StringValue;
                 StringValue stringValue = (StringValue) value;
-                switch(value.getType()) {
+                switch(target) {
                     case INT:
                         return new IntegerValue(Integer.parseInt(stringValue.value()));
                     case FLOAT:

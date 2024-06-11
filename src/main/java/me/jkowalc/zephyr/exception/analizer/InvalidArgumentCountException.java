@@ -9,6 +9,6 @@ public class InvalidArgumentCountException extends AnalizerException {
                 : "Too many arguments for function " + functionName + ". Expected " + expected + ", got " + got + ".";
     }
     public InvalidArgumentCountException(String functionName, int expected, int got, TextPosition position) {
-        super(generateMessage(functionName, got, expected), position);
+        super(generateMessage(functionName, expected, got), position);
     }
 }

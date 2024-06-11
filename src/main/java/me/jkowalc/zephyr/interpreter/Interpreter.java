@@ -4,6 +4,7 @@ import me.jkowalc.zephyr.BuiltinFunctionManager;
 import me.jkowalc.zephyr.analizer.ScopedContext;
 import me.jkowalc.zephyr.analizer.StaticAnalizer;
 import me.jkowalc.zephyr.domain.FunctionRepresentation;
+import me.jkowalc.zephyr.domain.node.expression.Expression;
 import me.jkowalc.zephyr.domain.node.expression.FunctionCall;
 import me.jkowalc.zephyr.domain.node.expression.VariableReference;
 import me.jkowalc.zephyr.domain.node.expression.binary.*;
@@ -54,14 +55,6 @@ public class Interpreter implements ASTVisitor {
         this.outputStream = outputStream;
     }
 
-    private Value convertAndCatch(Value value, TypeCategory target) {
-        try {
-            return TypeConverter.convert(value, target);
-        } catch (ConversionTypeException e) {
-            throw new ZephyrInternalException();
-        }
-    }
-
     private BareStaticType getBareType(String typeName, TextPosition position) throws ZephyrException {
         if(typeName == null)
             return new BareStaticType(TypeCategory.VOID);
@@ -71,12 +64,14 @@ public class Interpreter implements ASTVisitor {
         return type;
     }
 
-    private void executeFunction(FunctionRepresentation functionRepresentation) throws ConversionTypeException, ZephyrException {
+    private void executeFunction(FunctionRepresentation functionRepresentation) throws ZephyrException {
         if(functionRepresentation.builtIn()) {
             Value returnValue = this.builtinFunctionManager.execute(functionRepresentation.name(), arguments.get());
             this.returnValue.set(returnValue);
         } else {
             functionRepresentation.definition().accept(this);
+            Value returnValue = this.returnValue.get();
+            this.returnValue.set(returnValue == null ? new VoidValue() : returnValue);
         }
     }
     @Override
@@ -89,12 +84,7 @@ public class Interpreter implements ASTVisitor {
         this.returnValue = new EphemeralValue<>(null);
         this.arguments = new EphemeralValue<>(List.of());
         this.builtinFunctionManager = new BuiltinFunctionManager(outputStream);
-        try {
-            executeFunction(functions.get("main"));
-        } catch (ConversionTypeException e) {
-            // ConversionException can only occur if the main function is a custom function, which is not possible
-            throw new ZephyrInternalException();
-        }
+        executeFunction(functions.get("main"));
     }
 
     @Override
@@ -111,17 +101,23 @@ public class Interpreter implements ASTVisitor {
                 throw new ZephyrInternalException();
             }
         }
-        functionDefinition.getBody().accept(this);
-        context.rollback();
+        try {
+            functionDefinition.getBody().accept(this);
+        } finally {
+            context.rollback();
+        }
     }
 
     @Override
     public void visit(StatementBlock statementBlock) throws ZephyrException {
         context.createLocalScope();
-        for(Statement statement : statementBlock.getStatements()) {
-            statement.accept(this);
+        try {
+            for (Statement statement : statementBlock.getStatements()) {
+                statement.accept(this);
+            }
+        } finally {
+            context.rollback();
         }
-        context.rollback();
     }
 
     @Override
@@ -129,24 +125,32 @@ public class Interpreter implements ASTVisitor {
         FunctionRepresentation functionRepresentation = functions.get(functionCall.getName());
         List<Value> args = new ArrayList<>();
         for(int i = 0; i < functionCall.getArguments().size(); i++) {
-            functionCall.getArguments().get(i).accept(this);
+            Expression argument = functionCall.getArguments().get(i);
+            argument.accept(this);
             Value value = returnValue.get();
             StaticType requestedtype = functionRepresentation.parameterTypes().get(i);
             if(requestedtype.isReference()) {
                 args.add(value);
                 continue;
             }
-            Value convertedValue = convertAndCatch(value, requestedtype.getBareStaticType().getCategory());
-            convertedValue = convertedValue.deepCopy();
-            args.add(convertedValue);
+            try {
+                Value convertedValue = TypeConverter.convert(value, requestedtype.getBareStaticType().getCategory());
+                convertedValue = convertedValue.deepCopy();
+                args.add(convertedValue);
+            } catch (ConversionTypeException e) {
+                throw new ConversionException(e.getValue(), e.getTarget(), argument.getStartPosition());
+            }
         }
         this.arguments.set(args);
         try {
             executeFunction(functionRepresentation);
-        } catch (ConversionTypeException e) {
-            // ConversionException can occur if the builtin 'to_string', 'to_int', etc. function are called with the wrong argument
-            throw new ConversionException(e.getValue(), e.getTarget(), functionCall.getStartPosition());
         } catch (ReturnSignal ignored) {}
+        try {
+            Value convertedReturnValue = TypeConverter.convert(returnValue.get(), functionRepresentation.returnType().getBareStaticType().getCategory());
+            returnValue.set(convertedReturnValue);
+        } catch (ConversionTypeException e) {
+            throw new ConversionException(e.getValue(), e.getTarget(), functionCall.getStartPosition());
+        }
     }
 
     @Override
@@ -327,7 +331,6 @@ public class Interpreter implements ASTVisitor {
     public void visit(ReturnStatement returnStatement) throws ZephyrException {
         if(returnStatement.getExpression() != null) {
             returnStatement.getExpression().accept(this);
-            // propagate the return value
         }
         throw new ReturnSignal();
     }

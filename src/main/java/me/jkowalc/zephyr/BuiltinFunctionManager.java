@@ -3,9 +3,9 @@ package me.jkowalc.zephyr;
 import me.jkowalc.zephyr.domain.FunctionRepresentation;
 import me.jkowalc.zephyr.domain.runtime.Value;
 import me.jkowalc.zephyr.domain.runtime.value.StringValue;
+import me.jkowalc.zephyr.domain.runtime.value.VoidValue;
 import me.jkowalc.zephyr.domain.type.StaticType;
 import me.jkowalc.zephyr.domain.type.TypeCategory;
-import me.jkowalc.zephyr.exception.type.ConversionTypeException;
 import me.jkowalc.zephyr.exception.ZephyrInternalException;
 
 import java.io.IOException;
@@ -64,7 +64,7 @@ public class BuiltinFunctionManager {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                yield null;
+                yield new VoidValue();
             }
             case "printLn" -> {
                 StringValue value = (StringValue) arguments.getFirst();
@@ -75,7 +75,7 @@ public class BuiltinFunctionManager {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                yield null;
+                yield new VoidValue();
             }
             case "to_string", "to_int", "to_float", "to_bool" -> arguments.getFirst();
             default -> throw new ZephyrInternalException();

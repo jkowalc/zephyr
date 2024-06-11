@@ -19,6 +19,9 @@ public class TypeChecker {
     }
     public static TypeCheckerResult checkType(BareStaticType got, BareStaticType expected) {
         if(got.equals(expected)) return TypeCheckerResult.SUCCESS;
+        if(got.getCategory().equals(TypeCategory.VOID)) return TypeCheckerResult.ERROR;
+        if(expected.getCategory().equals(TypeCategory.VOID)) return TypeCheckerResult.ERROR;
+        // at this point the two types must be different and neither of them is void
         return switch (expected.getCategory()) {
             case STRING ->
                     (BUILTIN_TYPES.contains(got) || got.getCategory().equals(TypeCategory.STRUCT)) ? TypeCheckerResult.CONVERTIBLE : TypeCheckerResult.ERROR;

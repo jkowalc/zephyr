@@ -2,14 +2,11 @@ struct A {
     int b
 }
 
-doSomething(A mref hello) {
-    hello.b = 3;
+doSomething() -> bool {
+    return "1";
 }
 
 main() {
-    A mut a = { b: 1 };
-    a.b = 2;
-    doSomething(a);
-    printLn(a);
-    printLn(a.b);
+    string c = doSomething()
+    printLn(c)
 }

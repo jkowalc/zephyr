@@ -355,7 +355,10 @@ public class StaticAnalizer implements ASTVisitor {
             returnStatement.getExpression().accept(this);
             gotReturnType = returnType.get();
         }
-        // TODO: check return type
+        TypeCheckerResult result = TypeChecker.checkType(gotReturnType.getBareStaticType(), expectedReturnType.getBareStaticType());
+        if(result.equals(TypeCheckerResult.ERROR)) {
+            throw new NonConvertibleTypeException(expectedReturnType.getBareStaticType(), gotReturnType.getBareStaticType(), returnStatement.getStartPosition());
+        }
     }
 
     @Override
