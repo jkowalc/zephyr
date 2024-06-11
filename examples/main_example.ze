@@ -1,7 +1,15 @@
+struct A {
+    int b
+}
+
+doSomething(A mref hello) {
+    hello.b = 3;
+}
+
 main() {
-    int b = 1;
-    int mut c = b;
-    c = 2;
-    printLn(b);
-    printLn(c);
+    A mut a = { b: 1 };
+    a.b = 2;
+    doSomething(a);
+    printLn(a);
+    printLn(a.b);
 }

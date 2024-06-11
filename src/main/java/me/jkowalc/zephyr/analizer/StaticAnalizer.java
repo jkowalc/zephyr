@@ -56,8 +56,17 @@ public class StaticAnalizer implements ASTVisitor {
         return type;
     }
 
+    private void resetState() {
+        this.context = new ScopedContext<>();
+        this.returnType = new EphemeralValue<>(null);
+        this.expectedReturnType = null;
+        this.lastFunctionStatement = new EphemeralValue<>(null);
+    }
+
     @Override
     public void visit(Program program) throws ZephyrException {
+        this.types = new TypeBuilder(program.getTypes()).build().getTypes();
+        resetState();
         this.functions = new HashMap<>(BuiltinFunctionManager.BUILTIN_FUNCTIONS);
         for(Map.Entry<String, FunctionDefinition> function : program.getFunctions().entrySet()) {
             if(BuiltinFunctionManager.BUILTIN_FUNCTIONS.containsKey(function.getKey())) {
@@ -77,11 +86,7 @@ public class StaticAnalizer implements ASTVisitor {
         if(!functions.containsKey("main")) {
             throw new MainFunctionNotDefinedException(program.getStartPosition());
         }
-        this.types = new TypeBuilder(program.getTypes()).build().getTypes();
-        this.context = new ScopedContext<>();
-        this.returnType = new EphemeralValue<>(null);
-        this.expectedReturnType = null;
-        this.lastFunctionStatement = new EphemeralValue<>(null);
+        resetState();
         for(FunctionDefinition functionDefinition : program.getFunctions().values()) {
             functionDefinition.accept(this);
             this.returnType.ignore();
