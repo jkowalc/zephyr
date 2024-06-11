@@ -408,7 +408,7 @@ Interpreter napisany w języku Java.
 Do każdego tokenu dodawany jest nr linii oraz nr kolumny w źródle.
 
 |         Typ tokenu         |                                    Wartość                                     |
-| :------------------------: | :----------------------------------------------------------------------------: |
+|:--------------------------:|:------------------------------------------------------------------------------:|
 |       Literał `int`        |                                Obliczona liczba                                |
 |      Literał `float`       |                                Obliczona liczba                                |
 |      Literał `string`      |                           Reprezentowany ciąg znaków                           |

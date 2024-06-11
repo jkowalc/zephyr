@@ -103,7 +103,9 @@ public class TypeChecker {
         }
         return switch (expectedCategory) {
             case STRUCT -> throw new ZephyrInternalException();
-            case INT, FLOAT, STRING, BOOL ->
+            case STRING ->
+                    (BUILTIN_TYPES.contains(gotCategory) || gotCategory.equals(TypeCategory.STRUCT)) ? TypeCheckerResult.CONVERTIBLE : TypeCheckerResult.ERROR;
+            case INT, FLOAT, BOOL ->
                     BUILTIN_TYPES.contains(gotCategory) ? TypeCheckerResult.CONVERTIBLE : TypeCheckerResult.ERROR;
             case ANY_BUILTIN ->
                     BUILTIN_TYPES.contains(gotCategory) ? TypeCheckerResult.SUCCESS : TypeCheckerResult.ERROR;

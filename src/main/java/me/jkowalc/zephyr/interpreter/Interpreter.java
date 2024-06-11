@@ -85,9 +85,9 @@ public class Interpreter implements ASTVisitor {
     @Override
     public void visit(FunctionDefinition functionDefinition) throws ZephyrException {
         context.createScope();
+        List<Value> arguments = this.arguments.get();
         for(int i = 0; i < functionDefinition.getParameters().size(); i++) {
             VariableDefinition parameter = functionDefinition.getParameters().get(i);
-            List<Value> arguments = this.arguments.get();
             try {
                 Value argument = arguments.get(i);
                 Reference reference = argument instanceof Reference var ? var : new Reference(argument);
@@ -294,7 +294,7 @@ public class Interpreter implements ASTVisitor {
         if(condition.value()) {
             ifStatement.getBody().accept(this);
         } else {
-            ifStatement.getElseBlock().accept(this);
+            if(ifStatement.getElseBlock() != null) ifStatement.getElseBlock().accept(this);
         }
     }
 

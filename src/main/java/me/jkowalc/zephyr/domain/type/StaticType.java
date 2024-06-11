@@ -30,4 +30,9 @@ public class StaticType {
         TypeCategory typeCategory = TypeCategory.fromString(type);
         return typeCategory.equals(TypeCategory.NAMED_TYPE) ? new NamedStaticType(type, mutable, reference) : new StaticType(typeCategory, mutable, reference);
     }
+
+    @Override
+    public String toString() {
+        return category.toString();
+    }
 }

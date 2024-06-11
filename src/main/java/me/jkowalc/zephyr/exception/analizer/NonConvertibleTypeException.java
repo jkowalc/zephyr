@@ -5,6 +5,6 @@ import me.jkowalc.zephyr.util.TextPosition;
 
 public class NonConvertibleTypeException extends AnalizerException {
     public NonConvertibleTypeException(StaticType expected, StaticType got, TextPosition position) {
-        super("Wrong type", position);
+        super("Cannot convert type " + got + " to " + expected, position);
     }
 }

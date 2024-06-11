@@ -9,4 +9,9 @@ public class NamedStaticType extends StaticType {
         super(TypeCategory.NAMED_TYPE, mutable, reference);
         this.name = name;
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }

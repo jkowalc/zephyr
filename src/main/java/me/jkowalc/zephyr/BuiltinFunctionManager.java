@@ -22,6 +22,10 @@ public class BuiltinFunctionManager {
                     "print",
                     List.of(new StaticType(TypeCategory.STRING)),
                     new StaticType(TypeCategory.VOID))),
+            entry("printLn", new BuiltinFunctionSignature(
+                    "printLn",
+                    List.of(new StaticType(TypeCategory.STRING)),
+                    new StaticType(TypeCategory.VOID))),
             entry("to_string", new BuiltinFunctionSignature(
                     "to_string",
                     List.of(new StaticType(TypeCategory.ANY_BUILTIN)),
@@ -49,6 +53,17 @@ public class BuiltinFunctionManager {
                 StringValue value = (StringValue) arguments.getFirst();
                 try {
                     outputStream.write(value.value());
+                    outputStream.flush();
+                } catch(IOException e) {
+                    e.printStackTrace();
+                }
+                yield null;
+            }
+            case "printLn" -> {
+                StringValue value = (StringValue) arguments.getFirst();
+                try {
+                    outputStream.write(value.value());
+                    outputStream.write("\n");
                     outputStream.flush();
                 } catch(IOException e) {
                     e.printStackTrace();

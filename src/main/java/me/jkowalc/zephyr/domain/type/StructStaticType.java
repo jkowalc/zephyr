@@ -12,4 +12,14 @@ public class StructStaticType extends StaticType {
         super(TypeCategory.STRUCT, false);
         this.fields = fields;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        fields.forEach((key, value) -> sb.append(key).append(": ").append(value).append(", "));
+        sb.delete(sb.length() - 2, sb.length());
+        sb.append("}");
+        return sb.toString();
+    }
 }

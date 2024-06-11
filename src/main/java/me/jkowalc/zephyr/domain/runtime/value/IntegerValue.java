@@ -11,11 +11,16 @@ public record IntegerValue(int value) implements Value {
 
     @Override
     public Value deepCopy() {
-        return null;
+        return this;
     }
 
     @Override
     public Value getValue() {
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(value);
     }
 }

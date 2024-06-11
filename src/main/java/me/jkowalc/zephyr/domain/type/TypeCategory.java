@@ -20,4 +20,9 @@ public enum TypeCategory {
             default -> NAMED_TYPE;
         };
     }
+
+    @Override
+    public String toString() {
+        return this.name().toLowerCase();
+    }
 }

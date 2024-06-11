@@ -8,7 +8,6 @@ import me.jkowalc.zephyr.analizer.StaticAnalizer;
 import me.jkowalc.zephyr.domain.node.program.Program;
 import me.jkowalc.zephyr.domain.token.Token;
 import me.jkowalc.zephyr.domain.token.TokenType;
-import me.jkowalc.zephyr.exception.ZephyrInternalException;
 import me.jkowalc.zephyr.exception.ZephyrException;
 import me.jkowalc.zephyr.interpreter.Interpreter;
 import me.jkowalc.zephyr.lexer.Lexer;
@@ -71,10 +70,6 @@ public class Main {
         }
         catch(ZephyrException e){
             System.err.println(e.toString());
-            System.exit(1);
-        }
-        catch(ZephyrInternalException e){
-            System.err.println("Zephyr internal error");
             System.exit(1);
         }
     }
