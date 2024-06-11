@@ -16,18 +16,20 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class FullIntegrationTest {
     private String output;
+    private int programExitCode;
     private void executeProgram(String input) throws IOException, ZephyrException {
         Lexer lexer = new Lexer(getStringAsInputStreamReader(input));
         Parser parser = new Parser(new CommentFilter(lexer));
         Program program = parser.parseProgram();
         MockTextPrinter outputstream = new MockTextPrinter();
-        Interpreter interpreter = new Interpreter(outputstream);
-        program.accept(interpreter);
+        Interpreter interpreter = new Interpreter(program, outputstream);
+        programExitCode = interpreter.executeMain();
         output = outputstream.getText();
     }
     @Test
     public void testHelloWorld() throws ZephyrException, IOException {
         executeProgram("main() { print(\"Hello, World!\") }");
+        assertEquals(0, programExitCode);
         assertEquals("Hello, World!", output);
     }
 }

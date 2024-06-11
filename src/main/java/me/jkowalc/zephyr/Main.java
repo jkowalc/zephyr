@@ -60,8 +60,9 @@ public class Main {
                 program.accept(printer);
             }
             else {
-                Interpreter interpreter = new Interpreter(new ConsoleTextPrinter());
-                program.accept(interpreter);
+                Interpreter interpreter = new Interpreter(program, new ConsoleTextPrinter());
+                int exitCode = interpreter.executeMain();
+                System.exit(exitCode);
             }
 
         }

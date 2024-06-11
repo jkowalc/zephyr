@@ -6,7 +6,8 @@ doSomething() -> bool {
     return "1";
 }
 
-main() {
+main() -> int {
     string c = doSomething()
     printLn(c)
+    return 4;
 }

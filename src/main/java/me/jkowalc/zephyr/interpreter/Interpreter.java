@@ -37,22 +37,27 @@ import java.util.List;
 import java.util.Map;
 
 public class Interpreter implements ASTVisitor {
-    private Map<String, FunctionRepresentation> functions;
+    private final Map<String, FunctionRepresentation> functions;
 
-    private Map<String, BareStaticType> types;
+    private final Map<String, BareStaticType> types;
 
-    private final TextPrinter outputStream;
+    private final EphemeralValue<Value> returnValue;
 
-    private EphemeralValue<Value> returnValue;
+    private final EphemeralValue<List<Value>> arguments;
 
-    private EphemeralValue<List<Value>> arguments;
+    private final ScopedContext<Reference> context;
 
-    private ScopedContext<Reference> context;
+    private final BuiltinFunctionManager builtinFunctionManager;
 
-    private BuiltinFunctionManager builtinFunctionManager;
-
-    public Interpreter(TextPrinter outputStream) {
-        this.outputStream = outputStream;
+    public Interpreter(Program program, TextPrinter outputStream) throws ZephyrException {
+        StaticAnalizer analizer = new StaticAnalizer();
+        program.accept(analizer);
+        this.functions = analizer.getFunctions();
+        this.types = analizer.getTypes();
+        this.context = new ScopedContext<>();
+        this.returnValue = new EphemeralValue<>(null);
+        this.arguments = new EphemeralValue<>(List.of());
+        this.builtinFunctionManager = new BuiltinFunctionManager(outputStream);
     }
 
     private BareStaticType getBareType(String typeName, TextPosition position) throws ZephyrException {
@@ -64,27 +69,36 @@ public class Interpreter implements ASTVisitor {
         return type;
     }
 
-    private void executeFunction(FunctionRepresentation functionRepresentation) throws ZephyrException {
+    private void executeFunction(FunctionRepresentation functionRepresentation) throws ZephyrException, ConversionTypeException {
+        Value returnValue;
         if(functionRepresentation.builtIn()) {
-            Value returnValue = this.builtinFunctionManager.execute(functionRepresentation.name(), arguments.get());
-            this.returnValue.set(returnValue);
+            returnValue = this.builtinFunctionManager.execute(functionRepresentation.name(), arguments.get());
         } else {
-            functionRepresentation.definition().accept(this);
-            Value returnValue = this.returnValue.get();
-            this.returnValue.set(returnValue == null ? new VoidValue() : returnValue);
+            try {
+                functionRepresentation.definition().accept(this);
+            } catch (ReturnSignal ignored) {}
+            returnValue = this.returnValue.get();
+            returnValue = (returnValue == null ? new VoidValue() : returnValue);
         }
+        Value convertedReturnValue = TypeConverter.convert(returnValue, functionRepresentation.returnType().getBareStaticType().getCategory());
+        this.returnValue.set(convertedReturnValue);
     }
-    @Override
-    public void visit(Program program) throws ZephyrException {
-        StaticAnalizer analizer = new StaticAnalizer();
-        program.accept(analizer);
-        this.functions = analizer.getFunctions();
-        this.types = analizer.getTypes();
-        this.context = new ScopedContext<>();
-        this.returnValue = new EphemeralValue<>(null);
-        this.arguments = new EphemeralValue<>(List.of());
-        this.builtinFunctionManager = new BuiltinFunctionManager(outputStream);
-        executeFunction(functions.get("main"));
+    public Value executeFunction(String name, List<Value> arguments) throws ZephyrException {
+        FunctionRepresentation functionRepresentation = functions.get(name);
+        this.arguments.set(arguments);
+        try {
+            executeFunction(functionRepresentation);
+        } catch (ConversionTypeException e) {
+            throw new ConversionException(e.getValue(), e.getTarget(), null);
+        }
+        return returnValue.get();
+    }
+    public int executeMain() throws ZephyrException {
+        Value returnValue = executeFunction("main", List.of());
+        if(returnValue instanceof VoidValue)
+            return 0;
+        IntegerValue exitCodeValue = (IntegerValue) returnValue;
+        return exitCodeValue.value();
     }
 
     @Override
@@ -121,6 +135,11 @@ public class Interpreter implements ASTVisitor {
     }
 
     @Override
+    public void visit(Program program) throws ZephyrException {
+        throw new UnsupportedOperationException("Visiting program is not supported. Use executeMain() instead.");
+    }
+
+    @Override
     public void visit(FunctionCall functionCall) throws ZephyrException {
         FunctionRepresentation functionRepresentation = functions.get(functionCall.getName());
         List<Value> args = new ArrayList<>();
@@ -144,13 +163,10 @@ public class Interpreter implements ASTVisitor {
         this.arguments.set(args);
         try {
             executeFunction(functionRepresentation);
-        } catch (ReturnSignal ignored) {}
-        try {
-            Value convertedReturnValue = TypeConverter.convert(returnValue.get(), functionRepresentation.returnType().getBareStaticType().getCategory());
-            returnValue.set(convertedReturnValue);
         } catch (ConversionTypeException e) {
             throw new ConversionException(e.getValue(), e.getTarget(), functionCall.getStartPosition());
         }
+
     }
 
     @Override

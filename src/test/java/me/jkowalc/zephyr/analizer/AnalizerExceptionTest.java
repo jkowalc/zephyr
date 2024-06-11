@@ -19,7 +19,7 @@ import java.util.Map;
 import static java.util.Map.entry;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class ExceptionTest {
+public class AnalizerExceptionTest {
     private final StaticAnalizer analizer = new StaticAnalizer();
 
     private Program programFromMainBlock(StatementBlock block) {

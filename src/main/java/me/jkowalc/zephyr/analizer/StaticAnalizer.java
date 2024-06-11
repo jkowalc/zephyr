@@ -125,7 +125,8 @@ public class StaticAnalizer implements ASTVisitor {
             }
             statement.accept(this);
         }
-        lastFunctionStatement.set(statementBlock.getStatements().getLast());
+        List<Statement> statements = statementBlock.getStatements();
+        lastFunctionStatement.set(!statements.isEmpty() ? statementBlock.getStatements().getLast() : null);
         context.rollback();
     }
 
