@@ -1,15 +1,17 @@
 package me.jkowalc.zephyr.domain.type;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import java.util.Map;
 
 @Getter
-public class StructStaticType extends StaticType {
-    private final Map<String, StaticType> fields;
+@EqualsAndHashCode(callSuper = false)
+public class StructStaticType extends BareStaticType {
+    private final Map<String, BareStaticType> fields;
 
-    public StructStaticType(Map<String, StaticType> fields) {
-        super(TypeCategory.STRUCT, false);
+    public StructStaticType(Map<String, BareStaticType> fields) {
+        super(TypeCategory.STRUCT);
         this.fields = fields;
     }
 

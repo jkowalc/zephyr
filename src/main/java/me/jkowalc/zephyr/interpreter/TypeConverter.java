@@ -7,13 +7,13 @@ import me.jkowalc.zephyr.domain.runtime.value.FloatValue;
 import me.jkowalc.zephyr.domain.runtime.value.IntegerValue;
 import me.jkowalc.zephyr.domain.runtime.value.StringValue;
 import me.jkowalc.zephyr.domain.type.TypeCategory;
-import me.jkowalc.zephyr.exception.ConversionException;
+import me.jkowalc.zephyr.exception.type.ConversionTypeException;
 import me.jkowalc.zephyr.exception.ZephyrInternalException;
 
 
 @Setter
 public class TypeConverter {
-    public static Value convert(Value value, TypeCategory target) throws ConversionException {
+    public static Value convert(Value value, TypeCategory target) throws ConversionTypeException {
         value = value.getValue();
         if (value.getType().equals(target)) return value;
         if (target.equals(TypeCategory.STRING)) return new StringValue(value.toString());
@@ -27,7 +27,7 @@ public class TypeConverter {
                     case BOOL:
                         if(integerValue.value() == 1) return new BooleanValue(true);
                         else if(integerValue.value() == 0) return new BooleanValue(false);
-                        else throw new ConversionException(value, target);
+                        else throw new ConversionTypeException(value, target);
                 }
             case FLOAT:
                 assert value instanceof FloatValue;
@@ -38,7 +38,7 @@ public class TypeConverter {
                     case BOOL:
                         if(floatValue.value() == 1.0) return new BooleanValue(true);
                         else if(floatValue.value() == 0.0) return new BooleanValue(false);
-                        else throw new ConversionException(value, target);
+                        else throw new ConversionTypeException(value, target);
                 }
             case BOOL:
                 assert value instanceof BooleanValue;

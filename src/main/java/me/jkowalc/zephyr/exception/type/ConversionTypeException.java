@@ -1,15 +1,15 @@
-package me.jkowalc.zephyr.exception;
+package me.jkowalc.zephyr.exception.type;
 
 import lombok.Getter;
 import me.jkowalc.zephyr.domain.runtime.Value;
 import me.jkowalc.zephyr.domain.type.TypeCategory;
 
 @Getter
-public class ConversionException extends Exception {
+public class ConversionTypeException extends TypeException {
     private final Value value;
     private final TypeCategory target;
-    public ConversionException(Value value, TypeCategory target) {
-        super("ConversionException");
+    public ConversionTypeException(Value value, TypeCategory target) {
+        super("Cannot convert " + value.toString() + " to " + target.name());
         this.value = value;
         this.target = target;
     }

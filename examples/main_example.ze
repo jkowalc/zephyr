@@ -1,8 +1,7 @@
 main() {
-    bool mut b = true;
-    while(b) {
-        print(b);
-        b = false;
-        print(b);
-    }
+    int b = 1;
+    int mut c = b;
+    c = 2;
+    printLn(b);
+    printLn(c);
 }

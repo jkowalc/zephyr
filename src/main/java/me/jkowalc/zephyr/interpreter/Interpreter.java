@@ -3,7 +3,6 @@ package me.jkowalc.zephyr.interpreter;
 import me.jkowalc.zephyr.BuiltinFunctionManager;
 import me.jkowalc.zephyr.analizer.ScopedContext;
 import me.jkowalc.zephyr.analizer.StaticAnalizer;
-import me.jkowalc.zephyr.domain.CustomFunctionRepresentation;
 import me.jkowalc.zephyr.domain.FunctionRepresentation;
 import me.jkowalc.zephyr.domain.node.expression.FunctionCall;
 import me.jkowalc.zephyr.domain.node.expression.VariableReference;
@@ -13,18 +12,23 @@ import me.jkowalc.zephyr.domain.node.expression.unary.NegationExpression;
 import me.jkowalc.zephyr.domain.node.expression.unary.NotExpression;
 import me.jkowalc.zephyr.domain.node.program.*;
 import me.jkowalc.zephyr.domain.node.statement.*;
-import me.jkowalc.zephyr.domain.runtime.BuiltinFunctionSignature;
 import me.jkowalc.zephyr.domain.runtime.Value;
 import me.jkowalc.zephyr.domain.runtime.Reference;
 import me.jkowalc.zephyr.domain.runtime.value.*;
+import me.jkowalc.zephyr.domain.type.BareStaticType;
 import me.jkowalc.zephyr.domain.type.StaticType;
 import me.jkowalc.zephyr.domain.type.TypeCategory;
 import me.jkowalc.zephyr.exception.*;
-import me.jkowalc.zephyr.exception.runtime.ConversionZephyrException;
+import me.jkowalc.zephyr.exception.analizer.TypeNotDefinedException;
+import me.jkowalc.zephyr.exception.runtime.ConversionException;
 import me.jkowalc.zephyr.exception.runtime.ReturnSignal;
+import me.jkowalc.zephyr.exception.scope.VariableAlreadyDefinedScopeException;
+import me.jkowalc.zephyr.exception.scope.VariableNotDefinedScopeException;
+import me.jkowalc.zephyr.exception.type.ConversionTypeException;
 import me.jkowalc.zephyr.util.ASTVisitor;
 import me.jkowalc.zephyr.util.EphemeralValue;
 import me.jkowalc.zephyr.util.SimpleMap;
+import me.jkowalc.zephyr.util.TextPosition;
 
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
@@ -33,6 +37,8 @@ import java.util.Map;
 
 public class Interpreter implements ASTVisitor {
     private Map<String, FunctionRepresentation> functions;
+
+    private Map<String, BareStaticType> types;
 
     private final OutputStreamWriter outputStream;
 
@@ -51,32 +57,41 @@ public class Interpreter implements ASTVisitor {
     private Value convertAndCatch(Value value, TypeCategory target) {
         try {
             return TypeConverter.convert(value, target);
-        } catch (ConversionException e) {
+        } catch (ConversionTypeException e) {
             throw new ZephyrInternalException();
         }
     }
 
-    private void executeFunction(FunctionRepresentation functionRepresentation) throws ConversionException, ZephyrException {
-        if(functionRepresentation instanceof BuiltinFunctionSignature builtinFunctionSignature) {
-            Value returnValue = this.builtinFunctionManager.execute(builtinFunctionSignature.name(), arguments.get());
+    private BareStaticType getBareType(String typeName, TextPosition position) throws ZephyrException {
+        if(typeName == null)
+            return new BareStaticType(TypeCategory.VOID);
+        BareStaticType type = types.get(typeName);
+        if(type == null)
+            throw new TypeNotDefinedException(typeName, position);
+        return type;
+    }
+
+    private void executeFunction(FunctionRepresentation functionRepresentation) throws ConversionTypeException, ZephyrException {
+        if(functionRepresentation.builtIn()) {
+            Value returnValue = this.builtinFunctionManager.execute(functionRepresentation.name(), arguments.get());
             this.returnValue.set(returnValue);
-        } else if (functionRepresentation instanceof CustomFunctionRepresentation customFunction) {
-            FunctionDefinition functionDefinition = customFunction.functionDefinition();
-            functionDefinition.accept(this);
-        } else throw new ZephyrInternalException();
+        } else {
+            functionRepresentation.definition().accept(this);
+        }
     }
     @Override
     public void visit(Program program) throws ZephyrException {
         StaticAnalizer analizer = new StaticAnalizer();
         program.accept(analizer);
         this.functions = analizer.getFunctions();
+        this.types = analizer.getTypes();
         this.context = new ScopedContext<>();
         this.returnValue = new EphemeralValue<>(null);
         this.arguments = new EphemeralValue<>(List.of());
         this.builtinFunctionManager = new BuiltinFunctionManager(outputStream);
         try {
             executeFunction(functions.get("main"));
-        } catch (ConversionException e) {
+        } catch (ConversionTypeException e) {
             // ConversionException can only occur if the main function is a custom function, which is not possible
             throw new ZephyrInternalException();
         }
@@ -92,7 +107,7 @@ public class Interpreter implements ASTVisitor {
                 Value argument = arguments.get(i);
                 Reference reference = argument instanceof Reference var ? var : new Reference(argument);
                 context.add(parameter.getName(), reference);
-            } catch (VariableAlreadyDefinedException e) {
+            } catch (VariableAlreadyDefinedScopeException e) {
                 throw new ZephyrInternalException();
             }
         }
@@ -116,21 +131,21 @@ public class Interpreter implements ASTVisitor {
         for(int i = 0; i < functionCall.getArguments().size(); i++) {
             functionCall.getArguments().get(i).accept(this);
             Value value = returnValue.get();
-            StaticType requestedtype = functionRepresentation.getParameterTypes().get(i);
+            StaticType requestedtype = functionRepresentation.parameterTypes().get(i);
             if(requestedtype.isReference()) {
                 args.add(value);
                 continue;
             }
-            Value convertedValue = convertAndCatch(value, requestedtype.getCategory());
+            Value convertedValue = convertAndCatch(value, requestedtype.getBareStaticType().getCategory());
             convertedValue = convertedValue.deepCopy();
             args.add(convertedValue);
         }
         this.arguments.set(args);
         try {
             executeFunction(functionRepresentation);
-        } catch (ConversionException e) {
+        } catch (ConversionTypeException e) {
             // ConversionException can occur if the builtin 'to_string', 'to_int', etc. function are called with the wrong argument
-            throw new ConversionZephyrException(e.getValue(), e.getTarget(), functionCall.getStartPosition());
+            throw new ConversionException(e.getValue(), e.getTarget(), functionCall.getStartPosition());
         } catch (ReturnSignal ignored) {}
     }
 
@@ -138,7 +153,7 @@ public class Interpreter implements ASTVisitor {
     public void visit(VariableReference variableReference) {
         try {
             returnValue.set(context.get(variableReference.getName()));
-        } catch (VariableNotDefinedException e) {
+        } catch (VariableNotDefinedScopeException e) {
             // every variable reference should already be checked by the static analizer
             throw new ZephyrInternalException();
         }
@@ -278,7 +293,7 @@ public class Interpreter implements ASTVisitor {
             Value value = returnValue.get();
             try {
                 context.get(variableReference.getName()).setValue(value.getValue().deepCopy());
-            } catch (VariableNotDefinedException e) {
+            } catch (VariableNotDefinedScopeException e) {
                 // every variable reference should already be checked by the static analizer
                 throw new ZephyrInternalException();
             }
@@ -321,12 +336,12 @@ public class Interpreter implements ASTVisitor {
     public void visit(VariableDefinition variableDefinition) throws ZephyrException {
         variableDefinition.getDefaultValue().accept(this);
         Value defaultValue = returnValue.get();
-        TypeCategory targetType = TypeCategory.fromString(variableDefinition.getTypeName());
+        BareStaticType type = getBareType(variableDefinition.getTypeName(), variableDefinition.getStartPosition());
         try {
-            context.add(variableDefinition.getName(), new Reference(TypeConverter.convert(defaultValue, targetType)));
-        } catch (ConversionException e) {
-            throw new ConversionZephyrException(e.getValue(), e.getTarget(), variableDefinition.getDefaultValue().getStartPosition());
-        } catch (VariableAlreadyDefinedException e) {
+            context.add(variableDefinition.getName(), new Reference(TypeConverter.convert(defaultValue, type.getCategory())));
+        } catch (ConversionTypeException e) {
+            throw new ConversionException(e.getValue(), e.getTarget(), variableDefinition.getDefaultValue().getStartPosition());
+        } catch (VariableAlreadyDefinedScopeException e) {
             // every variable definition should already be checked by the static analizer
             throw new ZephyrInternalException();
         }

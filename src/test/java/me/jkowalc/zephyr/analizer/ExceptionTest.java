@@ -7,9 +7,9 @@ import me.jkowalc.zephyr.domain.node.program.Program;
 import me.jkowalc.zephyr.domain.node.statement.ReturnStatement;
 import me.jkowalc.zephyr.domain.node.statement.StatementBlock;
 import me.jkowalc.zephyr.domain.node.statement.VariableDefinition;
-import me.jkowalc.zephyr.exception.analizer.TypeNotDefinedAnalizerException;
-import me.jkowalc.zephyr.exception.analizer.VariableAlreadyDefinedAnalizerException;
-import me.jkowalc.zephyr.exception.analizer.VariableNotDefinedAnalizerException;
+import me.jkowalc.zephyr.exception.analizer.TypeNotDefinedException;
+import me.jkowalc.zephyr.exception.analizer.VariableAlreadyDefinedException;
+import me.jkowalc.zephyr.exception.analizer.VariableNotDefinedException;
 import me.jkowalc.zephyr.exception.analizer.VariableNotInitializedException;
 import org.junit.jupiter.api.Test;
 
@@ -43,7 +43,7 @@ public class ExceptionTest {
                         new ReturnStatement(new VariableReference("a"))
                 )
         ));
-        assertThrows(VariableNotDefinedAnalizerException.class, () -> program.accept(analizer));
+        assertThrows(VariableNotDefinedException.class, () -> program.accept(analizer));
     }
     @Test
     public void testVariableNotInitialized() {
@@ -62,7 +62,7 @@ public class ExceptionTest {
                         new VariableDefinition("a", "int", false, false, new IntegerLiteral(1))
                 )
         ));
-        assertThrows(VariableAlreadyDefinedAnalizerException.class, () -> program.accept(analizer));
+        assertThrows(VariableAlreadyDefinedException.class, () -> program.accept(analizer));
     }
     @Test
     public void testTypeNotDefined() {
@@ -71,6 +71,6 @@ public class ExceptionTest {
                         new VariableDefinition("a", "not_defined", false, false, new IntegerLiteral(1))
                 )
         ));
-        assertThrows(TypeNotDefinedAnalizerException.class, () -> program.accept(analizer));
+        assertThrows(TypeNotDefinedException.class, () -> program.accept(analizer));
     }
 }

@@ -1,7 +1,7 @@
 package me.jkowalc.zephyr.analizer;
 
-import me.jkowalc.zephyr.exception.VariableAlreadyDefinedException;
-import me.jkowalc.zephyr.exception.VariableNotDefinedException;
+import me.jkowalc.zephyr.exception.scope.VariableAlreadyDefinedScopeException;
+import me.jkowalc.zephyr.exception.scope.VariableNotDefinedScopeException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,10 +17,10 @@ public class ScopedContext<T> {
         if(scopes.size() < 2) throw new IllegalStateException("Cannot rollback root scope");
         scopes.removeLast();
     }
-    public void add(String name, T value) throws VariableAlreadyDefinedException {
+    public void add(String name, T value) throws VariableAlreadyDefinedScopeException {
         scopes.getLast().add(name, value);
     }
-    public T get(String name) throws VariableNotDefinedException {
+    public T get(String name) throws VariableNotDefinedScopeException {
         return scopes.getLast().get(name);
     }
     public void set(String name, T value) {
