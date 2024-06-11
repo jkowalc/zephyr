@@ -7,9 +7,8 @@ import me.jkowalc.zephyr.domain.runtime.value.VoidValue;
 import me.jkowalc.zephyr.domain.type.StaticType;
 import me.jkowalc.zephyr.domain.type.TypeCategory;
 import me.jkowalc.zephyr.exception.ZephyrInternalException;
+import me.jkowalc.zephyr.input.TextPrinter;
 
-import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.Map;
 
@@ -48,9 +47,9 @@ public class BuiltinFunctionManager {
                     List.of(StaticType.fromCategory(TypeCategory.BOOL)),
                     StaticType.fromCategory(TypeCategory.BOOL)))
     );
-    private final OutputStreamWriter outputStream;
+    private final TextPrinter outputStream;
 
-    public BuiltinFunctionManager(OutputStreamWriter outputStream) {
+    public BuiltinFunctionManager(TextPrinter outputStream) {
         this.outputStream = outputStream;
     }
 
@@ -58,23 +57,12 @@ public class BuiltinFunctionManager {
         return switch (name) {
             case "print" -> {
                 StringValue value = (StringValue) arguments.getFirst();
-                try {
-                    outputStream.write(value.value());
-                    outputStream.flush();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                outputStream.print(value.value());
                 yield new VoidValue();
             }
             case "printLn" -> {
                 StringValue value = (StringValue) arguments.getFirst();
-                try {
-                    outputStream.write(value.value());
-                    outputStream.write("\n");
-                    outputStream.flush();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                outputStream.print(value.value() + "\n");
                 yield new VoidValue();
             }
             case "to_string", "to_int", "to_float", "to_bool" -> arguments.getFirst();

@@ -9,6 +9,7 @@ import me.jkowalc.zephyr.domain.node.program.Program;
 import me.jkowalc.zephyr.domain.token.Token;
 import me.jkowalc.zephyr.domain.token.TokenType;
 import me.jkowalc.zephyr.exception.ZephyrException;
+import me.jkowalc.zephyr.input.ConsoleTextPrinter;
 import me.jkowalc.zephyr.interpreter.Interpreter;
 import me.jkowalc.zephyr.lexer.Lexer;
 import me.jkowalc.zephyr.parser.ASTPrinter;
@@ -59,7 +60,7 @@ public class Main {
                 program.accept(printer);
             }
             else {
-                Interpreter interpreter = new Interpreter(new OutputStreamWriter(System.out));
+                Interpreter interpreter = new Interpreter(new ConsoleTextPrinter());
                 program.accept(interpreter);
             }
 

@@ -26,12 +26,12 @@ import me.jkowalc.zephyr.exception.runtime.ReturnSignal;
 import me.jkowalc.zephyr.exception.scope.VariableAlreadyDefinedScopeException;
 import me.jkowalc.zephyr.exception.scope.VariableNotDefinedScopeException;
 import me.jkowalc.zephyr.exception.type.ConversionTypeException;
+import me.jkowalc.zephyr.input.TextPrinter;
 import me.jkowalc.zephyr.util.ASTVisitor;
 import me.jkowalc.zephyr.util.EphemeralValue;
 import me.jkowalc.zephyr.util.SimpleMap;
 import me.jkowalc.zephyr.util.TextPosition;
 
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +41,7 @@ public class Interpreter implements ASTVisitor {
 
     private Map<String, BareStaticType> types;
 
-    private final OutputStreamWriter outputStream;
+    private final TextPrinter outputStream;
 
     private EphemeralValue<Value> returnValue;
 
@@ -51,7 +51,7 @@ public class Interpreter implements ASTVisitor {
 
     private BuiltinFunctionManager builtinFunctionManager;
 
-    public Interpreter(OutputStreamWriter outputStream) {
+    public Interpreter(TextPrinter outputStream) {
         this.outputStream = outputStream;
     }
 
