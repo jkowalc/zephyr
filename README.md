@@ -17,7 +17,7 @@ Jako dodatkowy typ danych należy zaimplementować obsługę struktur i rekordu 
 Program składa się z definicji funkcji oraz typów (struktur lub rekordów wariantowych). Przy starcie programu wykonywana jest funkcja `main`.
 
 ```zephyr
-main() {[README.md](README.md)
+main() {
     // komentarz
     printLn"Hello World");
 }
@@ -241,7 +241,8 @@ main() {
 
 #### Sprawdzenie typu rekordu wariantowego
 
-Do sprawdzenia typu służy dedykowane wyrażenie `match`.
+Do sprawdzenia typu służy dedykowane wyrażenie `match`.  
+Z perspektywy wyrażenia `match` typy o tej samej strukturze są sobie równe.
 
 ```zephyr
 struct Result {
@@ -412,27 +413,19 @@ Interpreter napisany w języku Java.
 
 Do każdego tokenu dodawany jest nr linii oraz nr kolumny w źródle.
 
-|         Typ tokenu         |                                    Wartość                                     |
-|:--------------------------:|:------------------------------------------------------------------------------:|
-|       Literał `int`        |                                Obliczona liczba                                |
-|      Literał `float`       |                                Obliczona liczba                                |
-|      Literał `string`      |                           Reprezentowany ciąg znaków                           |
-|       Literał `bool`       |                        Reprezentowana wartość logiczna                         |
-|         Komentarz          |                        Treść komentarza bez znaku `//`                         |
-|       Identyfikator        |                             Wartość identyfikatora                             |
-|       Słowo kluczowe       |                  Enum reprezentujący słowo kluczowe z listy\*                  |
-| Operator negacji logicznej |                                      `!`                                       |
-|  Operator multiplikatywny  |                                 Enum: `*`, `/`                                 |
-|     Operator addytywny     |                                 Enum: `+`, `-`                                 |
-|     Operator relacyjny     |                  Enum: `==`, `>`, `<`, `>=`, `<=`, `==`, `!=`                  |
-|     Operator logiczny      |                               Enum: `and`, `or`                                |
-|    Operator przypisania    |                                      `=`                                       |
-|     Operator strzałki      |                                      `->`                                      |
-|         Typ danych         | Struktura przechowująca odpowiednie nazwy typów wbudowanych lub identyfikatory |
-|           Nawias           |                            Enum: `(`, `)`, `{`, `}`                            |
-|         Separator          |                              Enum: `;`, `:`, `,`                               |
+|    Typ tokenu    |             Wartość             |
+|:----------------:|:-------------------------------:|
+|  Literał `int`   |        Obliczona liczba         |
+| Literał `float`  |        Obliczona liczba         |
+| Literał `string` |   Reprezentowany ciąg znaków    |
+|  Literał `bool`  | Reprezentowana wartość logiczna |
+|    Komentarz     | Treść komentarza bez znaku `//` |
+|  Identyfikator   |     Wartość identyfikatora      |
+|       EOF        |             (brak)              |
 
-\* Lista słów kluczowych:
+Oprócz tego każdy operator, słowo kluczowe i separator ma swój dedykowany typ.
+
+Lista słów kluczowych:
 
 - `struct`
 - `mut`
@@ -445,6 +438,23 @@ Do każdego tokenu dodawany jest nr linii oraz nr kolumny w źródle.
 - `else`
 - `match`
 - `case`
+- `union`
+- `true`
+- `false`
+- `or`
+- `and`
+
+Operatory znajdują się [wyżej](#operatory)
+
+Separatory:
+
+- `,`
+- `:`
+- `;`
+- `(`
+- `)`
+- `{`
+- `}`
 
 ### Sposób uruchomienia
 
@@ -460,9 +470,12 @@ Wymienione wyżej typy tokenów reprezentowane są analogicznymi klasami.
 
 Klasa Parser przyjmuje w konstruktorze obiekt leksera. Posiada funkcję parser(), która parsuje cały program i zwraca obiekt typu Program.
 
-Klasa SemanticAnalizer przyjmuje obiekt typu Program, dokonuje analizy semantycznej i zwraca obiekt typu Program po poprawkach.
+Klasa StaticAnalizer akceptuje jako wizytator obiekt typu Program i dokonuje analizy semantycznej, rzucając wyjątki AnalizerException w przypadku błędów.
+Analiza semantyczna typów jest delegowana do klasy TypeBuilder.
 
-Klasa Interpreter przyjmuje w konstruktorze obiekt Program i posiada funkcję run(), która wołana jest tylko wtedy, gdy wyłączona jest flaga `--parse-only`.
+Klasa Interpreter przyjmuje w konstruktorze obiekt Program i posiada funkcję executeMain(), która wołana jest tylko wtedy, gdy wyłączona jest flaga `--parse-only`.
+
+Dodatkowo Interpreter oraz StaticAnalizer korzystają z klas TypeChecker i TypeConverter do obsługi typów.
 
 ### Opis sposobu testowania
 
@@ -472,12 +485,14 @@ Testy jednostkowe leksera będą tworzyć strumień z przygotowanego tekstu jęz
 
 Testy jednostkowe parsera tworzą mock obiektu leksera, który zwraca spreparowane tokeny. Sprawdzana jest poprawność generowania drzewa, jak i zgłaszanie odpowiednich wyjątków w sytuacjach wyjątkowych.
 
+Testy jednostkowe analizatora statycznego sprawdzają poprawność analizy semantycznej. W tym celu tworzone są obiekty Program z przygotowanymi strukturami i funkcjami, a następnie sprawdzane są zgłaszane wyjątki.
+
 Testy integracyjne sprawdzają poprawność całego interpretera (wszystkich modułów) poprzez sprawdzanie generowanego standardowego wyjścia.
 
 ### Obsługa błędów
 
 Błędy realizowane przez mechanizm wyjątków w języku Java.  
-Rozróżniane między `LexicalError`, `SyntaxError` i `RuntimeError`.
+Rozróżniane między `LexicalException`, `SyntaxException`, `AnalizerException` i `ZephyrRuntimeException`.
 
 W każdym przypadku na ekranie wyświetli się komunikat w formacie:
 

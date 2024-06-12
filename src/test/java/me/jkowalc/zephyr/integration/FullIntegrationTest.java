@@ -28,9 +28,9 @@ public class FullIntegrationTest {
     }
     @Test
     public void testHelloWorld() throws ZephyrException, IOException {
-        executeProgram("main() { print(\"Hello, World!\") }");
+        executeProgram("main() { printLn(\"Hello, World!\") }");
         assertEquals(0, programExitCode);
-        assertEquals("Hello, World!", output);
+        assertEquals("Hello, World!\n", output);
     }
     @Test
     public void testScope() throws ZephyrException, IOException {

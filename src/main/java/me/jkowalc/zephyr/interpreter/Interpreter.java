@@ -23,6 +23,7 @@ import me.jkowalc.zephyr.domain.type.TypeCategory;
 import me.jkowalc.zephyr.exception.*;
 import me.jkowalc.zephyr.exception.analizer.TypeNotDefinedException;
 import me.jkowalc.zephyr.exception.runtime.ConversionException;
+import me.jkowalc.zephyr.exception.runtime.DivideByZeroException;
 import me.jkowalc.zephyr.exception.runtime.ReturnSignal;
 import me.jkowalc.zephyr.exception.scope.VariableNotDefinedScopeException;
 import me.jkowalc.zephyr.exception.type.ConversionTypeException;
@@ -39,6 +40,8 @@ import java.util.stream.Stream;
 public class Interpreter implements ASTVisitor {
     private final Map<String, FunctionRepresentation> functions;
 
+    private final StaticAnalizer analizer;
+
     private final Map<String, BareStaticType> types;
 
     private final EphemeralValue<Value> returnValue;
@@ -52,7 +55,7 @@ public class Interpreter implements ASTVisitor {
     private Value matchValue = null;
 
     public Interpreter(Program program, TextPrinter outputStream) throws ZephyrException {
-        StaticAnalizer analizer = new StaticAnalizer();
+        this.analizer = new StaticAnalizer();
         program.accept(analizer);
         this.functions = analizer.getFunctions();
         this.types = analizer.getTypes();
@@ -99,6 +102,7 @@ public class Interpreter implements ASTVisitor {
     }
 
     public Value evaluateExpression(Expression expression) throws ZephyrException {
+        expression.accept(analizer);
         expression.accept(this);
         return returnValue.get();
     }
@@ -399,6 +403,7 @@ public class Interpreter implements ASTVisitor {
         Pair<FloatValue, FloatValue> floats = convertToFloats(leftValue, rightValue, divideExpression.getStartPosition());
         FloatValue leftFloat = floats.first();
         FloatValue rightFloat = floats.second();
+        if(rightFloat.value() == 0) throw new DivideByZeroException(leftValue, divideExpression.getStartPosition());
         returnValue.set(new FloatValue(leftFloat.value() / rightFloat.value()));
     }
 

@@ -3,7 +3,9 @@ package me.jkowalc.zephyr.interpreter;
 import me.jkowalc.zephyr.VoidTextPrinter;
 import me.jkowalc.zephyr.domain.node.expression.FunctionCall;
 import me.jkowalc.zephyr.domain.node.expression.binary.AddExpression;
+import me.jkowalc.zephyr.domain.node.expression.binary.DivideExpression;
 import me.jkowalc.zephyr.domain.node.expression.binary.EqualExpression;
+import me.jkowalc.zephyr.domain.node.expression.binary.MultiplyExpression;
 import me.jkowalc.zephyr.domain.node.expression.literal.*;
 import me.jkowalc.zephyr.domain.node.program.FunctionDefinition;
 import me.jkowalc.zephyr.domain.node.program.Program;
@@ -14,13 +16,15 @@ import me.jkowalc.zephyr.domain.runtime.value.FloatValue;
 import me.jkowalc.zephyr.domain.runtime.value.IntegerValue;
 import me.jkowalc.zephyr.domain.runtime.value.StringValue;
 import me.jkowalc.zephyr.exception.ZephyrException;
+import me.jkowalc.zephyr.exception.runtime.ConversionException;
+import me.jkowalc.zephyr.exception.runtime.DivideByZeroException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ExpressionEvaluationTest {
     private static final FunctionDefinition DEFAULT_MAIN = new FunctionDefinition("main", List.of(), new StatementBlock(List.of()), null);
@@ -122,5 +126,30 @@ public class ExpressionEvaluationTest {
                 interpreter.evaluateExpression(new AddExpression(
                         new StringLiteral("The struct: "),
                         new StructLiteral(Map.of("a", new IntegerLiteral(1))))));
+    }
+    @Test
+    public void testComplexExpression() throws ZephyrException {
+        Value result = interpreter.evaluateExpression(new MultiplyExpression(
+                new IntegerLiteral(2),
+                new FunctionCall("to_float", List.of(new StringLiteral("2.5")))
+        ));
+        assertInstanceOf(FloatValue.class, result);
+        FloatValue floatValue = (FloatValue) result;
+        assertEquals(5.0f, floatValue.value(), 0.00001f);
+    }
+    @Test
+    public void testDivideByZero() {
+        assertThrows(DivideByZeroException.class, () -> interpreter.evaluateExpression(
+                new DivideExpression(new IntegerLiteral(1), new IntegerLiteral(0))
+        ));
+        assertThrows(DivideByZeroException.class, () -> interpreter.evaluateExpression(
+                new DivideExpression(new FloatLiteral(1.0f), new FloatLiteral(0.0f))
+        ));
+    }
+    @Test
+    public void testConversionException() {
+        assertThrows(ConversionException.class, () -> interpreter.evaluateExpression(
+                new FunctionCall("to_int", List.of(new StringLiteral("a")))
+        ));
     }
 }
