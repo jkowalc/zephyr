@@ -6,6 +6,8 @@ import me.jkowalc.zephyr.domain.node.program.StructDefinitionMember;
 import me.jkowalc.zephyr.domain.node.program.TypeDefinition;
 import me.jkowalc.zephyr.domain.node.program.UnionDefinition;
 import me.jkowalc.zephyr.domain.type.*;
+import me.jkowalc.zephyr.exception.ZephyrException;
+import me.jkowalc.zephyr.exception.analizer.RecursiveTypeDefinitionException;
 import me.jkowalc.zephyr.exception.analizer.TypeAlreadyDefinedException;
 import me.jkowalc.zephyr.exception.analizer.TypeNotDefinedException;
 import me.jkowalc.zephyr.exception.ZephyrInternalException;
@@ -20,6 +22,7 @@ import java.util.Map;
 
 public class TypeBuilder {
     private final Map<String, TypeDefinition> typeDefinitionMap;
+    private final List<String> visited = new ArrayList<>();
 
     @Getter
     private final Map<String, BareStaticType> types = new HashMap<>(
@@ -34,41 +37,49 @@ public class TypeBuilder {
     public TypeBuilder(Map<String, TypeDefinition> types) {
         this.typeDefinitionMap = types;
     }
-    public TypeBuilder build() throws TypeAlreadyDefinedException, TypeNotDefinedException {
+    public TypeBuilder build() throws ZephyrException {
         for(Map.Entry<String, TypeDefinition> entry : typeDefinitionMap.entrySet()) {
             if(this.types.containsKey(entry.getKey())) throw new TypeAlreadyDefinedException(entry.getValue());
+            visited.add(entry.getKey());
             this.types.put(entry.getKey(), buildBareTypeFromDefinition(entry.getValue()));
+            visited.removeLast();
         }
         return this;
     }
-    private TypeDefinition getTypeDefinition(String name, TextPosition position) throws TypeNotDefinedException {
+    private TypeDefinition getTypeDefinition(String name, TextPosition position) throws ZephyrException {
         TypeDefinition typeDefinition = typeDefinitionMap.get(name);
         if (typeDefinition == null) {
             throw new TypeNotDefinedException(name, position);
         }
         return typeDefinition;
     }
-    private BareStaticType buildBareTypeFromName(String name, TextPosition position) throws TypeNotDefinedException {
+    private BareStaticType buildBareTypeFromName(String name, TextPosition position) throws ZephyrException {
+        if(visited.contains(name)) {
+            throw new RecursiveTypeDefinitionException(name, position);
+        }
+        visited.add(name);
         if(types.containsKey(name)) {
             return types.get(name);
         }
-        return buildBareTypeFromDefinition(getTypeDefinition(name, position));
+        BareStaticType type = buildBareTypeFromDefinition(getTypeDefinition(name, position));
+        visited.removeLast();
+        return type;
     }
-    private Map<String, BareStaticType> deriveFieldsFromDefinition(StructDefinition structDefinition) throws TypeNotDefinedException {
+    private Map<String, BareStaticType> deriveFieldsFromDefinition(StructDefinition structDefinition) throws ZephyrException {
         Map<String, BareStaticType> fields = new SimpleMap<>();
         for(StructDefinitionMember member : structDefinition.getMembers()) {
             fields.put(member.getName(), buildBareTypeFromName(member.getTypeName(), member.getStartPosition()));
         }
         return fields;
     }
-    private List<BareStaticType> deriveAlternativesFromDefinition(UnionDefinition unionDefinition) throws TypeNotDefinedException {
+    private List<BareStaticType> deriveAlternativesFromDefinition(UnionDefinition unionDefinition) throws ZephyrException {
         List<BareStaticType> alternatives = new ArrayList<>();
         for(String unionMemberName : unionDefinition.getTypeNames()) {
             alternatives.add(buildBareTypeFromName(unionMemberName, unionDefinition.getStartPosition()));
         }
         return alternatives;
     }
-    private BareStaticType buildBareTypeFromDefinition(TypeDefinition typeDefinition) throws TypeNotDefinedException {
+    private BareStaticType buildBareTypeFromDefinition(TypeDefinition typeDefinition) throws ZephyrException {
         if(typeDefinition instanceof StructDefinition structDefinition) {
             return new StructStaticType(deriveFieldsFromDefinition(structDefinition));
         } else if(typeDefinition instanceof UnionDefinition unionDefinition) {

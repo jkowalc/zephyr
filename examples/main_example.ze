@@ -1,3 +1,5 @@
+struct A { A a }
+
 fib(int n) -> int {
     if(n <= 1) {
         return n;
