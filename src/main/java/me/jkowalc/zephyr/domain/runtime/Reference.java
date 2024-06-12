@@ -14,8 +14,8 @@ public class Reference implements Value {
     }
 
     @Override
-    public TypeCategory getType() {
-        return value.getType();
+    public TypeCategory getCategory() {
+        return value.getCategory();
     }
 
     @Override

@@ -3,7 +3,7 @@ package me.jkowalc.zephyr.domain.runtime;
 import me.jkowalc.zephyr.domain.type.TypeCategory;
 
 public interface Value {
-    TypeCategory getType();
+    TypeCategory getCategory();
     Value deepCopy();
     Value getValue();
 }

@@ -15,10 +15,11 @@ import me.jkowalc.zephyr.exception.ZephyrInternalException;
 public class TypeConverter {
     public static Value convert(Value value, TypeCategory target) throws ConversionTypeException {
         value = value.getValue();
-        if (value.getType().equals(target)) return value;
+        if (value.getCategory().equals(target)) return value;
         if (target.equals(TypeCategory.STRING)) return new StringValue(value.toString());
-        if (value.getType().equals(TypeCategory.STRUCT)) throw new ZephyrInternalException();
-        switch(value.getType()) {
+        if (value.getCategory().equals(TypeCategory.STRUCT)) throw new ZephyrInternalException();
+        if(target.equals(TypeCategory.UNION)) return value;
+        switch(value.getCategory()) {
             case INT:
                 IntegerValue integerValue = (IntegerValue) value;
                 switch(target) {

@@ -17,7 +17,7 @@ Jako dodatkowy typ danych należy zaimplementować obsługę struktur i rekordu 
 Program składa się z definicji funkcji oraz typów (struktur lub rekordów wariantowych). Przy starcie programu wykonywana jest funkcja `main`.
 
 ```zephyr
-main() {
+main() {[README.md](README.md)
     // komentarz
     print("Hello World");
 }

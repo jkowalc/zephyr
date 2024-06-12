@@ -5,7 +5,7 @@ import me.jkowalc.zephyr.domain.type.TypeCategory;
 
 public class VoidValue implements Value {
     @Override
-    public TypeCategory getType() {
+    public TypeCategory getCategory() {
         return TypeCategory.VOID;
     }
 

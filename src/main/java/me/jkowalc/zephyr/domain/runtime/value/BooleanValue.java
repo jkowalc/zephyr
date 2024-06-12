@@ -5,7 +5,7 @@ import me.jkowalc.zephyr.domain.type.TypeCategory;
 
 public record BooleanValue(boolean value) implements Value {
     @Override
-    public TypeCategory getType() {
+    public TypeCategory getCategory() {
         return TypeCategory.BOOL;
     }
 

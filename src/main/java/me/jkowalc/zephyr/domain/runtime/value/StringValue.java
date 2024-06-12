@@ -6,7 +6,7 @@ import me.jkowalc.zephyr.domain.type.TypeCategory;
 public record StringValue(String value) implements Value {
 
     @Override
-    public TypeCategory getType() {
+    public TypeCategory getCategory() {
         return TypeCategory.STRING;
     }
 

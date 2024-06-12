@@ -22,15 +22,13 @@ import me.jkowalc.zephyr.exception.*;
 import me.jkowalc.zephyr.exception.analizer.*;
 import me.jkowalc.zephyr.exception.scope.VariableAlreadyDefinedScopeException;
 import me.jkowalc.zephyr.exception.scope.VariableNotDefinedScopeException;
-import me.jkowalc.zephyr.util.ASTVisitor;
-import me.jkowalc.zephyr.util.EphemeralValue;
-import me.jkowalc.zephyr.util.SimpleMap;
-import me.jkowalc.zephyr.util.TextPosition;
+import me.jkowalc.zephyr.util.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class StaticAnalizer implements ASTVisitor {
     @Getter
@@ -169,84 +167,196 @@ public class StaticAnalizer implements ASTVisitor {
     public void visit(DotExpression dotExpression) throws ZephyrException {
         dotExpression.getValue().accept(this);
         StaticType returnType = this.returnType.get();
-        BareStaticType type = ((StructStaticType) returnType.getBareStaticType()).getFields().get(dotExpression.getField());
+        if(!(returnType.getBareStaticType() instanceof StructStaticType structStaticType)) {
+            throw new InvalidFieldAccessException((Assignable) dotExpression.getValue(), dotExpression.getField(), false, dotExpression.getStartPosition());
+        }
+        BareStaticType type = (structStaticType.getFields().get(dotExpression.getField()));
         if(type == null) {
-            throw new InvalidFieldAccessException((Assignable) dotExpression.getValue(), dotExpression.getField(), dotExpression.getStartPosition());
+            throw new InvalidFieldAccessException((Assignable) dotExpression.getValue(), dotExpression.getField(), true, dotExpression.getStartPosition());
         }
         this.returnType.set(new StaticType(type, returnType.isMutable(), returnType.isReference()));
     }
 
+    private static final List<BareStaticType> ADD_VALID_TYPES = List.of(
+            new BareStaticType(TypeCategory.INT),
+            new BareStaticType(TypeCategory.FLOAT),
+            new BareStaticType(TypeCategory.STRING)
+    );
+
     @Override
     public void visit(AddExpression addExpression) throws ZephyrException {
         addExpression.getLeft().accept(this);
-        StaticType leftType = returnType.get();
+        BareStaticType leftType = returnType.get().getBareStaticType();
         addExpression.getRight().accept(this);
-        StaticType rightType = returnType.get();
+        BareStaticType rightType = returnType.get().getBareStaticType();
+        boolean leftOk = ADD_VALID_TYPES.stream().anyMatch(type -> !TypeChecker.checkType(leftType, type).equals(TypeCheckerResult.ERROR));
+        if(!leftOk) throw new InvalidTypeForOperationException(List.of(new BareStaticType(TypeCategory.FLOAT), leftType), "+", addExpression.getLeft().getStartPosition());
+        boolean rightOk = ADD_VALID_TYPES.stream().anyMatch(type -> !TypeChecker.checkType(rightType, type).equals(TypeCheckerResult.ERROR));
+        if(!rightOk) throw new InvalidTypeForOperationException(List.of(new BareStaticType(TypeCategory.FLOAT), rightType), "+", addExpression.getRight().getStartPosition());
+        if(leftType.getCategory().equals(TypeCategory.INT) && rightType.getCategory().equals(TypeCategory.INT)) {
+            returnType.set(new StaticType(new BareStaticType(TypeCategory.INT)));
+        } else if (leftType.getCategory().equals(TypeCategory.FLOAT) && rightType.getCategory().equals(TypeCategory.INT)) {
+            returnType.set(new StaticType(new BareStaticType(TypeCategory.FLOAT)));
+        } else if (leftType.getCategory().equals(TypeCategory.INT) && rightType.getCategory().equals(TypeCategory.FLOAT)) {
+            returnType.set(new StaticType(new BareStaticType(TypeCategory.FLOAT)));
+        } else {
+            returnType.set(new StaticType(new BareStaticType(TypeCategory.STRING)));
+        }
     }
 
-    @Override
-    public void visit(AndExpression andExpression) {
-
+    public void booleanCheck(Expression expression) throws ZephyrException {
+        expression.accept(this);
+        BareStaticType type = returnType.get().getBareStaticType();
+        TypeCheckerResult result = TypeChecker.checkType(type, new BareStaticType(TypeCategory.BOOL));
+        if(result.equals(TypeCheckerResult.ERROR)) {
+            throw new NonConvertibleTypeException(new BareStaticType(TypeCategory.BOOL), type, expression.getStartPosition());
+        }
     }
-
     @Override
-    public void visit(DivideExpression divideExpression) {
-
-    }
-
-    @Override
-    public void visit(EqualExpression equalExpression) {
-
-    }
-
-    @Override
-    public void visit(GreaterEqualExpression greaterEqualExpression) {
-
-    }
-
-    @Override
-    public void visit(GreaterExpression greaterExpression) {
-
-    }
-
-    @Override
-    public void visit(LessEqualExpression lessEqualExpression) {
-
-    }
-
-    @Override
-    public void visit(LessExpression lessExpression) {
-
-    }
-
-    @Override
-    public void visit(MultiplyExpression multiplyExpression) {
-
-    }
-
-    @Override
-    public void visit(NotEqualExpression notEqualExpression) {
-
-    }
-
-    @Override
-    public void visit(OrExpression orExpression) {
-
-    }
-
-    @Override
-    public void visit(SubtractExpression subtractExpression) {
-
-    }
-
-    @Override
-    public void visit(NegationExpression negationExpression) {
-
-    }
-
-    @Override
-    public void visit(NotExpression notExpression) {
+    public void visit(AndExpression andExpression) throws ZephyrException {
+        booleanCheck(andExpression.getLeft());
+        booleanCheck(andExpression.getRight());
         returnType.set(StaticType.fromCategory(TypeCategory.BOOL));
+    }
+
+    @Override
+    public void visit(OrExpression orExpression) throws ZephyrException {
+        booleanCheck(orExpression.getLeft());
+        booleanCheck(orExpression.getRight());
+        returnType.set(StaticType.fromCategory(TypeCategory.BOOL));
+    }
+
+    @Override
+    public void visit(NotExpression notExpression) throws ZephyrException {
+        notExpression.getExpression().accept(this);
+        BareStaticType type = returnType.get().getBareStaticType();
+        TypeCheckerResult result = TypeChecker.checkType(type, new BareStaticType(TypeCategory.BOOL));
+        if(result.equals(TypeCheckerResult.ERROR)) {
+            throw new NonConvertibleTypeException(new BareStaticType(TypeCategory.BOOL), type, notExpression.getExpression().getStartPosition());
+        }
+        returnType.set(StaticType.fromCategory(TypeCategory.BOOL));
+    }
+
+    private static final List<TypeCategory> INVALID_EQUALITY_TYPES = List.of(
+            TypeCategory.VOID,
+            TypeCategory.UNION
+    );
+
+    public void equalityCheck(Expression left, Expression right) throws ZephyrException {
+        left.accept(this);
+        BareStaticType leftType = returnType.get().getBareStaticType();
+        right.accept(this);
+        BareStaticType rightType = returnType.get().getBareStaticType();
+        if(Stream.of(leftType.getCategory(), rightType.getCategory()).anyMatch(INVALID_EQUALITY_TYPES::contains)) {
+            throw new InvalidTypeForOperationException(List.of(leftType, rightType), "==", left.getStartPosition());
+        }
+        if(rightType.getCategory().equals(leftType.getCategory())) {
+            returnType.set(StaticType.fromCategory(TypeCategory.BOOL));
+            return;
+        }
+        if(leftType.getCategory().equals(TypeCategory.STRUCT) || rightType.getCategory().equals(TypeCategory.STRUCT)) {
+            throw new InvalidTypeForOperationException(List.of(leftType, rightType), "==", left.getStartPosition());
+        }
+        returnType.set(StaticType.fromCategory(TypeCategory.BOOL));
+    }
+    @Override
+    public void visit(EqualExpression equalExpression) throws ZephyrException {
+        equalityCheck(equalExpression.getLeft(), equalExpression.getRight());
+    }
+
+    @Override
+    public void visit(NotEqualExpression notEqualExpression) throws ZephyrException {
+        equalityCheck(notEqualExpression.getLeft(), notEqualExpression.getRight());
+    }
+    private static final List<TypeCategory> INVALID_ARIHMETIC_TYPES = List.of(
+            TypeCategory.VOID,
+            TypeCategory.STRUCT,
+            TypeCategory.UNION
+    );
+
+    private static final List<TypeCategory> AMBIGUOUS_ARITHMETIC_TYPES = List.of(
+            TypeCategory.STRING,
+            TypeCategory.BOOL
+    );
+
+    private void standardArithmeticCheck(Expression left, Expression right, String operator) throws ZephyrException {
+        left.accept(this);
+        BareStaticType leftType = returnType.get().getBareStaticType();
+        right.accept(this);
+        BareStaticType rightType = returnType.get().getBareStaticType();
+        if(Stream.of(leftType.getCategory(), rightType.getCategory()).anyMatch(INVALID_ARIHMETIC_TYPES::contains)) {
+            throw new InvalidTypeForOperationException(List.of(leftType, rightType), operator, left.getStartPosition());
+        }
+        if(Stream.of(leftType.getCategory(), rightType.getCategory()).anyMatch(AMBIGUOUS_ARITHMETIC_TYPES::contains)) {
+            throw new AmbiguousExpressionType(List.of(new BareStaticType(TypeCategory.INT), new BareStaticType(TypeCategory.FLOAT)), left.getStartPosition());
+        }
+        if(leftType.getCategory().equals(TypeCategory.FLOAT) || rightType.getCategory().equals(TypeCategory.FLOAT)) {
+            returnType.set(StaticType.fromCategory(TypeCategory.FLOAT));
+        } else {
+            returnType.set(StaticType.fromCategory(TypeCategory.INT));
+        }
+    }
+
+    @Override
+    public void visit(GreaterEqualExpression greaterEqualExpression) throws ZephyrException {
+        standardArithmeticCheck(greaterEqualExpression.getLeft(), greaterEqualExpression.getRight(), ">=");
+    }
+
+    @Override
+    public void visit(GreaterExpression greaterExpression) throws ZephyrException {
+        standardArithmeticCheck(greaterExpression.getLeft(), greaterExpression.getRight(), ">");
+    }
+
+    @Override
+    public void visit(LessEqualExpression lessEqualExpression) throws ZephyrException {
+        standardArithmeticCheck(lessEqualExpression.getLeft(), lessEqualExpression.getRight(), "<=");
+    }
+
+    @Override
+    public void visit(LessExpression lessExpression) throws ZephyrException {
+        standardArithmeticCheck(lessExpression.getLeft(), lessExpression.getRight(), "<");
+    }
+
+    @Override
+    public void visit(MultiplyExpression multiplyExpression) throws ZephyrException {
+        standardArithmeticCheck(multiplyExpression.getLeft(), multiplyExpression.getRight(), "*");
+    }
+
+    @Override
+    public void visit(DivideExpression divideExpression) throws ZephyrException {
+        // check if both are convertible to float
+        divideExpression.getLeft().accept(this);
+        BareStaticType leftType = returnType.get().getBareStaticType();
+        divideExpression.getRight().accept(this);
+        BareStaticType rightType = returnType.get().getBareStaticType();
+        boolean leftOk = !TypeChecker.checkType(leftType, new BareStaticType(TypeCategory.FLOAT)).equals(TypeCheckerResult.ERROR);
+        boolean rightOk = !TypeChecker.checkType(rightType, new BareStaticType(TypeCategory.FLOAT)).equals(TypeCheckerResult.ERROR);
+        if(!leftOk || !rightOk) {
+            throw new InvalidTypeForOperationException(List.of(leftType, rightType), "/", divideExpression.getStartPosition());
+        }
+        returnType.set(StaticType.fromCategory(TypeCategory.FLOAT));
+    }
+
+    @Override
+    public void visit(SubtractExpression subtractExpression) throws ZephyrException {
+        standardArithmeticCheck(subtractExpression.getLeft(), subtractExpression.getRight(), "-");
+    }
+
+    @Override
+    public void visit(NegationExpression negationExpression) throws ZephyrException {
+        negationExpression.getExpression().accept(this);
+        BareStaticType type = returnType.get().getBareStaticType();
+        if(List.of(TypeCategory.STRUCT, TypeCategory.UNION, TypeCategory.VOID).contains(type.getCategory())) {
+            throw new InvalidTypeForOperationException(List.of(type), "-", negationExpression.getExpression().getStartPosition());
+        }
+        if(type.getCategory().equals(TypeCategory.STRING)) {
+            throw new AmbiguousExpressionType(List.of(new BareStaticType(TypeCategory.INT), new BareStaticType(TypeCategory.FLOAT)), negationExpression.getExpression().getStartPosition());
+        }
+        if(type.getCategory().equals(TypeCategory.FLOAT)) {
+            returnType.set(StaticType.fromCategory(TypeCategory.FLOAT));
+        } else {
+            returnType.set(StaticType.fromCategory(TypeCategory.INT));
+        }
     }
 
     @Override
@@ -281,17 +391,17 @@ public class StaticAnalizer implements ASTVisitor {
 
     @Override
     public void visit(StructDefinition structDefinition) {
-        // TODO: implement checking struct definition
+        throw new UnsupportedOperationException("Visiting struct definition is not supported. Struct definition checks are in TypeBuilder");
     }
 
     @Override
     public void visit(StructDefinitionMember structDefinitionMember) {
-        // TODO: implement checking struct definition member
+        throw new UnsupportedOperationException("Visiting struct definition member is not supported. Struct definition checks are in TypeBuilder");
     }
 
     @Override
     public void visit(UnionDefinition unionDefinition) {
-        // TODO: implement checking union definition
+        throw new UnsupportedOperationException("Visiting union definition is not supported. Union definition checks are in TypeBuilder");
     }
 
     @Override
@@ -349,7 +459,7 @@ public class StaticAnalizer implements ASTVisitor {
 
     @Override
     public void visit(ReturnStatement returnStatement) throws ZephyrException {
-        StaticType gotReturnType = null;
+        StaticType gotReturnType;
         if(returnStatement.getExpression() == null) {
             gotReturnType = StaticType.fromCategory(TypeCategory.VOID);
         } else {
@@ -364,7 +474,7 @@ public class StaticAnalizer implements ASTVisitor {
 
     @Override
     public void visit(VariableDefinition variableDefinition) throws ZephyrException {
-        StaticType variableType = new StaticType(types.get(variableDefinition.getTypeName()), variableDefinition.isMutable(), variableDefinition.isReference());
+        StaticType variableType = new StaticType(getBareType(variableDefinition.getTypeName(), variableDefinition.getStartPosition()), variableDefinition.isMutable(), variableDefinition.isReference());
         if(variableDefinition.getDefaultValue() != null) {
             variableDefinition.getDefaultValue().accept(this);
             StaticType defaultValueType = returnType.get();

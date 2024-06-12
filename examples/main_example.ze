@@ -1,13 +1,15 @@
-struct A {
-    int b
+union A {
+    int,
+    float
 }
-
-doSomething() -> bool {
-    return "1";
-}
-
-main() -> int {
-    string c = doSomething()
-    printLn(c)
-    return 4;
+main() {
+    A a = 1;
+    match(a) {
+        case (int a) {
+            print("Int: " + a);
+        }
+        case (float a) {
+            print("Float: " + a);
+        }
+    }
 }

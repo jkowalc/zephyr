@@ -8,7 +8,7 @@ import java.util.Map;
 
 public record StructValue(Map<String, Value> fields) implements Value {
     @Override
-    public TypeCategory getType() {
+    public TypeCategory getCategory() {
         return TypeCategory.STRUCT;
     }
     @Override
