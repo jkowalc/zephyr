@@ -432,6 +432,11 @@ public class StaticAnalizer implements ASTVisitor {
         context.createLocalScope();
         ifStatement.getBody().accept(this);
         context.rollback();
+        if(ifStatement.getElseBlock() != null) {
+            context.createLocalScope();
+            ifStatement.getElseBlock().accept(this);
+            context.rollback();
+        }
     }
 
     @Override

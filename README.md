@@ -188,7 +188,7 @@ func(int mut a) {
     a = a + 5;
     print(a) // 10
 }
-main() -> int {
+main() {
     int mut a = 5;
     func(a);
     print(a); // 5

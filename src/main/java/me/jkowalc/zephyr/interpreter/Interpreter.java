@@ -491,14 +491,15 @@ public class Interpreter implements ASTVisitor {
     public void visit(IfStatement ifStatement) throws ZephyrException {
         ifStatement.getCondition().accept(this);
         BooleanValue condition = (BooleanValue) returnValue.get().getValue();
-        try {
-            if (condition.value()) {
+        if (condition.value()) {
+            context.createLocalScope();
+            try {
                 ifStatement.getBody().accept(this);
-            } else {
-                if (ifStatement.getElseBlock() != null) ifStatement.getElseBlock().accept(this);
+            } finally {
+                context.rollback();
             }
-        } finally {
-            context.rollback();
+        } else {
+            if (ifStatement.getElseBlock() != null) ifStatement.getElseBlock().accept(this);
         }
     }
 

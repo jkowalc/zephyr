@@ -8,7 +8,6 @@ import me.jkowalc.zephyr.domain.runtime.value.IntegerValue;
 import me.jkowalc.zephyr.domain.runtime.value.StringValue;
 import me.jkowalc.zephyr.domain.type.TypeCategory;
 import me.jkowalc.zephyr.exception.type.ConversionTypeException;
-import me.jkowalc.zephyr.exception.ZephyrInternalException;
 
 
 @Setter
@@ -17,7 +16,7 @@ public class TypeConverter {
         value = value.getValue();
         if (value.getCategory().equals(target)) return value;
         if (target.equals(TypeCategory.STRING)) return new StringValue(value.toString());
-        if (value.getCategory().equals(TypeCategory.STRUCT)) throw new ZephyrInternalException();
+        if (value.getCategory().equals(TypeCategory.STRUCT)) return value;
         if(target.equals(TypeCategory.UNION)) return value;
         switch(value.getCategory()) {
             case INT:
