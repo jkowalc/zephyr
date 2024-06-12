@@ -24,8 +24,8 @@ calcFib(int n) -> FibResult {
 }
 
 main() {
-    int n = 10;
-    FibResult result = fib(n);
+    int n = 6;
+    FibResult result = calcFib(n);
     match(result) {
         case (int x) {
             printLn("Fibonacci of " + n + " is " + x);
