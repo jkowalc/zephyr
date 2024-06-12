@@ -1,15 +1,5 @@
-union A {
-    int,
-    float
-}
 main() {
-    A a = 1;
-    match(a) {
-        case (int a) {
-            print("Int: " + a);
-        }
-        case (float a) {
-            print("Float: " + a);
-        }
-    }
+    int a = 4;
+    int a = 3;
+    print(a); // 3
 }

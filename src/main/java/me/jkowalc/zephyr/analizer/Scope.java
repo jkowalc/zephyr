@@ -1,6 +1,5 @@
 package me.jkowalc.zephyr.analizer;
 
-import me.jkowalc.zephyr.exception.scope.VariableAlreadyDefinedScopeException;
 import me.jkowalc.zephyr.exception.scope.VariableNotDefinedScopeException;
 import me.jkowalc.zephyr.util.SimpleMap;
 
@@ -13,12 +12,6 @@ public class Scope<T> {
         this.parent = parent;
         if(values == null) this.values = new SimpleMap<>();
         else this.values = values;
-    }
-    public void add(String name, T value) throws VariableAlreadyDefinedScopeException {
-        if(values.containsKey(name)) {
-            throw new VariableAlreadyDefinedScopeException("Variable" + name + " already defined");
-        }
-        values.put(name, value);
     }
     public void set(String name, T value) {
         values.put(name, value);

@@ -8,7 +8,6 @@ import me.jkowalc.zephyr.domain.node.statement.ReturnStatement;
 import me.jkowalc.zephyr.domain.node.statement.StatementBlock;
 import me.jkowalc.zephyr.domain.node.statement.VariableDefinition;
 import me.jkowalc.zephyr.exception.analizer.TypeNotDefinedException;
-import me.jkowalc.zephyr.exception.analizer.VariableAlreadyDefinedException;
 import me.jkowalc.zephyr.exception.analizer.VariableNotDefinedException;
 import me.jkowalc.zephyr.exception.analizer.VariableNotInitializedException;
 import org.junit.jupiter.api.Test;
@@ -56,13 +55,7 @@ public class AnalizerExceptionTest {
     }
     @Test
     public void testVariableAlreadyDefined() {
-        Program program = programFromMainBlock(new StatementBlock(
-                List.of(
-                        new VariableDefinition("a", "int", false, false, new IntegerLiteral(1)),
-                        new VariableDefinition("a", "int", false, false, new IntegerLiteral(1))
-                )
-        ));
-        assertThrows(VariableAlreadyDefinedException.class, () -> program.accept(analizer));
+
     }
     @Test
     public void testTypeNotDefined() {

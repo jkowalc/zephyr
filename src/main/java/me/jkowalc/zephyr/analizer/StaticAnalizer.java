@@ -20,7 +20,6 @@ import me.jkowalc.zephyr.domain.type.StaticType;
 import me.jkowalc.zephyr.domain.type.TypeCategory;
 import me.jkowalc.zephyr.exception.*;
 import me.jkowalc.zephyr.exception.analizer.*;
-import me.jkowalc.zephyr.exception.scope.VariableAlreadyDefinedScopeException;
 import me.jkowalc.zephyr.exception.scope.VariableNotDefinedScopeException;
 import me.jkowalc.zephyr.util.*;
 
@@ -116,7 +115,6 @@ public class StaticAnalizer implements ASTVisitor {
 
     @Override
     public void visit(StatementBlock statementBlock) throws ZephyrException {
-        context.createLocalScope();
         for(Statement statement : statementBlock.getStatements()) {
             if(statement instanceof VariableDefinition variableDefinition && variableDefinition.getDefaultValue() == null) {
                 throw new VariableNotInitializedException(variableDefinition.getName(), variableDefinition.getStartPosition());
@@ -125,7 +123,6 @@ public class StaticAnalizer implements ASTVisitor {
         }
         List<Statement> statements = statementBlock.getStatements();
         lastFunctionStatement.set(!statements.isEmpty() ? statementBlock.getStatements().getLast() : null);
-        context.rollback();
     }
 
     @Override
@@ -432,7 +429,9 @@ public class StaticAnalizer implements ASTVisitor {
     @Override
     public void visit(IfStatement ifStatement) throws ZephyrException {
         checkCondition(ifStatement.getCondition());
+        context.createLocalScope();
         ifStatement.getBody().accept(this);
+        context.rollback();
     }
 
     @Override
@@ -448,11 +447,7 @@ public class StaticAnalizer implements ASTVisitor {
     @Override
     public void visit(MatchCase matchCase) throws ZephyrException {
         context.createLocalScope();
-        try {
-            context.add(matchCase.getVariableName(), new StaticType(getBareType(matchCase.getPattern(), matchCase.getStartPosition())));
-        } catch(VariableAlreadyDefinedScopeException ignored) {
-            throw new ZephyrInternalException();
-        }
+        context.set(matchCase.getVariableName(), new StaticType(getBareType(matchCase.getPattern(), matchCase.getStartPosition())));
         matchCase.getBody().accept(this);
         context.rollback();
     }
@@ -484,17 +479,15 @@ public class StaticAnalizer implements ASTVisitor {
                 throw new NonConvertibleTypeException(variableType.getBareStaticType(), defaultValueType.getBareStaticType(), variableDefinition.getDefaultValue().getStartPosition());
             }
         }
-        try {
-            context.add(variableDefinition.getName(), variableType);
-        } catch(VariableAlreadyDefinedScopeException e) {
-            throw new VariableAlreadyDefinedException(variableDefinition.getName(), variableDefinition.getStartPosition());
-        }
+        context.set(variableDefinition.getName(), variableType);
         returnType.set(variableType);
     }
 
     @Override
     public void visit(WhileStatement whileStatement) throws ZephyrException {
         checkCondition(whileStatement.getCondition());
+        context.createLocalScope();
         whileStatement.getBody().accept(this);
+        context.rollback();
     }
 }

@@ -24,7 +24,6 @@ import me.jkowalc.zephyr.exception.*;
 import me.jkowalc.zephyr.exception.analizer.TypeNotDefinedException;
 import me.jkowalc.zephyr.exception.runtime.ConversionException;
 import me.jkowalc.zephyr.exception.runtime.ReturnSignal;
-import me.jkowalc.zephyr.exception.scope.VariableAlreadyDefinedScopeException;
 import me.jkowalc.zephyr.exception.scope.VariableNotDefinedScopeException;
 import me.jkowalc.zephyr.exception.type.ConversionTypeException;
 import me.jkowalc.zephyr.input.TextPrinter;
@@ -113,13 +112,9 @@ public class Interpreter implements ASTVisitor {
         List<Value> arguments = this.arguments.get();
         for (int i = 0; i < functionDefinition.getParameters().size(); i++) {
             VariableDefinition parameter = functionDefinition.getParameters().get(i);
-            try {
-                Value argument = arguments.get(i);
-                Reference reference = argument instanceof Reference var ? var : new Reference(argument);
-                context.add(parameter.getName(), reference);
-            } catch (VariableAlreadyDefinedScopeException e) {
-                throw new ZephyrInternalException();
-            }
+            Value argument = arguments.get(i);
+            Reference reference = argument instanceof Reference var ? var : new Reference(argument);
+            context.set(parameter.getName(), reference);
         }
         try {
             functionDefinition.getBody().accept(this);
@@ -496,10 +491,14 @@ public class Interpreter implements ASTVisitor {
     public void visit(IfStatement ifStatement) throws ZephyrException {
         ifStatement.getCondition().accept(this);
         BooleanValue condition = (BooleanValue) returnValue.get().getValue();
-        if (condition.value()) {
-            ifStatement.getBody().accept(this);
-        } else {
-            if (ifStatement.getElseBlock() != null) ifStatement.getElseBlock().accept(this);
+        try {
+            if (condition.value()) {
+                ifStatement.getBody().accept(this);
+            } else {
+                if (ifStatement.getElseBlock() != null) ifStatement.getElseBlock().accept(this);
+            }
+        } finally {
+            context.rollback();
         }
     }
 
@@ -518,11 +517,7 @@ public class Interpreter implements ASTVisitor {
         boolean result = TypeChecker.checkValue(matchValue, type);
         if (!result) return;
         context.createLocalScope();
-        try {
-            context.add(matchCase.getVariableName(), new Reference(matchValue));
-        } catch (VariableAlreadyDefinedScopeException e) {
-            throw new ZephyrInternalException();
-        }
+        context.set(matchCase.getVariableName(), new Reference(matchValue));
         try {
             matchCase.getBody().accept(this);
         } finally {
@@ -544,12 +539,9 @@ public class Interpreter implements ASTVisitor {
         Value defaultValue = returnValue.get();
         BareStaticType type = getBareType(variableDefinition.getTypeName(), variableDefinition.getStartPosition());
         try {
-            context.add(variableDefinition.getName(), new Reference(TypeConverter.convert(defaultValue, type.getCategory())));
+            context.set(variableDefinition.getName(), new Reference(TypeConverter.convert(defaultValue, type.getCategory())));
         } catch (ConversionTypeException e) {
             throw new ConversionException(e.getValue(), e.getTarget(), variableDefinition.getDefaultValue().getStartPosition());
-        } catch (VariableAlreadyDefinedScopeException e) {
-            // every variable definition should already be checked by the static analizer
-            throw new ZephyrInternalException();
         }
     }
 
@@ -558,7 +550,12 @@ public class Interpreter implements ASTVisitor {
         whileStatement.getCondition().accept(this);
         BooleanValue condition = (BooleanValue) returnValue.get().getValue();
         while (condition.value()) {
-            whileStatement.getBody().accept(this);
+            context.createLocalScope();
+            try {
+                whileStatement.getBody().accept(this);
+            } finally {
+                context.rollback();
+            }
             whileStatement.getCondition().accept(this);
             condition = (BooleanValue) returnValue.get().getValue();
         }

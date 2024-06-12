@@ -1,11 +1,9 @@
 package me.jkowalc.zephyr.analizer;
 
-import me.jkowalc.zephyr.exception.scope.VariableAlreadyDefinedScopeException;
 import me.jkowalc.zephyr.exception.scope.VariableNotDefinedScopeException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class ScopedContext<T> {
     private final List<Scope<T>> scopes = new ArrayList<>();
@@ -17,9 +15,6 @@ public class ScopedContext<T> {
         if(scopes.size() < 2) throw new IllegalStateException("Cannot rollback root scope");
         scopes.removeLast();
     }
-    public void add(String name, T value) throws VariableAlreadyDefinedScopeException {
-        scopes.getLast().add(name, value);
-    }
     public T get(String name) throws VariableNotDefinedScopeException {
         return scopes.getLast().get(name);
     }
@@ -29,13 +24,7 @@ public class ScopedContext<T> {
     public void createScope() {
         scopes.add(new Scope<>(null, null));
     }
-    public void createScope(Map<String, T> values) {
-        scopes.add(new Scope<>(null, values));
-    }
     public void createLocalScope() {
         scopes.add(new Scope<>(scopes.getLast(), null));
-    }
-    public void createLocalScope(Map<String, T> values) {
-        scopes.add(new Scope<>(scopes.getLast(), values));
     }
 }
