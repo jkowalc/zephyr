@@ -5,6 +5,7 @@ import me.jkowalc.zephyr.analizer.ScopedContext;
 import me.jkowalc.zephyr.analizer.StaticAnalizer;
 import me.jkowalc.zephyr.analizer.TypeChecker;
 import me.jkowalc.zephyr.domain.FunctionRepresentation;
+import me.jkowalc.zephyr.domain.node.Node;
 import me.jkowalc.zephyr.domain.node.expression.Expression;
 import me.jkowalc.zephyr.domain.node.expression.FunctionCall;
 import me.jkowalc.zephyr.domain.node.expression.VariableReference;
@@ -115,6 +116,30 @@ public class Interpreter implements ASTVisitor {
         return exitCodeValue.value();
     }
 
+    private Value eval(Node node) throws ZephyrException {
+        node.accept(this);
+        return returnValue.get();
+    }
+    private Value eval(Expression expression) throws ZephyrException {
+        expression.accept(this);
+        return returnValue.get();
+    }
+    private BooleanValue evalBool(Node node) throws ZephyrException {
+        node.accept(this);
+        return (BooleanValue) returnValue.get().getValue();
+    }
+    private BooleanValue evalBool(Expression expression) throws ZephyrException {
+        expression.accept(this);
+        return (BooleanValue) returnValue.get().getValue();
+    }
+    private StructValue evalStruct(Node node) throws ZephyrException {
+        node.accept(this);
+        return (StructValue) returnValue.get().getValue();
+    }
+    private StructValue evalStruct(Expression expression) throws ZephyrException {
+        expression.accept(this);
+        return (StructValue) returnValue.get().getValue();
+    }
     @Override
     public void visit(FunctionDefinition functionDefinition) throws ZephyrException {
         context.createScope();
@@ -155,15 +180,14 @@ public class Interpreter implements ASTVisitor {
         List<Value> args = new ArrayList<>();
         for (int i = 0; i < functionCall.getArguments().size(); i++) {
             Expression argument = functionCall.getArguments().get(i);
-            argument.accept(this);
-            Value value = returnValue.get();
+            Value argumentValue = eval(argument);
             StaticType requestedtype = functionRepresentation.parameterTypes().get(i);
             if (requestedtype.isReference()) {
-                args.add(value);
+                args.add(argumentValue);
                 continue;
             }
             try {
-                Value convertedValue = TypeConverter.convert(value, requestedtype.getBareStaticType().getCategory());
+                Value convertedValue = TypeConverter.convert(argumentValue, requestedtype.getBareStaticType().getCategory());
                 convertedValue = convertedValue.deepCopy();
                 args.add(convertedValue);
             } catch (ConversionTypeException e) {
@@ -176,7 +200,6 @@ public class Interpreter implements ASTVisitor {
         } catch (ConversionTypeException e) {
             throw new ConversionException(e.getValue(), e.getTarget(), functionCall.getStartPosition());
         }
-
     }
 
     @Override
@@ -191,17 +214,14 @@ public class Interpreter implements ASTVisitor {
 
     @Override
     public void visit(DotExpression dotExpression) throws ZephyrException {
-        dotExpression.getValue().accept(this);
-        StructValue value = (StructValue) returnValue.get().getValue();
+        StructValue value = evalStruct(dotExpression.getValue());
         returnValue.set(value.getField(dotExpression.getField()));
     }
 
     @Override
     public void visit(AddExpression addExpression) throws ZephyrException {
-        addExpression.getLeft().accept(this);
-        Value leftValue = returnValue.get();
-        addExpression.getRight().accept(this);
-        Value rightValue = returnValue.get();
+        Value leftValue = eval(addExpression.getLeft());
+        Value rightValue = eval(addExpression.getRight());
         TypeCategory leftCategory = leftValue.getValue().getCategory();
         TypeCategory rightCategory = rightValue.getValue().getCategory();
         if (leftCategory.equals(TypeCategory.INT) && rightCategory.equals(TypeCategory.INT)) {
@@ -229,10 +249,8 @@ public class Interpreter implements ASTVisitor {
     }
 
     private void booleanOperation(Expression left, Expression right, BiFunction<Boolean, Boolean, Boolean> function) throws ZephyrException {
-        left.accept(this);
-        Value leftValue = returnValue.get();
-        right.accept(this);
-        Value rightValue = returnValue.get();
+        Value leftValue = eval(left);
+        Value rightValue = eval(right);
         boolean leftBoolean;
         boolean rightBoolean;
         try {
@@ -289,10 +307,8 @@ public class Interpreter implements ASTVisitor {
     );
 
     private boolean compare(Expression left, Expression right) throws ZephyrException {
-        left.accept(this);
-        Value leftValue = returnValue.get();
-        right.accept(this);
-        Value rightValue = returnValue.get();
+        Value leftValue = eval(left);
+        Value rightValue = eval(right);
         TypeCategory leftCategory = leftValue.getValue().getCategory();
         TypeCategory rightCategory = rightValue.getValue().getCategory();
         if (leftCategory.equals(rightCategory)) {
@@ -323,10 +339,8 @@ public class Interpreter implements ASTVisitor {
     }
 
     private void standardComparisonOperation(Expression left, Expression right, BiPredicate<Float, Float> floatFunction, BiPredicate<Integer,Integer> intFunction) throws ZephyrException {
-        left.accept(this);
-        Value leftValue = returnValue.get();
-        right.accept(this);
-        Value rightValue = returnValue.get();
+        Value leftValue = eval(left);
+        Value rightValue = eval(right);
         TypeCategory leftCategory = leftValue.getValue().getCategory();
         TypeCategory rightCategory = rightValue.getValue().getCategory();
         if (leftCategory.equals(TypeCategory.INT) && rightCategory.equals(TypeCategory.INT)) {
@@ -340,10 +354,8 @@ public class Interpreter implements ASTVisitor {
     }
 
     private void standardArithmeticOperation(Expression left, Expression right, BiFunction<Float, Float, Float> floatFunction, BiFunction<Integer, Integer, Integer> intFunction) throws ZephyrException {
-        left.accept(this);
-        Value leftValue = returnValue.get();
-        right.accept(this);
-        Value rightValue = returnValue.get();
+        Value leftValue = eval(left);
+        Value rightValue = eval(right);
         TypeCategory leftCategory = leftValue.getValue().getCategory();
         TypeCategory rightCategory = rightValue.getValue().getCategory();
         if (leftCategory.equals(TypeCategory.INT) && rightCategory.equals(TypeCategory.INT)) {
@@ -396,10 +408,8 @@ public class Interpreter implements ASTVisitor {
     }
     @Override
     public void visit(DivideExpression divideExpression) throws ZephyrException {
-        divideExpression.getLeft().accept(this);
-        Value leftValue = returnValue.get();
-        divideExpression.getRight().accept(this);
-        Value rightValue = returnValue.get();
+        Value leftValue = eval(divideExpression.getLeft());
+        Value rightValue = eval(divideExpression.getRight());
         Pair<FloatValue, FloatValue> floats = convertToFloats(leftValue, rightValue, divideExpression.getStartPosition());
         FloatValue leftFloat = floats.first();
         FloatValue rightFloat = floats.second();
@@ -414,8 +424,7 @@ public class Interpreter implements ASTVisitor {
 
     @Override
     public void visit(NegationExpression negationExpression) throws ZephyrException {
-        negationExpression.getExpression().accept(this);
-        Value value = returnValue.get();
+        Value value = eval(negationExpression.getExpression());
         TypeCategory category = value.getValue().getCategory();
         if (category.equals(TypeCategory.FLOAT)) {
             FloatValue floatValue = (FloatValue) value.getValue();
@@ -455,8 +464,7 @@ public class Interpreter implements ASTVisitor {
     public void visit(StructLiteral structLiteral) throws ZephyrException {
         Map<String, Value> fields = new SimpleMap<>();
         for (Map.Entry<String, Literal> entry : structLiteral.getFields().entrySet()) {
-            entry.getValue().accept(this);
-            fields.put(entry.getKey(), returnValue.get());
+            fields.put(entry.getKey(), eval(entry.getValue()));
         }
         returnValue.set(new StructValue(fields));
     }
@@ -479,13 +487,10 @@ public class Interpreter implements ASTVisitor {
     @Override
     public void visit(AssignmentStatement assignmentStatement) throws ZephyrException {
         if (assignmentStatement.getTarget() instanceof DotExpression dotExpression) {
-            dotExpression.getValue().accept(this);
-            StructValue target = (StructValue) returnValue.get().getValue();
-            assignmentStatement.getValue().accept(this);
-            target.setField(dotExpression.getField(), returnValue.get());
+            StructValue target = evalStruct(dotExpression.getValue());
+            target.setField(dotExpression.getField(), eval(assignmentStatement.getValue()));
         } else if (assignmentStatement.getTarget() instanceof VariableReference variableReference) {
-            assignmentStatement.getValue().accept(this);
-            Value value = returnValue.get();
+            Value value = eval(assignmentStatement.getValue());
             try {
                 context.get(variableReference.getName()).setValue(value.getValue().deepCopy());
             } catch (VariableNotDefinedScopeException e) {
@@ -499,8 +504,7 @@ public class Interpreter implements ASTVisitor {
 
     @Override
     public void visit(IfStatement ifStatement) throws ZephyrException {
-        ifStatement.getCondition().accept(this);
-        BooleanValue condition = (BooleanValue) returnValue.get().getValue();
+        BooleanValue condition = evalBool(ifStatement.getCondition());
         if (condition.value()) {
             context.createLocalScope();
             try {
@@ -515,8 +519,7 @@ public class Interpreter implements ASTVisitor {
 
     @Override
     public void visit(MatchStatement matchStatement) throws ZephyrException {
-        matchStatement.getExpression().accept(this);
-        matchValue = returnValue.get().getValue();
+        matchValue = eval(matchStatement.getExpression()).getValue();
         for (MatchCase matchCase : matchStatement.getCases()) {
             matchCase.accept(this);
         }
@@ -540,14 +543,14 @@ public class Interpreter implements ASTVisitor {
     public void visit(ReturnStatement returnStatement) throws ZephyrException {
         if (returnStatement.getExpression() != null) {
             returnStatement.getExpression().accept(this);
+            // propagate return value
         }
         throw new ReturnSignal();
     }
 
     @Override
     public void visit(VariableDefinition variableDefinition) throws ZephyrException {
-        variableDefinition.getDefaultValue().accept(this);
-        Value defaultValue = returnValue.get();
+        Value defaultValue = eval(variableDefinition.getDefaultValue());
         BareStaticType type = getBareType(variableDefinition.getTypeName(), variableDefinition.getStartPosition());
         try {
             context.set(variableDefinition.getName(), new Reference(TypeConverter.convert(defaultValue, type.getCategory())));
@@ -558,8 +561,7 @@ public class Interpreter implements ASTVisitor {
 
     @Override
     public void visit(WhileStatement whileStatement) throws ZephyrException {
-        whileStatement.getCondition().accept(this);
-        BooleanValue condition = (BooleanValue) returnValue.get().getValue();
+        BooleanValue condition = evalBool(whileStatement.getCondition());
         while (condition.value()) {
             context.createLocalScope();
             try {
@@ -567,8 +569,7 @@ public class Interpreter implements ASTVisitor {
             } finally {
                 context.rollback();
             }
-            whileStatement.getCondition().accept(this);
-            condition = (BooleanValue) returnValue.get().getValue();
+            condition = evalBool(whileStatement.getCondition());
         }
     }
 }

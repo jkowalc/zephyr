@@ -2,11 +2,9 @@ package me.jkowalc.zephyr.interpreter;
 
 import me.jkowalc.zephyr.VoidTextPrinter;
 import me.jkowalc.zephyr.domain.node.expression.FunctionCall;
-import me.jkowalc.zephyr.domain.node.expression.binary.AddExpression;
-import me.jkowalc.zephyr.domain.node.expression.binary.DivideExpression;
-import me.jkowalc.zephyr.domain.node.expression.binary.EqualExpression;
-import me.jkowalc.zephyr.domain.node.expression.binary.MultiplyExpression;
+import me.jkowalc.zephyr.domain.node.expression.binary.*;
 import me.jkowalc.zephyr.domain.node.expression.literal.*;
+import me.jkowalc.zephyr.domain.node.expression.unary.NotExpression;
 import me.jkowalc.zephyr.domain.node.program.FunctionDefinition;
 import me.jkowalc.zephyr.domain.node.program.Program;
 import me.jkowalc.zephyr.domain.node.statement.StatementBlock;
@@ -16,6 +14,8 @@ import me.jkowalc.zephyr.domain.runtime.value.FloatValue;
 import me.jkowalc.zephyr.domain.runtime.value.IntegerValue;
 import me.jkowalc.zephyr.domain.runtime.value.StringValue;
 import me.jkowalc.zephyr.exception.ZephyrException;
+import me.jkowalc.zephyr.exception.analizer.AmbiguousExpressionType;
+import me.jkowalc.zephyr.exception.analizer.NonConvertibleTypeException;
 import me.jkowalc.zephyr.exception.runtime.ConversionException;
 import me.jkowalc.zephyr.exception.runtime.DivideByZeroException;
 import org.junit.jupiter.api.BeforeAll;
@@ -138,12 +138,63 @@ public class ExpressionEvaluationTest {
         assertEquals(5.0f, floatValue.value(), 0.00001f);
     }
     @Test
+    public void testBoolean() throws ZephyrException {
+        assertEquals(new BooleanValue(false),
+                interpreter.evaluateExpression(new AndExpression(new BooleanLiteral(false), new BooleanLiteral(true))));
+        assertEquals(new BooleanValue(true),
+                interpreter.evaluateExpression(new OrExpression(new BooleanLiteral(false), new BooleanLiteral(true))));
+        assertEquals(new BooleanValue(true),
+                interpreter.evaluateExpression(new NotExpression(new BooleanLiteral(false))));
+        assertEquals(new BooleanValue(false),
+                interpreter.evaluateExpression(new NotExpression(new BooleanLiteral(true))));
+        assertEquals(new BooleanValue(true),
+                interpreter.evaluateExpression(new NotExpression(new NotExpression(new BooleanLiteral(true)))));
+        assertEquals(new BooleanValue(true),
+                interpreter.evaluateExpression(new NotExpression(new NotExpression(new StringLiteral("a")))));
+        assertEquals(new BooleanValue(false),
+                interpreter.evaluateExpression(new NotExpression(new NotExpression(new StringLiteral("")))));
+        assertEquals(new BooleanValue(false),
+                interpreter.evaluateExpression(new NotExpression(new NotExpression(new IntegerLiteral(0)))));
+        assertEquals(new BooleanValue(true),
+                interpreter.evaluateExpression(new NotExpression(new NotExpression(new IntegerLiteral(1)))));
+        assertEquals(new BooleanValue(true),
+                interpreter.evaluateExpression(new NotExpression(new NotExpression(new FloatLiteral(1.0f)))));
+        assertEquals(new BooleanValue(false),
+                interpreter.evaluateExpression(new NotExpression(new NotExpression(new FloatLiteral(0.0f)))));
+        assertThrows(NonConvertibleTypeException.class, () -> interpreter.evaluateExpression(
+                new NotExpression(new StructLiteral(Map.of("a", new IntegerLiteral(1))))
+        ));
+    }
+    @Test
+    public void testDivide() throws ZephyrException {
+        assertEquals(new FloatValue(2.0f),
+                interpreter.evaluateExpression(new DivideExpression(new IntegerLiteral(4), new IntegerLiteral(2))));
+        assertEquals(new FloatValue(2.0f),
+                interpreter.evaluateExpression(new DivideExpression(new IntegerLiteral(4), new FloatLiteral(2.0f))));
+        assertEquals(new FloatValue(2.0f),
+                interpreter.evaluateExpression(new DivideExpression(new FloatLiteral(4.0f), new IntegerLiteral(2))));
+        assertEquals(new FloatValue(2.0f),
+                interpreter.evaluateExpression(new DivideExpression(new FloatLiteral(4.0f), new FloatLiteral(2.0f))));
+    }
+    @Test
     public void testDivideByZero() {
         assertThrows(DivideByZeroException.class, () -> interpreter.evaluateExpression(
                 new DivideExpression(new IntegerLiteral(1), new IntegerLiteral(0))
         ));
         assertThrows(DivideByZeroException.class, () -> interpreter.evaluateExpression(
                 new DivideExpression(new FloatLiteral(1.0f), new FloatLiteral(0.0f))
+        ));
+    }
+    @Test
+    public void testMultiply() throws ZephyrException {
+        assertEquals(new IntegerValue(6),
+                interpreter.evaluateExpression(new MultiplyExpression(new IntegerLiteral(2), new IntegerLiteral(3))));
+        assertEquals(new IntegerValue(-6),
+                interpreter.evaluateExpression(new MultiplyExpression(new IntegerLiteral(2), new IntegerLiteral(-3))));
+        assertEquals(new FloatValue(6.0f),
+                interpreter.evaluateExpression(new MultiplyExpression(new IntegerLiteral(2), new FloatLiteral(3.0f))));
+        assertThrows(AmbiguousExpressionType.class, () -> interpreter.evaluateExpression(
+                new MultiplyExpression(new StringLiteral("2"), new StringLiteral("3"))
         ));
     }
     @Test
