@@ -66,11 +66,8 @@ public class StaticAnalizer implements ASTVisitor {
         resetState();
         this.functions = new HashMap<>(BuiltinFunctionManager.BUILTIN_FUNCTIONS);
         for(Map.Entry<String, FunctionDefinition> function : program.getFunctions().entrySet()) {
-            if(BuiltinFunctionManager.BUILTIN_FUNCTIONS.containsKey(function.getKey())) {
-                throw new FunctionAlreadyDefinedException(function.getKey(), true, function.getValue().getStartPosition());
-            }
             if(functions.containsKey(function.getKey())) {
-                throw new FunctionAlreadyDefinedException(function.getKey(), false, function.getValue().getStartPosition());
+                throw new FunctionAlreadyDefinedException(function.getKey(), function.getValue().getStartPosition());
             }
             StaticType returnType = new StaticType(getBareType(function.getValue().getReturnType(), function.getValue().getStartPosition()));
             List<StaticType> parameterTypes = new ArrayList<>();

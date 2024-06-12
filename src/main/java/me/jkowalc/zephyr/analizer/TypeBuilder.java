@@ -57,10 +57,10 @@ public class TypeBuilder {
         if(visited.contains(name)) {
             throw new RecursiveTypeDefinitionException(name, position);
         }
-        visited.add(name);
         if(types.containsKey(name)) {
             return types.get(name);
         }
+        visited.add(name);
         BareStaticType type = buildBareTypeFromDefinition(getTypeDefinition(name, position));
         visited.removeLast();
         return type;

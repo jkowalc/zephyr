@@ -98,6 +98,11 @@ public class Interpreter implements ASTVisitor {
         return returnValue.get();
     }
 
+    public Value evaluateExpression(Expression expression) throws ZephyrException {
+        expression.accept(this);
+        return returnValue.get();
+    }
+
     public int executeMain() throws ZephyrException {
         Value returnValue = executeFunction("main", List.of());
         if (returnValue instanceof VoidValue)

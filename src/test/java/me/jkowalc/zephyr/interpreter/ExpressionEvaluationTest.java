@@ -1,19 +1,20 @@
 package me.jkowalc.zephyr.interpreter;
 
 import me.jkowalc.zephyr.VoidTextPrinter;
-import me.jkowalc.zephyr.domain.node.expression.Expression;
+import me.jkowalc.zephyr.domain.node.expression.FunctionCall;
+import me.jkowalc.zephyr.domain.node.expression.binary.AddExpression;
 import me.jkowalc.zephyr.domain.node.expression.binary.EqualExpression;
-import me.jkowalc.zephyr.domain.node.expression.literal.FloatLiteral;
-import me.jkowalc.zephyr.domain.node.expression.literal.IntegerLiteral;
-import me.jkowalc.zephyr.domain.node.expression.literal.StringLiteral;
+import me.jkowalc.zephyr.domain.node.expression.literal.*;
 import me.jkowalc.zephyr.domain.node.program.FunctionDefinition;
 import me.jkowalc.zephyr.domain.node.program.Program;
-import me.jkowalc.zephyr.domain.node.statement.ReturnStatement;
 import me.jkowalc.zephyr.domain.node.statement.StatementBlock;
 import me.jkowalc.zephyr.domain.runtime.Value;
 import me.jkowalc.zephyr.domain.runtime.value.BooleanValue;
+import me.jkowalc.zephyr.domain.runtime.value.FloatValue;
 import me.jkowalc.zephyr.domain.runtime.value.IntegerValue;
+import me.jkowalc.zephyr.domain.runtime.value.StringValue;
 import me.jkowalc.zephyr.exception.ZephyrException;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -22,43 +23,104 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ExpressionEvaluationTest {
-    private Value result;
     private static final FunctionDefinition DEFAULT_MAIN = new FunctionDefinition("main", List.of(), new StatementBlock(List.of()), null);
-    private void evaluate(Expression expression, String expectedType) throws ZephyrException {
-        Program program = new Program(Map.of("main", DEFAULT_MAIN, "eval",
-                new FunctionDefinition("eval",
-                        List.of(),
-                        new StatementBlock(List.of(
-                                new ReturnStatement(expression)
-                        )), expectedType)), Map.of());
-        Interpreter interpreter = new Interpreter(program, new VoidTextPrinter());
-        result = interpreter.executeFunction("eval", List.of());
+    private static Interpreter interpreter;
+    @BeforeAll
+    public static void setUp() throws ZephyrException {
+        interpreter = new Interpreter(new Program(Map.of("main", DEFAULT_MAIN), Map.of()), new VoidTextPrinter());
     }
     @Test
     public void testBasicExpression() throws ZephyrException {
-        evaluate(new IntegerLiteral(1), "int");
+        Value result = interpreter.evaluateExpression(new IntegerLiteral(1));
         assertEquals(new IntegerValue(1), result);
     }
     @Test
     public void testEqualsBasic() throws ZephyrException {
-        evaluate(new EqualExpression(new IntegerLiteral(1), new IntegerLiteral(1)), "bool");
-        assertEquals(new BooleanValue(true), result);
-        evaluate(new EqualExpression(new IntegerLiteral(1), new IntegerLiteral(2)), "bool");
-        assertEquals(new BooleanValue(false), result);
+        assertEquals(new BooleanValue(true),
+                interpreter.evaluateExpression(new EqualExpression(new IntegerLiteral(1), new IntegerLiteral(1))));
 
-        evaluate(new EqualExpression(new StringLiteral("a"), new StringLiteral("a")), "bool");
-        assertEquals(new BooleanValue(true), result);
-        evaluate(new EqualExpression(new StringLiteral("a"), new StringLiteral("b")), "bool");
-        assertEquals(new BooleanValue(false), result);
+        assertEquals(new BooleanValue(false),
+                interpreter.evaluateExpression(new EqualExpression(new IntegerLiteral(1), new IntegerLiteral(2))));
+
+        assertEquals(new BooleanValue(true),
+                interpreter.evaluateExpression(new EqualExpression(new StringLiteral("a"), new StringLiteral("a"))));
+
+        assertEquals(new BooleanValue(false),
+                interpreter.evaluateExpression(new EqualExpression(new StringLiteral("a"), new StringLiteral("b"))));
     }
     @Test
     public void testEqualsArithmeticConversion() throws ZephyrException {
-        evaluate(new EqualExpression(new IntegerLiteral(1), new FloatLiteral(1.0f)), "bool");
-        assertEquals(new BooleanValue(true), result);
+        assertEquals(new BooleanValue(true),
+                interpreter.evaluateExpression(new EqualExpression(new IntegerLiteral(1), new FloatLiteral(1.0f))));
 
-        evaluate(new EqualExpression(new IntegerLiteral(1), new FloatLiteral(1.1f)), "bool");
-        assertEquals(new BooleanValue(false), result);
+        assertEquals(new BooleanValue(false),
+                interpreter.evaluateExpression(new EqualExpression(new IntegerLiteral(1), new FloatLiteral(1.1f))));
+    }
+    @Test
+    public void testAdd() throws ZephyrException {
+        assertEquals(new IntegerValue(3),
+                interpreter.evaluateExpression(new AddExpression(new IntegerLiteral(1), new IntegerLiteral(2))));
 
+        assertEquals(new FloatValue(2.0f),
+                interpreter.evaluateExpression(new AddExpression(new IntegerLiteral(1), new FloatLiteral(1.0f))));
 
+        assertEquals(new FloatValue(2.0f),
+                interpreter.evaluateExpression(new AddExpression(new FloatLiteral(1.0f), new IntegerLiteral(1))));
+
+        assertEquals(new StringValue("1a"),
+                interpreter.evaluateExpression(new AddExpression(new IntegerLiteral(1), new StringLiteral("a"))));
+
+        assertEquals(new StringValue("a1"),
+                interpreter.evaluateExpression(new AddExpression(new StringLiteral("a"), new IntegerLiteral(1))));
+
+        assertEquals(new StringValue("1.0a"),
+                interpreter.evaluateExpression(new AddExpression(new FloatLiteral(1.0f), new StringLiteral("a"))));
+
+        assertEquals(new StringValue("a1.0"),
+                interpreter.evaluateExpression(new AddExpression(new StringLiteral("a"), new FloatLiteral(1.0f))));
+
+        assertEquals(new StringValue("atrue"),
+                interpreter.evaluateExpression(new AddExpression(new StringLiteral("a"), new BooleanLiteral(true))));
+
+        assertEquals(new StringValue("truea"),
+                interpreter.evaluateExpression(new AddExpression(new BooleanLiteral(true), new StringLiteral("a"))));
+
+        assertEquals(new StringValue("true1"),
+                interpreter.evaluateExpression(new AddExpression(new BooleanLiteral(true), new IntegerLiteral(1))));
+    }
+    @Test
+    public void testAddExplicitConversion() throws ZephyrException {
+        assertEquals(new IntegerValue(2),
+                interpreter.evaluateExpression(new AddExpression(new IntegerLiteral(1), new FunctionCall("to_int", List.of(new BooleanLiteral(true))))));
+
+        assertEquals(new FloatValue(2.0f),
+                interpreter.evaluateExpression(new AddExpression(new IntegerLiteral(1), new FunctionCall("to_float", List.of(new BooleanLiteral(true))))));
+    }
+    @Test
+    public void testAddStruct() throws ZephyrException {
+        assertEquals(new StringValue("1{a: 1}"),
+                interpreter.evaluateExpression(new AddExpression(
+                        new IntegerLiteral(1),
+                        new StructLiteral(Map.of("a", new IntegerLiteral(1))))));
+
+        assertEquals(new StringValue("{a: 1}1"),
+                interpreter.evaluateExpression(new AddExpression(
+                        new StructLiteral(Map.of("a", new IntegerLiteral(1))),
+                        new IntegerLiteral(1))));
+
+        assertEquals(new StringValue("{a: 1}{b: 2}"),
+                interpreter.evaluateExpression(new AddExpression(
+                        new StructLiteral(Map.of("a", new IntegerLiteral(1))),
+                        new StructLiteral(Map.of("b", new IntegerLiteral(2))))));
+
+        assertEquals(new StringValue("1.0{a: 1}"),
+                interpreter.evaluateExpression(new AddExpression(
+                        new FloatLiteral(1.0f),
+                        new StructLiteral(Map.of("a", new IntegerLiteral(1))))));
+
+        assertEquals(new StringValue("The struct: {a: 1}"),
+                interpreter.evaluateExpression(new AddExpression(
+                        new StringLiteral("The struct: "),
+                        new StructLiteral(Map.of("a", new IntegerLiteral(1))))));
     }
 }

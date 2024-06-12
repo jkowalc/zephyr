@@ -19,7 +19,7 @@ Program składa się z definicji funkcji oraz typów (struktur lub rekordów war
 ```zephyr
 main() {[README.md](README.md)
     // komentarz
-    print("Hello World");
+    printLn"Hello World");
 }
 ```
 
@@ -59,10 +59,10 @@ W zależności od sytuacji może oznaczać konkatenację ciągów znaków lub do
 
 ```zephyr
 main() {
-    print(3.1 + 3); // 6.1
-    print("2.4" + 3.6); // "2.43.6"
-    print(3.6 + "2.4"); // "3.62.4"
-    print(false + "str"); // "falsestr"
+    printLn3.1 + 3); // 6.1
+    printLn"2.4" + 3.6); // "2.43.6"
+    printLn3.6 + "2.4"); // "3.62.4"
+    printLnfalse + "str"); // "falsestr"
 }
 ```
 
@@ -97,7 +97,7 @@ Zasady:
 ```zephyr
 main() {
     int a = 5;
-    print(a); // 5
+    printLna); // 5
 }
 ```
 
@@ -105,7 +105,7 @@ main() {
 main() {
     int a = 4;
     int a = 3;
-    print(a); // 3
+    printLna); // 3
 }
 ```
 
@@ -114,9 +114,9 @@ main() {
     int a = 5;
     {
         int a = 2;
-        print(a); // 2
+        printLna); // 2
     }
-    print(a); // 5
+    printLna); // 5
 }
 ```
 
@@ -143,13 +143,14 @@ Funkcja bez zwracanej wartości (void)
 
 ```zephyr
 func(int a) {
-    print(a);
+    printLna);
 }
 ```
 
 ### Funkcje wbudowane
 
 - print() - wypisuje tekst na standardowe wyjście
+- printLn() - wypisuje tekst na standardowe wyjście z nową linią
 - to_string() - jawna konwersja na typ `string` (potrzebna tylko w nietypowych przypadkach)
 - to_float()
 - to_int()
@@ -169,7 +170,7 @@ func(int mref a) {
 main() -> int {
     int mut a = 5;
     func(a); // rzutowanie na referencję
-    print(a); // 10
+    printLn(a); // 10
     return 0;
 }
 ```
@@ -186,14 +187,14 @@ func(int a) {
 ```zephyr
 func(int mut a) {
     a = a + 5;
-    print(a) // 10
+    printLn(a) // 10
 }
 main() {
     int mut a = 5;
     func(a);
-    print(a); // 5
+    printLn(a); // 5
     a = a + 5;
-    print(a); // 10
+    printLn(a); // 10
 }
 ```
 
@@ -211,7 +212,7 @@ union SomeUnion { SomeStruct, int }
 
 main() {
     SomeStruct someStruct = {a: 1, b: 1.5};
-    print(someStruct.a); // 1
+    printLnsomeStruct.a); // 1
 
     SomeUnion someVariant = {a: 1, b: 1.5}; // ok
     SomeUnion otherVariant = 1; // ok
@@ -259,10 +260,10 @@ main() {
     Maybe maybe = do_something();
     match(maybe) {
         case (Result res) {
-            print("Result: " + res.result);
+            printLn("Result: " + res.result);
         }
         case (Error err) {
-            print("Error: " + err.errno);
+            printLn("Error: " + err.errno);
         }
     }
 }
@@ -274,7 +275,7 @@ main() {
 main() {
     int mut i = 0;
     while(i < 10) {
-        print(i);
+        printLn(i);
         i = i + 1;
     }
 }
@@ -286,13 +287,13 @@ main() {
 main() {
     int a = 5;
     if (a > 10) {
-        print("Bigger than 10");
+        printLn("Bigger than 10");
     }
     elif (a > 4) {
-        print("Bigger than 4");
+        printLn("Bigger than 4");
     }
     else {
-        print("Some other number");
+        printLn("Some other number");
     }
 }
 ```
@@ -307,6 +308,10 @@ fib(int n) -> int {
     else {
         return fib(n-1) + fib(n-2);
     }
+    return 0;
+}
+main() {
+    printLn(fib(10));
 }
 ```
 
