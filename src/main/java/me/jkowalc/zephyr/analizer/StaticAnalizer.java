@@ -333,7 +333,7 @@ public class StaticAnalizer implements ASTVisitor {
 
     @Override
     public void visit(NegationExpression negationExpression) throws ZephyrException {
-        BareStaticType type = eval(negationExpression).getBareStaticType();
+        BareStaticType type = eval(negationExpression.getExpression()).getBareStaticType();
         if(List.of(TypeCategory.STRUCT, TypeCategory.UNION, TypeCategory.VOID).contains(type.getCategory())) {
             throw new InvalidTypeForOperationException(List.of(type), "-", negationExpression.getExpression().getStartPosition());
         }
