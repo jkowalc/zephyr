@@ -5,6 +5,7 @@ import lombok.Getter;
 import me.jkowalc.zephyr.domain.node.Node;
 import me.jkowalc.zephyr.domain.node.expression.Assignable;
 import me.jkowalc.zephyr.domain.node.expression.Expression;
+import me.jkowalc.zephyr.exception.ZephyrException;
 import me.jkowalc.zephyr.util.ASTVisitor;
 
 @Getter
@@ -20,7 +21,7 @@ public final class AssignmentStatement extends Node implements Statement {
     }
 
     @Override
-    public void accept(ASTVisitor visitor) {
+    public void accept(ASTVisitor visitor) throws ZephyrException {
         visitor.visit(this);
     }
 }

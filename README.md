@@ -19,14 +19,14 @@ Program składa się z definicji funkcji oraz typów (struktur lub rekordów war
 ```zephyr
 main() {
     // komentarz
-    print("Hello World");
+    printLn"Hello World");
 }
 ```
 
 ### Operatory
 
 | Priorytet |               Operatory                |                   Znaczenie                    | Asocjacyjność |
-| :-------: | :------------------------------------: | :--------------------------------------------: | :-----------: |
+|:---------:|:--------------------------------------:|:----------------------------------------------:|:-------------:|
 |     8     |                  `.`                   |            Dostęp do pola struktury            |  Lewostronna  |
 |     7     |                  `!`                   |              Negacja typu `bool`               |     Brak      |
 |     7     |                  `-`                   |                 Negacja liczby                 |     Brak      |
@@ -40,7 +40,7 @@ main() {
 ### Konwersja typów
 
 | Oryginalny typ |                    float                    |                  int                  |                   string                   |                               bool                                |
-| :------------: | :-----------------------------------------: | :-----------------------------------: | :----------------------------------------: | :---------------------------------------------------------------: |
+|:--------------:|:-------------------------------------------:|:-------------------------------------:|:------------------------------------------:|:-----------------------------------------------------------------:|
 |     float      |                      -                      |        `5.4` -> `5` (odcięcie)        |              `2.4` -> `"2.4"`              | `1.0` -> `true`<br>`0.0` -> false<br>inna wartość -> błąd runtime |
 |      int       |                `4` -> `4.0`                 |                   -                   |                `3` -> `"3"`                |  `1` -> `true`<br>`0` -> `false`<br>inna wartość -> błąd runtime  |
 |     string     | `"3.14"` -> `3.14`<br>`"a"` -> błąd runtime | `"4"` -> `4`<br>`"a"` -> błąd runtime |                     -                      |               `"sth"` -> `true`<br>`""` -> `false`                |
@@ -59,10 +59,10 @@ W zależności od sytuacji może oznaczać konkatenację ciągów znaków lub do
 
 ```zephyr
 main() {
-    print(3.1 + 3); // 6.1
-    print("2.4" + 3.6); // "2.43.6"
-    print(3.6 + "2.4"); // "3.62.4"
-    print(false + "str"); // "falsestr"
+    printLn3.1 + 3); // 6.1
+    printLn"2.4" + 3.6); // "2.43.6"
+    printLn3.6 + "2.4"); // "3.62.4"
+    printLnfalse + "str"); // "falsestr"
 }
 ```
 
@@ -97,7 +97,7 @@ Zasady:
 ```zephyr
 main() {
     int a = 5;
-    print(a); // 5
+    printLna); // 5
 }
 ```
 
@@ -105,7 +105,7 @@ main() {
 main() {
     int a = 4;
     int a = 3;
-    print(a); // 3
+    printLna); // 3
 }
 ```
 
@@ -114,9 +114,9 @@ main() {
     int a = 5;
     {
         int a = 2;
-        print(a); // 2
+        printLna); // 2
     }
-    print(a); // 5
+    printLna); // 5
 }
 ```
 
@@ -134,7 +134,7 @@ a = 7 // ok
 - Przeciążanie funkcji nie jest możliwe
 
 ```zephyr
-do_something(int a, int b = 5) -> int {
+do_something(int a, int b) -> int {
     return a + b;
 }
 ```
@@ -143,14 +143,15 @@ Funkcja bez zwracanej wartości (void)
 
 ```zephyr
 func(int a) {
-    print(a);
+    printLna);
 }
 ```
 
 ### Funkcje wbudowane
 
 - print() - wypisuje tekst na standardowe wyjście
-- to_str() - jawna konwersja na typ `string` (potrzebna tylko w nietypowych przypadkach)
+- printLn() - wypisuje tekst na standardowe wyjście z nową linią
+- to_string() - jawna konwersja na typ `string` (potrzebna tylko w nietypowych przypadkach)
 - to_float()
 - to_int()
 - to_bool()
@@ -169,7 +170,7 @@ func(int mref a) {
 main() -> int {
     int mut a = 5;
     func(a); // rzutowanie na referencję
-    print(a); // 10
+    printLn(a); // 10
     return 0;
 }
 ```
@@ -186,14 +187,14 @@ func(int a) {
 ```zephyr
 func(int mut a) {
     a = a + 5;
-    print(a) // 10
+    printLn(a) // 10
 }
-main() -> int {
+main() {
     int mut a = 5;
     func(a);
-    print(a); // 5
+    printLn(a); // 5
     a = a + 5;
-    print(a); // 10
+    printLn(a); // 10
 }
 ```
 
@@ -211,7 +212,7 @@ union SomeUnion { SomeStruct, int }
 
 main() {
     SomeStruct someStruct = {a: 1, b: 1.5};
-    print(someStruct.a); // 1
+    printLnsomeStruct.a); // 1
 
     SomeUnion someVariant = {a: 1, b: 1.5}; // ok
     SomeUnion otherVariant = 1; // ok
@@ -240,7 +241,8 @@ main() {
 
 #### Sprawdzenie typu rekordu wariantowego
 
-Do sprawdzenia typu służy dedykowane wyrażenie `match`.
+Do sprawdzenia typu służy dedykowane wyrażenie `match`.  
+Z perspektywy wyrażenia `match` typy o tej samej strukturze są sobie równe.
 
 ```zephyr
 struct Result {
@@ -259,10 +261,10 @@ main() {
     Maybe maybe = do_something();
     match(maybe) {
         case (Result res) {
-            print("Result: " + res.result);
+            printLn("Result: " + res.result);
         }
         case (Error err) {
-            print("Error: " + err.errno);
+            printLn("Error: " + err.errno);
         }
     }
 }
@@ -274,7 +276,7 @@ main() {
 main() {
     int mut i = 0;
     while(i < 10) {
-        print(i);
+        printLn(i);
         i = i + 1;
     }
 }
@@ -286,13 +288,13 @@ main() {
 main() {
     int a = 5;
     if (a > 10) {
-        print("Bigger than 10");
+        printLn("Bigger than 10");
     }
     elif (a > 4) {
-        print("Bigger than 4");
+        printLn("Bigger than 4");
     }
     else {
-        print("Some other number");
+        printLn("Some other number");
     }
 }
 ```
@@ -307,6 +309,10 @@ fib(int n) -> int {
     else {
         return fib(n-1) + fib(n-2);
     }
+    return 0;
+}
+main() {
+    printLn(fib(10));
 }
 ```
 
@@ -407,27 +413,19 @@ Interpreter napisany w języku Java.
 
 Do każdego tokenu dodawany jest nr linii oraz nr kolumny w źródle.
 
-|         Typ tokenu         |                                    Wartość                                     |
-| :------------------------: | :----------------------------------------------------------------------------: |
-|       Literał `int`        |                                Obliczona liczba                                |
-|      Literał `float`       |                                Obliczona liczba                                |
-|      Literał `string`      |                           Reprezentowany ciąg znaków                           |
-|       Literał `bool`       |                        Reprezentowana wartość logiczna                         |
-|         Komentarz          |                        Treść komentarza bez znaku `//`                         |
-|       Identyfikator        |                             Wartość identyfikatora                             |
-|       Słowo kluczowe       |                  Enum reprezentujący słowo kluczowe z listy\*                  |
-| Operator negacji logicznej |                                      `!`                                       |
-|  Operator multiplikatywny  |                                 Enum: `*`, `/`                                 |
-|     Operator addytywny     |                                 Enum: `+`, `-`                                 |
-|     Operator relacyjny     |                  Enum: `==`, `>`, `<`, `>=`, `<=`, `==`, `!=`                  |
-|     Operator logiczny      |                               Enum: `and`, `or`                                |
-|    Operator przypisania    |                                      `=`                                       |
-|     Operator strzałki      |                                      `->`                                      |
-|         Typ danych         | Struktura przechowująca odpowiednie nazwy typów wbudowanych lub identyfikatory |
-|           Nawias           |                            Enum: `(`, `)`, `{`, `}`                            |
-|         Separator          |                              Enum: `;`, `:`, `,`                               |
+|    Typ tokenu    |             Wartość             |
+|:----------------:|:-------------------------------:|
+|  Literał `int`   |        Obliczona liczba         |
+| Literał `float`  |        Obliczona liczba         |
+| Literał `string` |   Reprezentowany ciąg znaków    |
+|  Literał `bool`  | Reprezentowana wartość logiczna |
+|    Komentarz     | Treść komentarza bez znaku `//` |
+|  Identyfikator   |     Wartość identyfikatora      |
+|       EOF        |             (brak)              |
 
-\* Lista słów kluczowych:
+Oprócz tego każdy operator, słowo kluczowe i separator ma swój dedykowany typ.
+
+Lista słów kluczowych:
 
 - `struct`
 - `mut`
@@ -440,6 +438,23 @@ Do każdego tokenu dodawany jest nr linii oraz nr kolumny w źródle.
 - `else`
 - `match`
 - `case`
+- `union`
+- `true`
+- `false`
+- `or`
+- `and`
+
+Operatory znajdują się [wyżej](#operatory)
+
+Separatory:
+
+- `,`
+- `:`
+- `;`
+- `(`
+- `)`
+- `{`
+- `}`
 
 ### Sposób uruchomienia
 
@@ -455,9 +470,12 @@ Wymienione wyżej typy tokenów reprezentowane są analogicznymi klasami.
 
 Klasa Parser przyjmuje w konstruktorze obiekt leksera. Posiada funkcję parser(), która parsuje cały program i zwraca obiekt typu Program.
 
-Klasa SemanticAnalizer przyjmuje obiekt typu Program, dokonuje analizy semantycznej i zwraca obiekt typu Program po poprawkach.
+Klasa StaticAnalizer akceptuje jako wizytator obiekt typu Program i dokonuje analizy semantycznej, rzucając wyjątki AnalizerException w przypadku błędów.
+Analiza semantyczna typów jest delegowana do klasy TypeBuilder.
 
-Klasa Interpreter przyjmuje w konstruktorze obiekt Program i posiada funkcję run(), która wołana jest tylko wtedy, gdy wyłączona jest flaga `--parse-only`.
+Klasa Interpreter przyjmuje w konstruktorze obiekt Program i posiada funkcję executeMain(), która wołana jest tylko wtedy, gdy wyłączona jest flaga `--parse-only`.
+
+Dodatkowo Interpreter oraz StaticAnalizer korzystają z klas TypeChecker i TypeConverter do obsługi typów.
 
 ### Opis sposobu testowania
 
@@ -467,12 +485,14 @@ Testy jednostkowe leksera będą tworzyć strumień z przygotowanego tekstu jęz
 
 Testy jednostkowe parsera tworzą mock obiektu leksera, który zwraca spreparowane tokeny. Sprawdzana jest poprawność generowania drzewa, jak i zgłaszanie odpowiednich wyjątków w sytuacjach wyjątkowych.
 
+Testy jednostkowe analizatora statycznego sprawdzają poprawność analizy semantycznej. W tym celu tworzone są obiekty Program z przygotowanymi strukturami i funkcjami, a następnie sprawdzane są zgłaszane wyjątki.
+
 Testy integracyjne sprawdzają poprawność całego interpretera (wszystkich modułów) poprzez sprawdzanie generowanego standardowego wyjścia.
 
 ### Obsługa błędów
 
 Błędy realizowane przez mechanizm wyjątków w języku Java.  
-Rozróżniane między `LexicalError`, `SyntaxError` i `RuntimeError`.
+Rozróżniane między `LexicalException`, `SyntaxException`, `AnalizerException` i `ZephyrRuntimeException`.
 
 W każdym przypadku na ekranie wyświetli się komunikat w formacie:
 

@@ -1,6 +1,7 @@
 package me.jkowalc.zephyr.domain.node.expression.binary;
 
 import me.jkowalc.zephyr.domain.node.expression.Expression;
+import me.jkowalc.zephyr.exception.ZephyrException;
 import me.jkowalc.zephyr.util.ASTVisitor;
 
 public final class DivideExpression extends DefaultBinaryExpression {
@@ -9,7 +10,7 @@ public final class DivideExpression extends DefaultBinaryExpression {
     }
 
     @Override
-    public void accept(ASTVisitor visitor) {
+    public void accept(ASTVisitor visitor) throws ZephyrException {
         visitor.visit(this);
     }
 }

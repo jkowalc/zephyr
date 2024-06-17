@@ -4,11 +4,13 @@ package me.jkowalc.zephyr;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.FileConverter;
+import me.jkowalc.zephyr.analizer.StaticAnalizer;
 import me.jkowalc.zephyr.domain.node.program.Program;
 import me.jkowalc.zephyr.domain.token.Token;
 import me.jkowalc.zephyr.domain.token.TokenType;
-import me.jkowalc.zephyr.exception.ParserInternalException;
 import me.jkowalc.zephyr.exception.ZephyrException;
+import me.jkowalc.zephyr.input.ConsoleTextPrinter;
+import me.jkowalc.zephyr.interpreter.Interpreter;
 import me.jkowalc.zephyr.lexer.Lexer;
 import me.jkowalc.zephyr.parser.ASTPrinter;
 import me.jkowalc.zephyr.parser.CommentFilter;
@@ -51,8 +53,18 @@ public class Main {
                 System.err.println("Unexpected " + next.getClass().getSimpleName() + " at " + next.getStartPosition());
                 System.exit(1);
             }
-            ASTPrinter printer = new ASTPrinter(System.out, 4);
-            program.accept(printer);
+            if(parseOnly) {
+                StaticAnalizer staticAnalizer = new StaticAnalizer();
+                program.accept(staticAnalizer);
+                ASTPrinter printer = new ASTPrinter(System.out, 4);
+                program.accept(printer);
+            }
+            else {
+                Interpreter interpreter = new Interpreter(program, new ConsoleTextPrinter());
+                int exitCode = interpreter.executeMain();
+                System.exit(exitCode);
+            }
+
         }
         catch(IOException e){
             System.err.println("IO Error");
@@ -60,10 +72,6 @@ public class Main {
         }
         catch(ZephyrException e){
             System.err.println(e.toString());
-            System.exit(1);
-        }
-        catch(ParserInternalException e){
-            System.err.println("Internal parser error");
             System.exit(1);
         }
     }

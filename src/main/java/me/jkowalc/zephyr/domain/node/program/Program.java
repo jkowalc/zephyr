@@ -3,6 +3,7 @@ package me.jkowalc.zephyr.domain.node.program;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import me.jkowalc.zephyr.domain.node.Node;
+import me.jkowalc.zephyr.exception.ZephyrException;
 import me.jkowalc.zephyr.util.ASTVisitor;
 import me.jkowalc.zephyr.util.TextPosition;
 
@@ -22,6 +23,9 @@ public final class Program extends Node {
 
     @Override
     public TextPosition getStartPosition() {
+        if(functions.values().stream().anyMatch(f -> f.getStartPosition() == null) || types.values().stream().anyMatch(t -> t.getStartPosition() == null)) {
+            return null;
+        }
         TextPosition startPosition = functions.values().stream().map(Node::getStartPosition).min(TextPosition::compareTo).orElse(null);
         TextPosition startPosition2 = types.values().stream().map(TypeDefinition::getStartPosition).min(TextPosition::compareTo).orElse(null);
         if (startPosition == null) {
@@ -47,7 +51,7 @@ public final class Program extends Node {
     }
 
     @Override
-    public void accept(ASTVisitor visitor) {
+    public void accept(ASTVisitor visitor) throws ZephyrException {
         visitor.visit(this);
     }
 }

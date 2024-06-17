@@ -1,23 +1,37 @@
-struct Result {
-    int result
+union FibResult {
+    int, string
 }
-struct Error {
-    int errno
-}
-union Maybe { Result, Error }
 
-do_something() -> Maybe {
-    return {result: 1};
+fib(int n) -> int {
+    if(n == 1 or n == 0) {
+        return n;
+    }
+    elif (n < 0) {
+        return -1;
+    }
+    else {
+        return fib(n-1) + fib(n-2);
+    }
+    return 0;
+}
+
+calcFib(int n) -> FibResult {
+    int result = fib(n);
+    if(result == -1) {
+        return "Invalid input";
+    }
+    return result;
 }
 
 main() {
-    Maybe maybe = do_something();
-    match(maybe) {
-        case (Result res) {
-            print("Result: " + res.result);
+    int n = 6;
+    FibResult result = calcFib(n);
+    match(result) {
+        case (int x) {
+            printLn("Fibonacci of " + n + " is " + x);
         }
-        case (Error err) {
-            print("Error: " + err.errno);
+        case (string x) {
+            printLn(x);
         }
     }
 }
