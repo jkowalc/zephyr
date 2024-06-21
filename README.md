@@ -1,61 +1,64 @@
-# TKOM Zephyr
+# Zephyr
 
-## Polecenie
+## General overview
 
-Implementacja języka programowania ogólnego przeznaczenia według wytycznych:
+This repository contains an interpreter for a new language called "Zephyr".
 
-- typowanie słabe
-- zmienne są domyślnie stałe (język ma pozwalać na oba warianty, jeden jest "domyślny")
-- zmienne przekazywane do funkcji domyślnie przez kopię (wartość)
+Features:
 
-Jako dodatkowy typ danych należy zaimplementować obsługę struktur i rekordu wariantowego (przy czym struktury potrzebne są w zasadzie po to, żeby rekord wariantowy w ogóle miał sens). Do obsługi rekordu wariantowego należy dostarczyć w języku jakąś operację, która pozwala w sensowny sposób dostać się do danych z rekordu.
+- Statically and weak typed language
+- Variable are immutable by default
+- Variables passed to function create a copy by default
+- Structures and union (variant) types
 
-## Opis funkcjonalności i przykłady użycia
+## Functional specification and usage examples
 
-### Główne założenia
+### Program structure
 
-Program składa się z definicji funkcji oraz typów (struktur lub rekordów wariantowych). Przy starcie programu wykonywana jest funkcja `main`.
-
+A program consists of function definitions and types (structures or variant records). The main function is executed at the start of the program.
 ```zephyr
 main() {
-    // komentarz
-    printLn"Hello World");
+    // comment
+    printLn("Hello World");
 }
 ```
 
-### Operatory
+### Operators
 
-| Priorytet |               Operatory                |                   Znaczenie                    | Asocjacyjność |
-|:---------:|:--------------------------------------:|:----------------------------------------------:|:-------------:|
-|     8     |                  `.`                   |            Dostęp do pola struktury            |  Lewostronna  |
-|     7     |                  `!`                   |              Negacja typu `bool`               |     Brak      |
-|     7     |                  `-`                   |                 Negacja liczby                 |     Brak      |
-|     6     |                `*`, `/`                | Mnożenie/dzielenie/dzielenie całkowitoliczbowe |  Lewostronna  |
-|     5     |                `+`, `-`                |             Dodawanie/odejmowanie              |  Lewostronna  |
-|     4     | `==`, `>`, `<`, `>=`, `<=`, `==`, `!=` |              Porównanie logiczne               |     Brak      |
-|     3     |                 `and`                  |                Iloczyn logiczny                |  Lewostronna  |
-|     2     |                  `or`                  |                 Suma logiczna                  |  Lewostronna  |
-|     1     |                  `=`                   |                  Przypisanie                   |     Brak      |
+| Priority |               Operators                |                   Meaning                    | Associativity |
+|:--------:|:--------------------------------------:|:--------------------------------------------:|:-------------:|
+|    8     |                  `.`                   |            Structure field access            | Left-to-right |
+|    7     |                  `!`                   |               Boolean negation               |     None      |
+|    7     |                  `-`                   |               Number negation                |     None      |
+|    6     |                `*`, `/`                | Multiplication / Division / Integer division | Left-to-right |
+|    5     |                `+`, `-`                |            Addition / Subtraction            | Left-to-right |
+|    4     | `==`, `>`, `<`, `>=`, `<=`, `==`, `!=` |              Logical comparison              |     None      |
+|    3     |                 `and`                  |             Logical conjunction              | Left-to-right |
+|    2     |                  `or`                  |             Logical disjunction              | Left-to-right |
+|    1     |                  `=`                   |                  Assignment                  |     None      |
 
-### Konwersja typów
 
-| Oryginalny typ |                    float                    |                  int                  |                   string                   |                               bool                                |
-|:--------------:|:-------------------------------------------:|:-------------------------------------:|:------------------------------------------:|:-----------------------------------------------------------------:|
-|     float      |                      -                      |        `5.4` -> `5` (odcięcie)        |              `2.4` -> `"2.4"`              | `1.0` -> `true`<br>`0.0` -> false<br>inna wartość -> błąd runtime |
-|      int       |                `4` -> `4.0`                 |                   -                   |                `3` -> `"3"`                |  `1` -> `true`<br>`0` -> `false`<br>inna wartość -> błąd runtime  |
-|     string     | `"3.14"` -> `3.14`<br>`"a"` -> błąd runtime | `"4"` -> `4`<br>`"a"` -> błąd runtime |                     -                      |               `"sth"` -> `true`<br>`""` -> `false`                |
-|      bool      |     `true` -> `1.0`<br>`false` -> `0.0`     |    `true` -> `1`<br>`false` -> `0`    | `true` -> `"true"`<br>`false` -> `"false"` |                                 -                                 |
 
-W przypadku przypisania wyniku do zmiennej, na samym końcu występuje konwersja do zadanego typu (jeśli jest możliwa).
+### Type conversion
 
-#### Operatory `*` i `/`
+| Original type |                    float                     |                  int                   |                   string                   |                               bool                                |
+|:-------------:|:--------------------------------------------:|:--------------------------------------:|:------------------------------------------:|:-----------------------------------------------------------------:|
+|     float     |                      -                       |       `5.4` -> `5` (truncation)        |              `2.4` -> `"2.4"`              | `1.0` -> `true`<br>`0.0` -> false<br>other value -> runtime error |
+|      int      |                 `4` -> `4.0`                 |                   -                    |                `3` -> `"3"`                |  `1` -> `true`<br>`0` -> `false`<br>other value -> runtime error  |
+|    string     | `"3.14"` -> `3.14`<br>`"a"` -> runtime error | `"4"` -> `4`<br>`"a"` -> runtime error |                     -                      |               `"sth"` -> `true`<br>`""` -> `false`                |
+|     bool      |     `true` -> `1.0`<br>`false` -> `0.0`      |    `true` -> `1`<br>`false` -> `0`     | `true` -> `"true"`<br>`false` -> `"false"` |                                 -                                 |
 
-Mnożenie i dzielenie interpretowane jedynie jako operacja matematyczna - rzutowanie na `float` lub `int`.  
-Jedynie mnożenie dwóch liczb typu `int` daje typu `int`. Wszystkie inne kombinacje dają typ `float`.
+Converting a struct to `string` yields the struct's string representation.  
+When assigning the result to a variable, conversion to the specified type occurs at the end (if possible).
 
-#### Operator `+`
+#### `*` and `/` operators
 
-W zależności od sytuacji może oznaczać konkatenację ciągów znaków lub dodawanie liczb. W nietrywialnych sytuacjach preferowana jest konkatenacja.
+Multiplication and division are interpreted solely as mathematical operations - casting to float or int.
+Only multiplying two int numbers gives an int type. All other combinations yield a float.
+
+#### `+` operator
+
+Depending on the context, it can mean string concatenation or number addition. In non-trivial situations, concatenation is preferred.
 
 ```zephyr
 main() {
@@ -66,38 +69,38 @@ main() {
 }
 ```
 
-#### Operatory `==` i `!=`
+#### `==` and `!=` operators
 
-Kolejność argumentów nie ma wpływu na wynik.
+Argument order does not affect the result.
 
-- `int`, `float` - rzutowanie na `float`
-- `string`, \* - rzutowanie na string
+- `int`, `float` - casting to `float`
+- `string`, \* - casting to `string`
 
 #### Reszta operatorów
 
-Operatory `>`, `>=`, `<` i `<=` - rzutowanie do typu `float` lub `int`.  
-Operatory `-` (odejmowanie) oraz `-` (negacja liczby) - rzutowanie do typu `float` lub `int`  
-Operatory `and`, `or` oraz `!` - rzutowanie na `bool`
+Operators `>`, `>=`, `<` i `<=` - casting to `float` or `int`.  
+Operators `-` (subtraction) and `-` (number negation) - casting to `float` or `int`  
+Operators `and`, `or` and `!` - casting to `bool`
 
-### Zmienne
+### Variables
 
-Podstawowe typy zmiennych:
+Basic variable types:
 
 - float
 - int
 - string
 - bool
 
-Zasady:
+Rules:
 
-- Zmienna musi zostać zainicjowana.
-- Definiowanie zmiennych globalnych nie jest możliwe.
-- Zmienne w funkcji zasłaniają się w kolejności deklaracji, zmienne w blokach żyją jedynie do końca bloku.
+- A variable must be initialized.
+- Defining global variables is not possible.
+- Variables within a function overshadow each other in the order of declaration, and variables within blocks live only until the end of the block.
 
 ```zephyr
 main() {
     int a = 5;
-    printLna); // 5
+    printLn(a); // 5
 }
 ```
 
@@ -105,7 +108,7 @@ main() {
 main() {
     int a = 4;
     int a = 3;
-    printLna); // 3
+    printLn(a); // 3
 }
 ```
 
@@ -114,24 +117,24 @@ main() {
     int a = 5;
     {
         int a = 2;
-        printLna); // 2
+        printLn(a); // 2
     }
-    printLna); // 5
+    printLn(a); // 5
 }
 ```
 
-Zmienne są domyślnie stałe.
+Variables are immutable by default
 
 ```zephyr
 int a = 5
-a = 7 // błąd
+a = 7 // error
 int mut b = 5
 a = 7 // ok
 ```
 
-### Funkcje i argumenty
+### Functions and parameters
 
-- Przeciążanie funkcji nie jest możliwe
+- Function overloading is not possible
 
 ```zephyr
 do_something(int a, int b) -> int {
@@ -139,7 +142,7 @@ do_something(int a, int b) -> int {
 }
 ```
 
-Funkcja bez zwracanej wartości (void)
+Function with no return value (void)
 
 ```zephyr
 func(int a) {
@@ -147,21 +150,21 @@ func(int a) {
 }
 ```
 
-### Funkcje wbudowane
+### Built-in Functions
 
-- print() - wypisuje tekst na standardowe wyjście
-- printLn() - wypisuje tekst na standardowe wyjście z nową linią
-- to_string() - jawna konwersja na typ `string` (potrzebna tylko w nietypowych przypadkach)
-- to_float()
-- to_int()
-- to_bool()
+- print() - prints text to standard output
+- printLn() -  prints text to standard output with a new line
+- to_string() - explicit conversion to `string` (needed only in unusual cases)
+- to_float() - explicit conversion to `float` (needed only in unusual cases)
+- to_int() - explicit conversion to `int` (needed only in unusual cases)
+- to_bool() - explicit conversion to `bool` (needed only in unusual cases)
 
-### Przekazanie przez referencję, mutowalność
+### Pass by Reference, Mutability
 
-- int a - niemutowalna kopia
-- int mut a - mutowalna kopia
-- int ref a - referencja
-- int mref a - mutowalna referencja (zmienia zewnętrzny obiekt)
+- int a - immutable copy
+- int mut a - mutable copy
+- int ref a - reference
+- int mref a - mutable reference (modifies external object)
 
 ```zephyr
 func(int mref a) {
@@ -169,7 +172,7 @@ func(int mref a) {
 }
 main() -> int {
     int mut a = 5;
-    func(a); // rzutowanie na referencję
+    func(a); // cast to reference
     printLn(a); // 10
     return 0;
 }
@@ -177,10 +180,10 @@ main() -> int {
 
 ```zephyr
 func(int ref a) {
-    a = a + 5; // błąd
+    a = a + 5; // error
 }
 func(int a) {
-    a = a + 5; // błąd
+    a = a + 5; // error
 }
 ```
 
@@ -198,9 +201,9 @@ main() {
 }
 ```
 
-### Struktury i rekord wariantowy
+### Structures and unions
 
-#### Definicja i użycie
+#### Definition and usage
 
 ```zephyr
 struct SomeStruct {
@@ -219,9 +222,9 @@ main() {
 }
 ```
 
-#### Mutowalność struktur
+#### Structure mutability
 
-- Jeśli zmienna przechowująca strukturę jest niemutowalna, wszystkie jej pola są niemutowalne (wliczając pola zagnieżdżonych struktur)
+- If the variable holding the structure is immutable, all its fields are immutable (including fields of nested structures)
 
 ```zephyr
 struct SomeStruct {
@@ -232,17 +235,17 @@ union SomeUnion { SomeStruct, int }
 
 main() {
     SomeStruct someStruct = {a: 1, b: 1.5};
-    someStruct.a = 1; // bład, zmienna someStruct jest niemutowalna
+    someStruct.a = 1; // error, the variable someStruct is immutable
 
     SomeUnion mut a = {a: 1, b: 1.5}; // ok
-    a = 1; // ok, zmiana rzeczywistego typu na int
+    a = 1; // ok, change the actual type to int
 }
 ```
 
-#### Sprawdzenie typu rekordu wariantowego
+#### Checking the type of union
 
-Do sprawdzenia typu służy dedykowane wyrażenie `match`.  
-Z perspektywy wyrażenia `match` typy o tej samej strukturze są sobie równe.
+To check the type, a dedicated match expression is used.
+From the perspective of the match expression, types with the same structure are considered equal.
 
 ```zephyr
 struct Result {
@@ -270,7 +273,7 @@ main() {
 }
 ```
 
-### Pętle
+### Loops
 
 ```zephyr
 main() {
@@ -282,7 +285,7 @@ main() {
 }
 ```
 
-### Instrukcje warunkowe
+### Conditional statements
 
 ```zephyr
 main() {
@@ -299,7 +302,7 @@ main() {
 }
 ```
 
-### Rekursja
+### Recursion
 
 ```zephyr
 fib(int n) -> int {
@@ -316,9 +319,9 @@ main() {
 }
 ```
 
-## Specyfikacja składni i leksyki
+## Grammar and lexical specification
 
-### Warstwa składniowa
+### Grammar
 
 ```ebnf
 program = {struct_definition | union_definition | function_definition };
@@ -388,7 +391,7 @@ struct_literal_member = identifier, ":", literal;
 builtin_type = "int" | "bool" | "float" | "string";
 ```
 
-#### Warstwa leksykalna
+#### Lexical part
 
 ```ebnf
 identifier = letter, {letter | digit};
@@ -398,34 +401,32 @@ string_literal = "\"", {character}, "\"";
 bool_literal = "true" | "false";
 ```
 
-`letter` - litera zdefiniowana przez funkcję Character.isLetter()_  
-`digit` - cyfra zdefiniowana przez funkcję Character.isDigit()_  
-`nonzero_digit` - digit z wyłączeniem znaku "0"  
-`character` - dowolny znak Unicode
+`letter` - letter as defined by Character.isLetter() in Java\*  
+`digit` - digit as defined by Character.isDigit() in Java\*  
+`nonzero_digit` - digit except "0"  
+`character` - any Unicode character
 
-\* w celu zapewnienia wsparcia Unicode
+\* in order to support Unicode
 
-## Implementacja
+## Lexer specification
 
-Interpreter napisany w języku Java.
+### Token list
 
-### Lista tokenów
+Each token includes the line and column number in the source.
 
-Do każdego tokenu dodawany jest nr linii oraz nr kolumny w źródle.
+|   Token type    |           Value            |
+|:---------------:|:--------------------------:|
+| Integer literal |      Calculated value      |
+|  Float literal  |      Calculated value      |
+| String literal  |  Represented string value  |
+| Boolean literal | Represented logical value  |
+|     Comment     | Comment content without // |
+|   Identifier    |      Identifier value      |
+|       EOF       |           (none)           |
 
-|    Typ tokenu    |             Wartość             |
-|:----------------:|:-------------------------------:|
-|  Literał `int`   |        Obliczona liczba         |
-| Literał `float`  |        Obliczona liczba         |
-| Literał `string` |   Reprezentowany ciąg znaków    |
-|  Literał `bool`  | Reprezentowana wartość logiczna |
-|    Komentarz     | Treść komentarza bez znaku `//` |
-|  Identyfikator   |     Wartość identyfikatora      |
-|       EOF        |             (brak)              |
+Additionally, each operator, keyword, and separator has its own dedicated type.
 
-Oprócz tego każdy operator, słowo kluczowe i separator ma swój dedykowany typ.
-
-Lista słów kluczowych:
+Keyword list:
 
 - `struct`
 - `mut`
@@ -444,9 +445,9 @@ Lista słów kluczowych:
 - `or`
 - `and`
 
-Operatory znajdują się [wyżej](#operatory)
+Operators are listed [above](#operators)
 
-Separatory:
+Separators:
 
 - `,`
 - `:`
@@ -456,60 +457,22 @@ Separatory:
 - `{`
 - `}`
 
-### Sposób uruchomienia
 
-Interpreter języka uruchamiany z poziomu konsoli z argumentami:
+## Quick program overview
 
-- ścieżka do pliku z interpretowanym kodem
-- opcjonalnie flaga `--parse-only`
+Main classes:
 
-### Moduły i interfejsy
+- [Main](src/main/java/me/jkowalc/zephyr/Main.java) - main class and parsing console arguments
+- [Lexer](src/main/java/me/jkowalc/zephyr/lexer/Lexer.java) - lexical parsing
+- [Parser](src/main/java/me/jkowalc/zephyr/parser/Parser.java) - grammar parsing
+- [TypeBuilder](src/main/java/me/jkowalc/zephyr/analizer/TypeBuilder.java) - checking and building types for the program
+- [StaticAnalizer](src/main/java/me/jkowalc/zephyr/analizer/StaticAnalizer.java) - static analysis of the program
+- [Interpreter](src/main/java/me/jkowalc/zephyr/interpreter/Interpreter.java) - interpreting the program
 
-Klasa Lexer przyjmuje w konstruktorze strumień wejściowy i posiada funkcję nextToken(), która generuje kolejny token. Stan leksera przechowywany jest w polach klasy.  
-Wymienione wyżej typy tokenów reprezentowane są analogicznymi klasami.
+## Running
 
-Klasa Parser przyjmuje w konstruktorze obiekt leksera. Posiada funkcję parser(), która parsuje cały program i zwraca obiekt typu Program.
+Java version >= 17 is required.
 
-Klasa StaticAnalizer akceptuje jako wizytator obiekt typu Program i dokonuje analizy semantycznej, rzucając wyjątki AnalizerException w przypadku błędów.
-Analiza semantyczna typów jest delegowana do klasy TypeBuilder.
-
-Klasa Interpreter przyjmuje w konstruktorze obiekt Program i posiada funkcję executeMain(), która wołana jest tylko wtedy, gdy wyłączona jest flaga `--parse-only`.
-
-Dodatkowo Interpreter oraz StaticAnalizer korzystają z klas TypeChecker i TypeConverter do obsługi typów.
-
-### Opis sposobu testowania
-
-Testowanie za pomocą biblioteki JUnit i wstrzykiwania zależności.
-
-Testy jednostkowe leksera będą tworzyć strumień z przygotowanego tekstu języka i sprawdzać poprawność zwracanych tokenów z leksera.
-
-Testy jednostkowe parsera tworzą mock obiektu leksera, który zwraca spreparowane tokeny. Sprawdzana jest poprawność generowania drzewa, jak i zgłaszanie odpowiednich wyjątków w sytuacjach wyjątkowych.
-
-Testy jednostkowe analizatora statycznego sprawdzają poprawność analizy semantycznej. W tym celu tworzone są obiekty Program z przygotowanymi strukturami i funkcjami, a następnie sprawdzane są zgłaszane wyjątki.
-
-Testy integracyjne sprawdzają poprawność całego interpretera (wszystkich modułów) poprzez sprawdzanie generowanego standardowego wyjścia.
-
-### Obsługa błędów
-
-Błędy realizowane przez mechanizm wyjątków w języku Java.  
-Rozróżniane między `LexicalException`, `SyntaxException`, `AnalizerException` i `ZephyrRuntimeException`.
-
-W każdym przypadku na ekranie wyświetli się komunikat w formacie:
-
-```plaintext
-<nazwa błędu>: <komunikat> at <nr linii>:<nr kolumny>
-```
-
-Przykład:
-
-```plaintext
-SyntaxError: Unexpected token "}" at 10:12
-```
-
-### Uruchomienie
-
-Wymagana jest Java w wersji >= 17.
-
-- `make build` - zbudowanie archiwum JAR
-- `make run-example` - uruchomienie przykładowego programu (examples/hello_world.ze)
-- `make test` - uruchomienie testów i generacja raportu w katalogu `build/reports/jacoco/test/html/index.html`
+- `make build` - build the 
+- `make run-example` - run the example program (examples/main_example.ze)
+- `make test` - run tests and generate a report in the build/reports/jacoco/test/html/index.html directory
