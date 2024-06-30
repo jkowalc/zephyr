@@ -1,9 +1,9 @@
 package me.jkowalc.zephyr.interpreter;
 
 import me.jkowalc.zephyr.BuiltinFunctionManager;
-import me.jkowalc.zephyr.analizer.ScopedContext;
-import me.jkowalc.zephyr.analizer.StaticAnalizer;
-import me.jkowalc.zephyr.analizer.TypeChecker;
+import me.jkowalc.zephyr.analyzer.ScopedContext;
+import me.jkowalc.zephyr.analyzer.StaticAnalyzer;
+import me.jkowalc.zephyr.analyzer.TypeChecker;
 import me.jkowalc.zephyr.domain.FunctionRepresentation;
 import me.jkowalc.zephyr.domain.node.Node;
 import me.jkowalc.zephyr.domain.node.expression.Expression;
@@ -41,7 +41,7 @@ import java.util.stream.Stream;
 public class Interpreter implements ASTVisitor {
     private final Map<String, FunctionRepresentation> functions;
 
-    private final StaticAnalizer analizer;
+    private final StaticAnalyzer analizer;
 
     private final Map<String, BareStaticType> types;
 
@@ -56,7 +56,7 @@ public class Interpreter implements ASTVisitor {
     private Value matchValue = null;
 
     public Interpreter(Program program, TextPrinter outputStream) throws ZephyrException {
-        this.analizer = new StaticAnalizer();
+        this.analizer = new StaticAnalyzer();
         program.accept(analizer);
         this.functions = analizer.getFunctions();
         this.types = analizer.getTypes();

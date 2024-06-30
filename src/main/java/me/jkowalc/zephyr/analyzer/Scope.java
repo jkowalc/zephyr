@@ -1,4 +1,4 @@
-package me.jkowalc.zephyr.analizer;
+package me.jkowalc.zephyr.analyzer;
 
 import me.jkowalc.zephyr.exception.scope.VariableNotDefinedScopeException;
 import me.jkowalc.zephyr.util.SimpleMap;

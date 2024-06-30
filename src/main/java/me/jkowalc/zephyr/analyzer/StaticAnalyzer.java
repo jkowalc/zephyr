@@ -1,4 +1,4 @@
-package me.jkowalc.zephyr.analizer;
+package me.jkowalc.zephyr.analyzer;
 
 import lombok.Getter;
 import me.jkowalc.zephyr.BuiltinFunctionManager;
@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public class StaticAnalizer implements ASTVisitor {
+public class StaticAnalyzer implements ASTVisitor {
     @Getter
     private Map<String, FunctionRepresentation> functions;
 

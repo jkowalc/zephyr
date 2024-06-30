@@ -1,6 +1,6 @@
 package me.jkowalc.zephyr;
 
-import me.jkowalc.zephyr.analizer.ScopedContext;
+import me.jkowalc.zephyr.analyzer.ScopedContext;
 import me.jkowalc.zephyr.exception.scope.VariableNotDefinedScopeException;
 import org.junit.jupiter.api.Test;
 

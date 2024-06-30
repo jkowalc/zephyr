@@ -7,7 +7,7 @@ This repository contains an interpreter for a new language called "Zephyr".
 Features:
 
 - Statically and weak typed language
-- Variable are immutable by default
+- Variables are immutable by default
 - Variables passed to function create a copy by default
 - Structures and union (variant) types
 
@@ -465,8 +465,8 @@ Main classes:
 - [Main](src/main/java/me/jkowalc/zephyr/Main.java) - main class and parsing console arguments
 - [Lexer](src/main/java/me/jkowalc/zephyr/lexer/Lexer.java) - lexical parsing
 - [Parser](src/main/java/me/jkowalc/zephyr/parser/Parser.java) - grammar parsing
-- [TypeBuilder](src/main/java/me/jkowalc/zephyr/analizer/TypeBuilder.java) - checking and building types for the program
-- [StaticAnalizer](src/main/java/me/jkowalc/zephyr/analizer/StaticAnalizer.java) - static analysis of the program
+- [TypeBuilder](src/main/java/me/jkowalc/zephyr/analyzer/TypeBuilder.java) - checking and building types for the program
+- [StaticAnalyzer](src/main/java/me/jkowalc/zephyr/analyzer/StaticAnalyzer.java) - static analysis of the program
 - [Interpreter](src/main/java/me/jkowalc/zephyr/interpreter/Interpreter.java) - interpreting the program
 
 ## Running
@@ -476,3 +476,14 @@ Java version >= 17 is required.
 - `make build` - build the 
 - `make run-example` - run the example program (examples/main_example.ze)
 - `make test` - run tests and generate a report in the build/reports/jacoco/test/html/index.html directory
+
+## Potential improvements
+
+- Refactor the Interpreter and possibly StaticAnalyzer to use the Visitor pattern for operations (addition, multiplication, etc.)
+- Reduce the amount of instanceof checks in the Interpreter for better maintainability
+- Add more tests
+- (possibly) Remove the endPosition fields in tokens and AST nodes as they are not used
+- Change the struct definition syntax to match the struct literal
+- Better error messages when the user tries to parse a completely invalid program (e.g. only a single number, some random characters)
+- Change all Map implementations to List in the AST nodes (check for duplicates in the StaticAnalyzer)
+- Better error messages in regard to the function return type

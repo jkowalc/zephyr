@@ -1,4 +1,4 @@
-package me.jkowalc.zephyr.analizer;
+package me.jkowalc.zephyr.analyzer;
 
 import me.jkowalc.zephyr.domain.node.expression.FunctionCall;
 import me.jkowalc.zephyr.domain.node.expression.VariableReference;
@@ -21,7 +21,7 @@ import static java.util.Map.entry;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class AnalizerExceptionTest {
-    private final StaticAnalizer analizer = new StaticAnalizer();
+    private final StaticAnalyzer analizer = new StaticAnalyzer();
 
     private Program programFromMainBlock(StatementBlock block) {
         return new Program(

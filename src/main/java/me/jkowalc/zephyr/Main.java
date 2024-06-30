@@ -4,7 +4,7 @@ package me.jkowalc.zephyr;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.FileConverter;
-import me.jkowalc.zephyr.analizer.StaticAnalizer;
+import me.jkowalc.zephyr.analyzer.StaticAnalyzer;
 import me.jkowalc.zephyr.domain.node.program.Program;
 import me.jkowalc.zephyr.domain.token.Token;
 import me.jkowalc.zephyr.domain.token.TokenType;
@@ -54,7 +54,7 @@ public class Main {
                 System.exit(1);
             }
             if(parseOnly) {
-                StaticAnalizer staticAnalizer = new StaticAnalizer();
+                StaticAnalyzer staticAnalizer = new StaticAnalyzer();
                 program.accept(staticAnalizer);
                 ASTPrinter printer = new ASTPrinter(System.out, 4);
                 program.accept(printer);

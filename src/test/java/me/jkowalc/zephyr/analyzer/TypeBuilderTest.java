@@ -1,4 +1,4 @@
-package me.jkowalc.zephyr.analizer;
+package me.jkowalc.zephyr.analyzer;
 
 import me.jkowalc.zephyr.domain.node.program.StructDefinition;
 import me.jkowalc.zephyr.domain.node.program.StructDefinitionMember;

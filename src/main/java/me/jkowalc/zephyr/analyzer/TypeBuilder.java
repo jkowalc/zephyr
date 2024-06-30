@@ -1,4 +1,4 @@
-package me.jkowalc.zephyr.analizer;
+package me.jkowalc.zephyr.analyzer;
 
 import lombok.Getter;
 import me.jkowalc.zephyr.domain.node.program.StructDefinition;

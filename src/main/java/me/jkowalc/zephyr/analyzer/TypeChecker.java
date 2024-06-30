@@ -1,4 +1,4 @@
-package me.jkowalc.zephyr.analizer;
+package me.jkowalc.zephyr.analyzer;
 
 import me.jkowalc.zephyr.domain.TypeCheckerResult;
 import me.jkowalc.zephyr.domain.runtime.Value;
