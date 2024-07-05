@@ -207,8 +207,8 @@ main() {
 
 ```zephyr
 struct SomeStruct {
-    int a,
-    float b
+    a: int,
+    b: float
 }
 
 union SomeUnion { SomeStruct, int }
@@ -228,8 +228,8 @@ main() {
 
 ```zephyr
 struct SomeStruct {
-    int a,
-    float b
+    a: int,
+    b: float
 }
 union SomeUnion { SomeStruct, int }
 
@@ -249,10 +249,10 @@ From the perspective of the match expression, types with the same structure are 
 
 ```zephyr
 struct Result {
-    int result
+    result: int
 }
 struct Error {
-    int errno
+    errno: int
 }
 union Maybe { Result, Error }
 
@@ -328,7 +328,7 @@ program = {struct_definition | union_definition | function_definition };
 
 struct_definition = "struct", identifier, struct_members;
 struct_members = "{", [struct_member, {",", struct_member}, [","]], "}";
-struct_member = type, identifier;
+struct_member = identifier, ":", type;
 
 union_definition = "union", identifier, union_members;
 union_members = "{", [type, {",", type}, [","]], "}";

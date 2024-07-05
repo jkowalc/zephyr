@@ -141,17 +141,19 @@ public class Parser {
         return new StructDefinition(startPosition, members.second(), identifierToken.getValue(), members.first());
     }
 
-    // struct_member = type, identifier;
+    // struct_member = identifier, ":", type;
     private StructDefinitionMember parseStructDefinitionMember() throws LexicalException, IOException, SyntaxException {
         if(reader.getType() != TokenType.IDENTIFIER) {
             return null;
         }
-        IdentifierToken typeToken = (IdentifierToken) reader.getToken();
+        IdentifierToken nameToken = (IdentifierToken) reader.getToken();
+        reader.next();
+        mustBe(TokenType.COLON, "Expected ':'");
         reader.next();
         mustBe(TokenType.IDENTIFIER, "Expected identifier");
-        IdentifierToken identifierToken = (IdentifierToken) reader.getToken();
+        IdentifierToken typeToken = (IdentifierToken) reader.getToken();
         reader.next();
-        return new StructDefinitionMember(typeToken.getStartPosition(), identifierToken.getEndPosition(), identifierToken.getValue(), typeToken.getValue());
+        return new StructDefinitionMember(nameToken.getStartPosition(), typeToken.getEndPosition(), nameToken.getValue(), typeToken.getValue());
     }
 
     // union_members = "{", type, {",", type}, [","], "}";

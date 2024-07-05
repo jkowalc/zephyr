@@ -107,16 +107,16 @@ public class ParserLexerTest {
     public void testStructsUnions() throws LexicalException, IOException, SyntaxException {
         String input = """
                 struct SomeStruct {
-                    int a,
-                    float b
-                }
-                union SomeUnion { SomeStruct, int }
-                main() {
-                    SomeStruct someStruct = {a: 1, b: 1.5};
-                    someStruct.a = 1; // bład, zmienna someStruct jest niemutowalna
-                    SomeUnion mut a = {a: 1, b: 1.5}; // ok
-                    a = 1; // ok, zmiana rzeczywistego typu na int
-                }
+                     a: int,
+                     b: float
+                 }
+                 union SomeUnion { SomeStruct, int }
+                 main() {
+                     SomeStruct someStruct = {a: 1, b: 1.5};
+                     someStruct.a = 1; // error, the variable someStruct is immutable
+                     SomeUnion mut a = {a: 1, b: 1.5}; // ok
+                     a = 1; // ok, change the actual type to int
+                 }
                """;
         initTest(input);
         Program program = parser.parseProgram();
