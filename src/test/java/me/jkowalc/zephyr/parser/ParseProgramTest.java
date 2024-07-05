@@ -125,8 +125,9 @@ public class ParseProgramTest {
                 new Token(TokenType.STRUCT),
                 new IdentifierToken("A"),
                 new Token(TokenType.OPEN_BRACE),
-                new IdentifierToken("int"),
                 new IdentifierToken("a"),
+                new Token(TokenType.COLON),
+                new IdentifierToken("int"),
                 new Token(TokenType.CLOSE_BRACE)
         ));
         testTypeDefinition(new StructDefinition("A", List.of(
@@ -137,11 +138,13 @@ public class ParseProgramTest {
                 new Token(TokenType.STRUCT),
                 new IdentifierToken("A"),
                 new Token(TokenType.OPEN_BRACE),
-                new IdentifierToken("int"),
                 new IdentifierToken("a"),
-                new Token(TokenType.COMMA),
+                new Token(TokenType.COLON),
                 new IdentifierToken("int"),
+                new Token(TokenType.COMMA),
                 new IdentifierToken("b"),
+                new Token(TokenType.COLON),
+                new IdentifierToken("int"),
                 new Token(TokenType.CLOSE_BRACE)
         ));
         testTypeDefinition(new StructDefinition("A", List.of(

@@ -56,7 +56,7 @@ public class FullIntegrationTest {
                 main() -> int {
                     int mut a = 5;
                     printLn(a); // 5
-                    func(a); // rzutowanie na referencję
+                    func(a); // cast to reference
                     printLn(a); // 10
                     return 0;
                 }
@@ -84,10 +84,10 @@ public class FullIntegrationTest {
     public void testStructsAndUnions() throws ZephyrException, IOException {
         executeProgram("""
                 struct Result {
-                    int result
+                    result: int
                 }
                 struct Error {
-                    int errno
+                    errno: int
                 }
                 union Maybe { Result, Error }
                 do_something() -> Maybe {
