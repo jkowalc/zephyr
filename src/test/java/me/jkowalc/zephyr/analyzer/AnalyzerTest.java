@@ -20,8 +20,8 @@ import java.util.Map;
 import static java.util.Map.entry;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class AnalizerExceptionTest {
-    private final StaticAnalyzer analizer = new StaticAnalyzer();
+public class AnalyzerTest {
+    private final StaticAnalyzer analyzer = new StaticAnalyzer();
 
     private Program programFromMainBlock(StatementBlock block) {
         return new Program(
@@ -44,7 +44,7 @@ public class AnalizerExceptionTest {
                         new ReturnStatement(new VariableReference("a"))
                 )
         ));
-        assertThrows(VariableNotDefinedException.class, () -> program.accept(analizer));
+        assertThrows(VariableNotDefinedException.class, () -> program.accept(analyzer));
     }
 
     @Test
@@ -54,7 +54,7 @@ public class AnalizerExceptionTest {
                         new VariableDefinition("a", "int", false, false, null)
                 )
         ));
-        assertThrows(VariableNotInitializedException.class, () -> program.accept(analizer));
+        assertThrows(VariableNotInitializedException.class, () -> program.accept(analyzer));
     }
 
     @Test
@@ -64,7 +64,7 @@ public class AnalizerExceptionTest {
                         new VariableDefinition("a", "not_defined", false, false, new IntegerLiteral(1))
                 )
         ));
-        assertThrows(TypeNotDefinedException.class, () -> program.accept(analizer));
+        assertThrows(TypeNotDefinedException.class, () -> program.accept(analyzer));
     }
 
     @Test
@@ -92,7 +92,7 @@ public class AnalizerExceptionTest {
                 ),
                 Map.of()
         );
-        assertThrows(ConvertiblePassedByReferenceException.class, () -> program.accept(analizer));
+        assertThrows(ConvertiblePassedByReferenceException.class, () -> program.accept(analyzer));
     }
     @Test
     public void testFunctionAlreadyDefined() {
@@ -115,7 +115,7 @@ public class AnalizerExceptionTest {
                 ),
                 Map.of()
         );
-        assertThrows(FunctionAlreadyDefinedException.class, () -> program.accept(analizer));
+        assertThrows(FunctionAlreadyDefinedException.class, () -> program.accept(analyzer));
     }
     @Test
     public void testFunctionNotDefined() {
@@ -124,7 +124,7 @@ public class AnalizerExceptionTest {
                         new FunctionCall("doSomething", List.of())
                 )
         ));
-        assertThrows(FunctionNotDefinedException.class, () -> program.accept(analizer));
+        assertThrows(FunctionNotDefinedException.class, () -> program.accept(analyzer));
     }
     @Test
     public void testImmutableVariableModified() {
@@ -134,7 +134,7 @@ public class AnalizerExceptionTest {
                         new AssignmentStatement(new VariableReference("a"), new IntegerLiteral(2))
                 )
         ));
-        assertThrows(ImmutableVariableException.class, () -> program.accept(analizer));
+        assertThrows(ImmutableVariableException.class, () -> program.accept(analyzer));
 
         Program program1 = new Program(
                 Map.ofEntries(
@@ -157,7 +157,7 @@ public class AnalizerExceptionTest {
                         ))
                 )
         );
-        assertThrows(ImmutableVariableException.class, () -> program1.accept(analizer));
+        assertThrows(ImmutableVariableException.class, () -> program1.accept(analyzer));
         Program program2 = new Program(
                 Map.ofEntries(
                         entry("main", new FunctionDefinition(
@@ -179,7 +179,7 @@ public class AnalizerExceptionTest {
                         ))
                 )
         );
-        assertThrows(ImmutableVariableException.class, () -> program2.accept(analizer));
+        assertThrows(ImmutableVariableException.class, () -> program2.accept(analyzer));
     }
     @Test
     public void testInvalidArgumentCount() {
@@ -205,7 +205,7 @@ public class AnalizerExceptionTest {
                 ),
                 Map.of()
         );
-        assertThrows(InvalidArgumentCountException.class, () -> program.accept(analizer));
+        assertThrows(InvalidArgumentCountException.class, () -> program.accept(analyzer));
     }
     @Test
     public void testInvalidFieldAccess() {
@@ -230,7 +230,7 @@ public class AnalizerExceptionTest {
                         ))
                 )
         );
-        assertThrows(InvalidFieldAccessException.class, () -> program.accept(analizer));
+        assertThrows(InvalidFieldAccessException.class, () -> program.accept(analyzer));
     }
     @Test
     public void testInvalidTypeForOperation() {
@@ -241,7 +241,7 @@ public class AnalizerExceptionTest {
                         ))
                 )
         ));
-        assertThrows(InvalidTypeForOperationException.class, () -> program.accept(analizer));
+        assertThrows(InvalidTypeForOperationException.class, () -> program.accept(analyzer));
     }
     @Test
     public void testMainFunctionNotDefined() {
@@ -251,7 +251,7 @@ public class AnalizerExceptionTest {
                 ),
                 Map.of()
         );
-        assertThrows(MainFunctionNotDefinedException.class, () -> program.accept(analizer));
+        assertThrows(MainFunctionNotDefinedException.class, () -> program.accept(analyzer));
     }
     @Test
     public void testNonConvertibleType() {
@@ -267,6 +267,6 @@ public class AnalizerExceptionTest {
                         "SomeVariant", new UnionDefinition("SomeVariant", List.of("int", "string"))
                 )
         );
-        assertThrows(NonConvertibleTypeException.class, () -> program.accept(analizer));
+        assertThrows(NonConvertibleTypeException.class, () -> program.accept(analyzer));
     }
 }
