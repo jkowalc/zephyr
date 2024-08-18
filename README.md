@@ -471,7 +471,7 @@ Main classes:
 
 ## Running
 
-Java version >= 17 is required.
+Java version >= 21 is required.
 
 - `make build` - build the 
 - `make run-example` - run the example program (examples/main_example.ze)
