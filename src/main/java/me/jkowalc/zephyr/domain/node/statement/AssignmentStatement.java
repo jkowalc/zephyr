@@ -15,7 +15,7 @@ public final class AssignmentStatement extends Node implements Statement {
     private final Expression value;
 
     public AssignmentStatement(Assignable target, Expression value) {
-        super(target.getStartPosition(), target.getEndPosition());
+        super(target.getStartPosition());
         this.target = target;
         this.value = value;
     }

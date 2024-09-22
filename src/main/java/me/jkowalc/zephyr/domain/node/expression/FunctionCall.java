@@ -18,13 +18,13 @@ public final class FunctionCall extends Node implements Expression, Statement {
     private final List<Expression> arguments;
 
     public FunctionCall(String name, List<Expression> arguments) {
-        super(null, null);
+        super(null);
         this.name = name;
         this.arguments = arguments;
     }
 
-    public FunctionCall(TextPosition startPosition, TextPosition endPosition, String name, List<Expression> arguments) {
-        super(startPosition, endPosition);
+    public FunctionCall(TextPosition startPosition, String name, List<Expression> arguments) {
+        super(startPosition);
         this.name = name;
         this.arguments = arguments;
     }

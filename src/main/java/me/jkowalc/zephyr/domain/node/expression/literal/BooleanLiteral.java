@@ -10,11 +10,11 @@ import me.jkowalc.zephyr.util.TextPosition;
 public final class BooleanLiteral extends Node implements Literal {
     private final boolean value;
     public BooleanLiteral(boolean value) {
-        super(null, null);
+        super(null);
         this.value = value;
     }
-    public BooleanLiteral(TextPosition startPosition, TextPosition endPosition, boolean value) {
-        super(startPosition, endPosition);
+    public BooleanLiteral(TextPosition startPosition, boolean value) {
+        super(startPosition);
         this.value = value;
     }
     public boolean getValue() {

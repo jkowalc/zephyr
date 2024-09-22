@@ -16,13 +16,13 @@ public final class UnionDefinition extends Node implements TypeDefinition {
     private final List<String> typeNames;
 
     public UnionDefinition(String name, List<String> typeNames) {
-        super(null, null);
+        super(null);
         this.name = name;
         this.typeNames = typeNames;
     }
 
-    public UnionDefinition(TextPosition startPosition, TextPosition endPosition, String name, List<String> typeNames) {
-        super(startPosition, endPosition);
+    public UnionDefinition(TextPosition startPosition, String name, List<String> typeNames) {
+        super(startPosition);
         this.name = name;
         this.typeNames = typeNames;
     }

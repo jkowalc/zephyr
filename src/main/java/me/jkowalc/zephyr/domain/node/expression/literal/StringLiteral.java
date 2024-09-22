@@ -14,12 +14,12 @@ public final class StringLiteral extends Node implements Literal {
     private final String value;
 
     public StringLiteral(String value) {
-        super(null, null);
+        super(null);
         this.value = value;
     }
 
-    public StringLiteral(TextPosition startPosition, TextPosition endPosition, String value) {
-        super(startPosition, endPosition);
+    public StringLiteral(TextPosition startPosition, String value) {
+        super(startPosition);
         this.value = value;
     }
 

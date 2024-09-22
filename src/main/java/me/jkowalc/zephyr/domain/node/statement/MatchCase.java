@@ -15,13 +15,13 @@ public final class MatchCase extends Node {
     private final StatementBlock body;
 
     public MatchCase(String pattern, String variableName, StatementBlock body) {
-        super(null, null);
+        super(null);
         this.pattern = pattern;
         this.variableName = variableName;
         this.body = body;
     }
     public MatchCase(TextPosition startPosition, String pattern, String variableName, StatementBlock body) {
-        super(startPosition, body.getEndPosition());
+        super(startPosition);
         this.pattern = pattern;
         this.variableName = variableName;
         this.body = body;

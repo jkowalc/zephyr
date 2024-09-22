@@ -13,12 +13,12 @@ public final class FloatLiteral extends Node implements Literal {
     private final float value;
 
     public FloatLiteral(float value) {
-        super(null, null);
+        super(null);
         this.value = value;
     }
 
-    public FloatLiteral(TextPosition startPosition, TextPosition endPosition, float value) {
-        super(startPosition, endPosition);
+    public FloatLiteral(TextPosition startPosition, float value) {
+        super(startPosition);
         this.value = value;
     }
 

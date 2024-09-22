@@ -12,7 +12,7 @@ public abstract class DefaultBinaryExpression extends Node implements Expression
     private final Expression right;
 
     public DefaultBinaryExpression(Expression left, Expression right) {
-        super(left.getStartPosition(), right.getEndPosition());
+        super(left.getStartPosition());
         this.left = left;
         this.right = right;
     }
