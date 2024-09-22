@@ -17,13 +17,13 @@ public final class MatchStatement extends Node implements Statement {
     private final List<MatchCase> cases;
 
     public MatchStatement(Expression expression, List<MatchCase> cases) {
-        super(null, null);
+        super(null);
         this.expression = expression;
         this.cases = cases;
     }
 
-    public MatchStatement(TextPosition startPosition, TextPosition endPosition, Expression expression, List<MatchCase> cases) {
-        super(startPosition, endPosition);
+    public MatchStatement(TextPosition startPosition, Expression expression, List<MatchCase> cases) {
+        super(startPosition);
         this.expression = expression;
         this.cases = cases;
     }

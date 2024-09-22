@@ -16,12 +16,12 @@ public final class StatementBlock extends Node implements Statement, ElseBlock {
     private final List<Statement> statements;
 
     public StatementBlock(List<Statement> statements) {
-        super(null, null);
+        super(null);
         this.statements = statements;
     }
 
-    public StatementBlock(TextPosition startPosition, TextPosition endPosition, List<Statement> statements) {
-        super(startPosition, endPosition);
+    public StatementBlock(TextPosition startPosition, List<Statement> statements) {
+        super(startPosition);
         this.statements = statements;
     }
 

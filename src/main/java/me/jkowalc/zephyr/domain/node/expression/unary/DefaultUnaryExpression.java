@@ -12,11 +12,11 @@ public abstract class DefaultUnaryExpression extends Node implements Expression 
     private final Expression expression;
 
     public DefaultUnaryExpression(Expression expression) {
-        super(null, null);
+        super(null);
         this.expression = expression;
     }
     public DefaultUnaryExpression(TextPosition startPosition, Expression expression) {
-        super(startPosition, expression.getEndPosition());
+        super(startPosition);
         this.expression = expression;
     }
 }

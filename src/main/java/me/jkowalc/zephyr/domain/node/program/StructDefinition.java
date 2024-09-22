@@ -16,13 +16,13 @@ public final class StructDefinition extends Node implements TypeDefinition {
     private final List<StructDefinitionMember> members;
 
     public StructDefinition(String name, List<StructDefinitionMember> members) {
-        super(null, null);
+        super(null);
         this.name = name;
         this.members = members;
     }
 
-    public StructDefinition(TextPosition startPosition, TextPosition endPosition, String name, List<StructDefinitionMember> members) {
-        super(startPosition, endPosition);
+    public StructDefinition(TextPosition startPosition, String name, List<StructDefinitionMember> members) {
+        super(startPosition);
         this.name = name;
         this.members = members;
     }

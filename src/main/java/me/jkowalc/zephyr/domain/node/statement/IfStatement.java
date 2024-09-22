@@ -17,14 +17,14 @@ public final class IfStatement extends Node implements Statement, ElseBlock {
     private final ElseBlock elseBlock;
 
     public IfStatement(Expression condition, StatementBlock body, ElseBlock elseBlock) {
-        super(null, null);
+        super(null);
         this.condition = condition;
         this.body = body;
         this.elseBlock = elseBlock;
     }
 
     public IfStatement(TextPosition startPosition, Expression condition, StatementBlock body, ElseBlock elseBlock) {
-        super(startPosition, body.getEndPosition());
+        super(startPosition);
         this.condition = condition;
         this.body = body;
         this.elseBlock = elseBlock;

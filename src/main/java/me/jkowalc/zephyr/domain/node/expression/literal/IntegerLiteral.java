@@ -13,12 +13,12 @@ public final class IntegerLiteral extends Node implements Literal {
     private final int value;
 
     public IntegerLiteral(int value) {
-        super(null, null);
+        super(null);
         this.value = value;
     }
 
-    public IntegerLiteral(TextPosition startPosition, TextPosition endPosition, int value) {
-        super(startPosition, endPosition);
+    public IntegerLiteral(TextPosition startPosition, int value) {
+        super(startPosition);
         this.value = value;
     }
 

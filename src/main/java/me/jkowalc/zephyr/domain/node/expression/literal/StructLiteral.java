@@ -15,12 +15,12 @@ public final class StructLiteral extends Node implements Literal {
     private final List<StructLiteralMember> fields;
 
     public StructLiteral(List<StructLiteralMember> fields) {
-        super(null, null);
+        super(null);
         this.fields = fields;
     }
 
-    public StructLiteral(TextPosition startPosition, TextPosition endPosition, List<StructLiteralMember> fields) {
-        super(startPosition, endPosition);
+    public StructLiteral(TextPosition startPosition, List<StructLiteralMember> fields) {
+        super(startPosition);
         this.fields = fields;
     }
 

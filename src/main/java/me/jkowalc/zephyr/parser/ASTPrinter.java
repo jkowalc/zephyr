@@ -37,7 +37,7 @@ public class ASTPrinter implements ASTVisitor {
     }
     @Override
     public void visit(Program program) throws ZephyrException {
-        print("Program from " + program.getStartPosition() + " to " + program.getEndPosition() + "\n");
+        print("Program at " + program.getStartPosition() + "\n");
         if (program.getFunctions().isEmpty()) {
             print("- Functions: <empty>\n");
         } else {
@@ -63,7 +63,7 @@ public class ASTPrinter implements ASTVisitor {
     @Override
     public void visit(FunctionCall functionCall) throws ZephyrException {
         print("FunctionCall(name=\"" + CharacterUtil.getRepresentation(functionCall.getName())
-                + "\") from " + functionCall.getStartPosition() + " to " + functionCall.getEndPosition() + "\n");
+                + "\") at " + functionCall.getStartPosition() + "\n");
         if (functionCall.getArguments().isEmpty()) {
             print("- Parameters: <empty>\n");
             return;
@@ -79,10 +79,10 @@ public class ASTPrinter implements ASTVisitor {
     @Override
     public void visit(VariableReference variableReference) {
         print("VariableReference(name=" + CharacterUtil.getRepresentation(variableReference.getName())
-                + ") from " + variableReference.getStartPosition() + " to " + variableReference.getEndPosition() + "\n");
+                + ") at " + variableReference.getStartPosition() + "\n");
     }
     private void printDefaultBinaryExpression(DefaultBinaryExpression binaryExpression, String name) throws ZephyrException {
-        print(name + " from " + binaryExpression.getStartPosition() + " to " + binaryExpression.getEndPosition() + "\n");
+        print(name + " at " + binaryExpression.getStartPosition() + "\n");
         indent++;
         binaryExpression.getLeft().accept(this);
         binaryExpression.getRight().accept(this);
@@ -105,7 +105,7 @@ public class ASTPrinter implements ASTVisitor {
 
     @Override
     public void visit(DotExpression dotExpression) throws ZephyrException {
-        print("DotExpression from " + dotExpression.getStartPosition() + " to " + dotExpression.getEndPosition() + "\n");
+        print("DotExpression at " + dotExpression.getStartPosition() + "\n");
         if(dotExpression.getValue() == null) {
             print("- Value: null\n");
         } else {
@@ -164,27 +164,27 @@ public class ASTPrinter implements ASTVisitor {
 
     @Override
     public void visit(BooleanLiteral booleanLiteral) {
-        print("BooleanLiteral(value=" + booleanLiteral.getValue() + ") from " + booleanLiteral.getStartPosition() + " to " + booleanLiteral.getEndPosition() + "\n");
+        print("BooleanLiteral(value=" + booleanLiteral.getValue() + ") at " + booleanLiteral.getStartPosition() + "\n");
     }
 
     @Override
     public void visit(IntegerLiteral integerLiteral) {
-        print("IntegerLiteral(value=" + integerLiteral.getValue() + ") from " + integerLiteral.getStartPosition() + " to " + integerLiteral.getEndPosition() + "\n");
+        print("IntegerLiteral(value=" + integerLiteral.getValue() + ") at " + integerLiteral.getStartPosition() + "\n");
     }
 
     @Override
     public void visit(FloatLiteral floatLiteral) {
-        print("FloatLiteral(value=" + floatLiteral.getValue() + ") from " + floatLiteral.getStartPosition() + " to " + floatLiteral.getEndPosition() + "\n");
+        print("FloatLiteral(value=" + floatLiteral.getValue() + ") at " + floatLiteral.getStartPosition() + "\n");
     }
 
     @Override
     public void visit(StringLiteral stringLiteral) {
-        print("StringLiteral(value=\"" + CharacterUtil.getRepresentation(stringLiteral.getValue()) + "\") from " + stringLiteral.getStartPosition() + " to " + stringLiteral.getEndPosition() + "\n");
+        print("StringLiteral(value=\"" + CharacterUtil.getRepresentation(stringLiteral.getValue()) + "\") at " + stringLiteral.getStartPosition() + "\n");
     }
 
     @Override
     public void visit(StructLiteral structLiteral) throws ZephyrException {
-        print("StructLiteral from " + structLiteral.getStartPosition() + " to " + structLiteral.getEndPosition() + "\n");
+        print("StructLiteral at " + structLiteral.getStartPosition() + "\n");
         indent++;
         for (StructLiteralMember field: structLiteral.getFields()) {
             field.accept(this);
@@ -203,7 +203,7 @@ public class ASTPrinter implements ASTVisitor {
 
     @Override
     public void visit(NegationExpression negationExpression) throws ZephyrException {
-        print("NegationExpression from " + negationExpression.getStartPosition() + " to " + negationExpression.getEndPosition() + "\n");
+        print("NegationExpression at " + negationExpression.getStartPosition() + "\n");
         indent++;
         negationExpression.getExpression().accept(this);
         indent--;
@@ -211,7 +211,7 @@ public class ASTPrinter implements ASTVisitor {
 
     @Override
     public void visit(NotExpression notExpression) throws ZephyrException {
-        print("NotExpression from " + notExpression.getStartPosition() + " to " + notExpression.getEndPosition() + "\n");
+        print("NotExpression at " + notExpression.getStartPosition() + "\n");
         indent++;
         notExpression.getExpression().accept(this);
         indent--;
@@ -220,7 +220,7 @@ public class ASTPrinter implements ASTVisitor {
     @Override
     public void visit(FunctionDefinition functionDefinition) throws ZephyrException {
         print("FunctionDefinition(name=\"" + CharacterUtil.getRepresentation(functionDefinition.getName())
-                + "\") from " + functionDefinition.getStartPosition() + " to " + functionDefinition.getEndPosition() + "\n");
+                + "\") at " + functionDefinition.getStartPosition()  + "\n");
         if (functionDefinition.getParameters().isEmpty()) {
             print("- Parameters: <empty>\n");
         } else {
@@ -249,7 +249,7 @@ public class ASTPrinter implements ASTVisitor {
     @Override
     public void visit(StructDefinition structDefinition) throws ZephyrException {
         print("StructDefinition(name=\"" + CharacterUtil.getRepresentation(structDefinition.getName())
-                + "\") from " + structDefinition.getStartPosition() + " to " + structDefinition.getEndPosition() + "\n");
+                + "\") at " + structDefinition.getStartPosition() + "\n");
 
         if (structDefinition.getMembers().isEmpty()) {
             print("- Members: <empty>\n");
@@ -266,13 +266,13 @@ public class ASTPrinter implements ASTVisitor {
     @Override
     public void visit(StructDefinitionMember structDefinitionMember) {
         print("StructDefinitionMember(name=\"" + CharacterUtil.getRepresentation(structDefinitionMember.getName())
-                + "\", typeName=\"" + structDefinitionMember.getTypeName() + "\") from " + structDefinitionMember.getStartPosition() + " to " + structDefinitionMember.getEndPosition() + "\n");
+                + "\", typeName=\"" + structDefinitionMember.getTypeName() + "\") at " + structDefinitionMember.getStartPosition() + "\n");
     }
 
     @Override
     public void visit(UnionDefinition unionDefinition) {
         print("UnionDefinition(name=\"" + CharacterUtil.getRepresentation(unionDefinition.getName())
-                + "\") from " + unionDefinition.getStartPosition() + " to " + unionDefinition.getEndPosition() + "\n");
+                + "\") at " + unionDefinition.getStartPosition() + "\n");
         if (unionDefinition.getTypeNames().isEmpty()) {
             print("- Types: <empty>\n");
         } else {
@@ -287,7 +287,7 @@ public class ASTPrinter implements ASTVisitor {
 
     @Override
     public void visit(AssignmentStatement assignmentStatement) throws ZephyrException {
-        print("AssignmentStatement from " + assignmentStatement.getStartPosition() + " to " + assignmentStatement.getEndPosition() + "\n");
+        print("AssignmentStatement at " + assignmentStatement.getStartPosition() + "\n");
         print("- Target:\n");
         indent++;
         assignmentStatement.getTarget().accept(this);
@@ -300,7 +300,7 @@ public class ASTPrinter implements ASTVisitor {
 
     @Override
     public void visit(IfStatement ifStatement) throws ZephyrException {
-        print("IfStatement from " + ifStatement.getStartPosition() + " to " + ifStatement.getEndPosition() + "\n");
+        print("IfStatement at " + ifStatement.getStartPosition() + "\n");
         print("- Condition:\n");
         indent++;
         ifStatement.getCondition().accept(this);
@@ -321,7 +321,7 @@ public class ASTPrinter implements ASTVisitor {
 
     @Override
     public void visit(MatchStatement matchStatement) throws ZephyrException {
-        print("MatchStatement from " + matchStatement.getStartPosition() + " to " + matchStatement.getEndPosition() + "\n");
+        print("MatchStatement at " + matchStatement.getStartPosition() + "\n");
         print("- Expression:\n");
         indent++;
         matchStatement.getExpression().accept(this);
@@ -342,7 +342,7 @@ public class ASTPrinter implements ASTVisitor {
     public void visit(MatchCase matchCase) throws ZephyrException {
         print("MatchCase(pattern=\"" + CharacterUtil.getRepresentation(matchCase.getPattern()) + "\", " +
                         "variableName=\"" + CharacterUtil.getRepresentation(matchCase.getVariableName()) + "\") " +
-                "from " + matchCase.getStartPosition() + " to " + matchCase.getEndPosition() + "\n");
+                "at " + matchCase.getStartPosition() + "\n");
         print("- Body:\n");
         indent++;
         matchCase.getBody().accept(this);
@@ -351,7 +351,7 @@ public class ASTPrinter implements ASTVisitor {
 
     @Override
     public void visit(ReturnStatement returnStatement) throws ZephyrException {
-        print("ReturnStatement from " + returnStatement.getStartPosition() + " to " + returnStatement.getEndPosition() + "\n");
+        print("ReturnStatement at " + returnStatement.getStartPosition() + "\n");
 
         if (returnStatement.getExpression() == null) {
             print("- Expression: null\n");
@@ -365,7 +365,7 @@ public class ASTPrinter implements ASTVisitor {
 
     @Override
     public void visit(StatementBlock statementBlock) throws ZephyrException {
-        print("StatementBlock from " + statementBlock.getStartPosition() + " to " + statementBlock.getEndPosition() + "\n");
+        print("StatementBlock at " + statementBlock.getStartPosition() + "\n");
         if (statementBlock.getStatements().isEmpty()) {
             print("- Statements: <empty>\n");
         } else {
@@ -384,7 +384,7 @@ public class ASTPrinter implements ASTVisitor {
                 + "\", typeName=" + variableDefinition.getTypeName() + ", " +
                 "mutable=" + variableDefinition.isMutable() +
                 ", reference=" + variableDefinition.isReference() + ") " +
-                "from " + variableDefinition.getStartPosition() + " to " + variableDefinition.getEndPosition() + "\n");
+                "at " + variableDefinition.getStartPosition() + "\n");
 
         if (variableDefinition.getDefaultValue() == null) {
             print("- Default value: null (no default value)\n");
@@ -398,7 +398,7 @@ public class ASTPrinter implements ASTVisitor {
 
     @Override
     public void visit(WhileStatement whileStatement) throws ZephyrException {
-        print("WhileStatement from " + whileStatement.getStartPosition() + " to " + whileStatement.getEndPosition() + "\n");
+        print("WhileStatement at " + whileStatement.getStartPosition() + "\n");
         print("- Condition:\n");
         indent++;
         whileStatement.getCondition().accept(this);

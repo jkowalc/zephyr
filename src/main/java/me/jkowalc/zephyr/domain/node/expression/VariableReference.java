@@ -14,11 +14,11 @@ public final class VariableReference extends Node implements Expression, Assigna
     private final String name;
 
     public VariableReference(String name) {
-        super(null, null);
+        super(null);
         this.name = name;
     }
-    public VariableReference(TextPosition startPosition, TextPosition endPosition, String name) {
-        super(startPosition, endPosition);
+    public VariableReference(TextPosition startPosition, String name) {
+        super(startPosition);
         this.name = name;
     }
 

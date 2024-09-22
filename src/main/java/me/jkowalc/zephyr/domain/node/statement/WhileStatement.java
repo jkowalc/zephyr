@@ -15,13 +15,13 @@ public final class WhileStatement extends Node implements Statement {
     private final StatementBlock body;
 
     public WhileStatement(Expression condition, StatementBlock body) {
-        super(null, null);
+        super(null);
         this.condition = condition;
         this.body = body;
     }
 
     public WhileStatement(TextPosition startPosition, Expression condition, StatementBlock body) {
-        super(startPosition, body.getEndPosition());
+        super(startPosition);
         this.condition = condition;
         this.body = body;
     }

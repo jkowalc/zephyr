@@ -18,7 +18,7 @@ public final class VariableDefinition extends Node implements Statement {
     private final Expression defaultValue;
 
     public VariableDefinition(String name, String typeName, boolean mutable, boolean reference, Expression defaultValue) {
-        super(null, null);
+        super(null);
         this.name = name;
         this.typeName = typeName;
         this.mutable = mutable;
@@ -26,8 +26,8 @@ public final class VariableDefinition extends Node implements Statement {
         this.defaultValue = defaultValue;
     }
 
-    public VariableDefinition(TextPosition startPosition, TextPosition endPosition, String name, String typeName, boolean mutable, boolean reference, Expression defaultValue) {
-        super(startPosition, endPosition);
+    public VariableDefinition(TextPosition startPosition, String name, String typeName, boolean mutable, boolean reference, Expression defaultValue) {
+        super(startPosition);
         this.name = name;
         this.typeName = typeName;
         this.mutable = mutable;

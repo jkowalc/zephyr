@@ -16,7 +16,7 @@ public final class Program extends Node {
     private final List<TypeDefinition> types;
 
     public Program(List<FunctionDefinition> functions, List<TypeDefinition> types) {
-        super(null, null);
+        super(null);
         this.functions = functions;
         this.types = types;
     }
@@ -35,19 +35,6 @@ public final class Program extends Node {
             return startPosition;
         }
         return startPosition.compareTo(startPosition2) < 0 ? startPosition : startPosition2;
-    }
-
-    @Override
-    public TextPosition getEndPosition() {
-        TextPosition endPosition = functions.stream().map(Node::getEndPosition).max(TextPosition::compareTo).orElse(null);
-        TextPosition endPosition2 = types.stream().map(TypeDefinition::getEndPosition).max(TextPosition::compareTo).orElse(null);
-        if (endPosition == null) {
-            return endPosition2;
-        }
-        if (endPosition2 == null) {
-            return endPosition;
-        }
-        return endPosition.compareTo(endPosition2) > 0 ? endPosition : endPosition2;
     }
 
     @Override

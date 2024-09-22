@@ -6,10 +6,8 @@ import me.jkowalc.zephyr.util.TextPosition;
 @Getter
 public abstract class Node implements NodeInterface {
     private final TextPosition startPosition;
-    private final TextPosition endPosition;
 
-    protected Node(TextPosition startPosition, TextPosition endPosition) {
+    protected Node(TextPosition startPosition) {
         this.startPosition = startPosition;
-        this.endPosition = endPosition;
     }
 }

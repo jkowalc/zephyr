@@ -14,13 +14,13 @@ public final class StructDefinitionMember extends Node {
     private final String typeName;
 
     public StructDefinitionMember(String name, String typeName) {
-        super(null, null);
+        super(null);
         this.name = name;
         this.typeName = typeName;
     }
 
-    public StructDefinitionMember(TextPosition startPosition, TextPosition endPosition, String name, String typeName) {
-        super(startPosition, endPosition);
+    public StructDefinitionMember(TextPosition startPosition, String name, String typeName) {
+        super(startPosition);
         this.name = name;
         this.typeName = typeName;
     }

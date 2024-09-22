@@ -14,12 +14,12 @@ public class StructLiteralMember extends Node {
     private final Literal fieldValue;
 
     public StructLiteralMember(String fieldName, Literal fieldValue) {
-        super(null, null);
+        super(null);
         this.fieldName = fieldName;
         this.fieldValue = fieldValue;
     }
     public StructLiteralMember(TextPosition startPosition, String fieldName, Literal fieldValue) {
-        super(startPosition, fieldValue.getEndPosition());
+        super(startPosition);
         this.fieldName = fieldName;
         this.fieldValue = fieldValue;
     }
