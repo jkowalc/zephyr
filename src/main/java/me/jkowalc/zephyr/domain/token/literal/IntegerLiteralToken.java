@@ -1,24 +1,23 @@
 package me.jkowalc.zephyr.domain.token.literal;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import me.jkowalc.zephyr.domain.token.Token;
 import me.jkowalc.zephyr.domain.token.TokenType;
 import me.jkowalc.zephyr.util.TextPosition;
 
-import java.util.Objects;
 
-
+@Getter
+@EqualsAndHashCode(callSuper = false)
 public class IntegerLiteralToken extends Token {
     private final int value;
-    public IntegerLiteralToken(TextPosition startPosition, TextPosition endPosition, int value) {
-        super(startPosition, endPosition, TokenType.INTEGER_LITERAL);
+    public IntegerLiteralToken(TextPosition startPosition, int value) {
+        super(startPosition, TokenType.INTEGER_LITERAL);
         this.value = value;
     }
     public IntegerLiteralToken(int value) {
-        super(null, null, TokenType.INTEGER_LITERAL);
+        super(null, TokenType.INTEGER_LITERAL);
         this.value = value;
-    }
-    public int getValue() {
-        return value;
     }
 
     @Override
@@ -26,19 +25,5 @@ public class IntegerLiteralToken extends Token {
         return "IntegerLiteralToken{" +
                 "value=" + value +
                 '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-        IntegerLiteralToken that = (IntegerLiteralToken) o;
-        return value == that.value;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), value);
     }
 }
