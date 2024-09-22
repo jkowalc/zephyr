@@ -19,7 +19,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -28,7 +27,7 @@ public class ExpressionEvaluationTest {
     private static Interpreter interpreter;
     @BeforeAll
     public static void setUp() throws ZephyrException {
-        interpreter = new Interpreter(new Program(Map.of("main", DEFAULT_MAIN), Map.of()), new VoidTextPrinter());
+        interpreter = new Interpreter(new Program(List.of(DEFAULT_MAIN), List.of()), new VoidTextPrinter());
     }
     @Test
     public void testBasicExpression() throws ZephyrException {

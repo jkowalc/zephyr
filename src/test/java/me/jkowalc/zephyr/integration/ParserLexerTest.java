@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import static me.jkowalc.zephyr.Utils.getStringAsInputStreamReader;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,14 +32,14 @@ public class ParserLexerTest {
     public void testComment() throws LexicalException, IOException, SyntaxException {
         initTest("main() {\n// comment\n print(\"hello print\") // comment 2 \n}");
         Program program = parser.parseProgram();
-        Program expected = new Program(Map.of(
-                "main", new FunctionDefinition("main", List.of(),
+        Program expected = new Program(List.of(
+                new FunctionDefinition("main", List.of(),
                         new StatementBlock(List.of(
                                 new FunctionCall("print", List.of(new StringLiteral("hello print")))
                                 )),
                         null
                 )
-        ), Map.of());
+        ), List.of());
         assertEquals(expected, program);
     }
     @Test
@@ -57,8 +56,8 @@ public class ParserLexerTest {
                 """;
         initTest(input);
         Program program = parser.parseProgram();
-        Program expected = new Program(Map.of(
-                "fib", new FunctionDefinition("fib", List.of(
+        Program expected = new Program(List.of(
+                new FunctionDefinition("fib", List.of(
                         new VariableDefinition("n", "int", false, false, null)
                 ), new StatementBlock(List.of(
                         new IfStatement(
@@ -97,7 +96,7 @@ public class ParserLexerTest {
                                 ))
                         )
                 )), "int")
-        ), Map.of());
+        ), List.of());
         assertEquals(expected, program);
     }
     @Test
@@ -117,8 +116,8 @@ public class ParserLexerTest {
                """;
         initTest(input);
         Program program = parser.parseProgram();
-        Program expected = new Program(Map.of(
-                "main", new FunctionDefinition("main", List.of(), new StatementBlock(List.of(
+        Program expected = new Program(List.of(
+                new FunctionDefinition("main", List.of(), new StatementBlock(List.of(
                         new VariableDefinition("someStruct", "SomeStruct", false, false, new StructLiteral(List.of(
                                 new StructLiteralMember("a", new IntegerLiteral(1)),
                                 new StructLiteralMember("b", new FloatLiteral(1.5f))
@@ -130,12 +129,12 @@ public class ParserLexerTest {
                         ))),
                         new AssignmentStatement(new VariableReference("a"), new IntegerLiteral(1))
                 )), null)
-        ), Map.of(
-                "SomeStruct", new StructDefinition("SomeStruct", List.of(
+        ), List.of(
+                new StructDefinition("SomeStruct", List.of(
                         new StructDefinitionMember("a", "int"),
                         new StructDefinitionMember("b", "float")
                 )),
-                "SomeUnion", new UnionDefinition("SomeUnion", List.of(
+                new UnionDefinition("SomeUnion", List.of(
                         "SomeStruct", "int"
                 ))
         ));

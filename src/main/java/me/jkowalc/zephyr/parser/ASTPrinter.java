@@ -43,7 +43,7 @@ public class ASTPrinter implements ASTVisitor {
         } else {
             print("- Functions:\n");
             indent++;
-            for (FunctionDefinition functionDefinition : program.getFunctions().values()) {
+            for (FunctionDefinition functionDefinition : program.getFunctions()) {
                 functionDefinition.accept(this);
             }
             indent--;
@@ -54,7 +54,7 @@ public class ASTPrinter implements ASTVisitor {
         }
         print("- Types\n");
         indent++;
-        for (TypeDefinition typeDefinition : program.getTypes().values()) {
+        for (TypeDefinition typeDefinition : program.getTypes()) {
             typeDefinition.accept(this);
         }
         indent--;

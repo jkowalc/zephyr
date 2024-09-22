@@ -11,6 +11,7 @@ import me.jkowalc.zephyr.domain.type.UnionStaticType;
 import me.jkowalc.zephyr.exception.ZephyrException;
 import me.jkowalc.zephyr.exception.analizer.DuplicateStructFieldException;
 import me.jkowalc.zephyr.exception.analizer.RecursiveTypeDefinitionException;
+import me.jkowalc.zephyr.exception.analizer.TypeAlreadyDefinedException;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -21,18 +22,18 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class TypeBuilderTest {
     private Map<String, BareStaticType> result;
-    private void build(Map<String, TypeDefinition> typeDefinitionMap) throws ZephyrException {
-        TypeBuilder typeBuilder = new TypeBuilder(typeDefinitionMap);
+    private void build(List<TypeDefinition> typeDefinitions) throws ZephyrException {
+        TypeBuilder typeBuilder = new TypeBuilder(typeDefinitions);
         result = typeBuilder.build().getTypes();
     }
     @Test
     public void testSimpleTypes() throws ZephyrException {
-        build(Map.of(
-                "SomeStruct", new StructDefinition("SomeStruct", List.of(
+        build(List.of(
+                new StructDefinition("SomeStruct", List.of(
                         new StructDefinitionMember("a", "int"),
                         new StructDefinitionMember("b", "float")
                 )),
-                "SomeUnion", new UnionDefinition("SomeUnion", List.of("SomeStruct", "int"))
+                new UnionDefinition("SomeUnion", List.of("SomeStruct", "int"))
                 ));
         Map<String, BareStaticType> expected = Map.of(
                 "int", new BareStaticType(TypeCategory.INT),
@@ -55,29 +56,56 @@ public class TypeBuilderTest {
     }
     @Test
     public void testRecursiveType() {
-        assertThrows(RecursiveTypeDefinitionException.class, () -> build(Map.of(
-                "SomeStruct", new StructDefinition("SomeStruct", List.of(
+        assertThrows(RecursiveTypeDefinitionException.class, () -> build(List.of(
+                new StructDefinition("SomeStruct", List.of(
                         new StructDefinitionMember("a", "SomeStruct")
                 ))
         )));
-        assertThrows(RecursiveTypeDefinitionException.class, () -> build(Map.of(
-                "SomeUnion", new UnionDefinition("SomeUnion", List.of("SomeUnion"))
+        assertThrows(RecursiveTypeDefinitionException.class, () -> build(List.of(
+                new UnionDefinition("SomeUnion", List.of("SomeUnion"))
         )));
-        assertThrows(RecursiveTypeDefinitionException.class, () -> build(Map.of(
-                "SomeStruct", new StructDefinition("SomeStruct", List.of(
+        assertThrows(RecursiveTypeDefinitionException.class, () -> build(List.of(
+                new StructDefinition("SomeStruct", List.of(
                         new StructDefinitionMember("a", "SomeUnion")
                 )),
-                "SomeUnion", new UnionDefinition("SomeUnion", List.of("SomeStruct"))
+                new UnionDefinition("SomeUnion", List.of("SomeStruct"))
         )));
     }
     @Test
     public void testDuplicateFieldInStructDefinition() {
-        assertThrows(DuplicateStructFieldException.class, () -> build(Map.of(
-                "SomeStruct", new StructDefinition(
+        assertThrows(DuplicateStructFieldException.class, () -> build(List.of(
+                new StructDefinition(
                         "SomeStruct", List.of(
                                 new StructDefinitionMember("a", "int"),
                                 new StructDefinitionMember("a", "string")
                         )
                 ))));
+    }
+    @Test
+    public void testDuplicateTypes() {
+        assertThrows(TypeAlreadyDefinedException.class, () -> build(List.of(
+                new StructDefinition(
+                        "A", List.of()
+                ),
+                new StructDefinition(
+                        "A", List.of(new StructDefinitionMember("a", "int"))
+                )
+        )));
+        assertThrows(TypeAlreadyDefinedException.class, () -> build(List.of(
+                new UnionDefinition(
+                        "A", List.of()
+                ),
+                new UnionDefinition(
+                        "A", List.of("int")
+                )
+        )));
+        assertThrows(TypeAlreadyDefinedException.class, () -> build(List.of(
+                new StructDefinition(
+                        "A", List.of()
+                ),
+                new UnionDefinition(
+                        "A", List.of()
+                )
+        )));
     }
 }
