@@ -22,7 +22,7 @@ import java.util.Map;
 
 
 public class TypeBuilder {
-    private final Map<String, TypeDefinition> typeDefinitionMap;
+    private final Map<String, TypeDefinition> typeDefinitions = new HashMap<>();
     private final List<String> visited = new ArrayList<>();
 
     @Getter
@@ -35,20 +35,27 @@ public class TypeBuilder {
             )
     );
 
-    public TypeBuilder(Map<String, TypeDefinition> types) {
-        this.typeDefinitionMap = types;
+    public TypeBuilder(List<TypeDefinition> types) throws TypeAlreadyDefinedException {
+        // build HashMap from provided types
+        for(TypeDefinition typeDefinition : types) {
+            if(typeDefinitions.containsKey(typeDefinition.getName())) {
+                throw new TypeAlreadyDefinedException(typeDefinition);
+            }
+            typeDefinitions.put(typeDefinition.getName(), typeDefinition);
+        }
     }
     public TypeBuilder build() throws ZephyrException {
-        for(Map.Entry<String, TypeDefinition> entry : typeDefinitionMap.entrySet()) {
-            if(this.types.containsKey(entry.getKey())) throw new TypeAlreadyDefinedException(entry.getValue());
-            visited.add(entry.getKey());
-            this.types.put(entry.getKey(), buildBareTypeFromDefinition(entry.getValue()));
+        for(Map.Entry<String, TypeDefinition> typeDefinition : typeDefinitions.entrySet()) {
+            String typeName = typeDefinition.getKey();
+            if(this.types.containsKey(typeName)) throw new TypeAlreadyDefinedException(typeDefinition.getValue());
+            visited.add(typeName);
+            this.types.put(typeName, buildBareTypeFromDefinition(typeDefinition.getValue()));
             visited.removeLast();
         }
         return this;
     }
     private TypeDefinition getTypeDefinition(String name, TextPosition position) throws ZephyrException {
-        TypeDefinition typeDefinition = typeDefinitionMap.get(name);
+        TypeDefinition typeDefinition = typeDefinitions.get(name);
         if (typeDefinition == null) {
             throw new TypeNotDefinedException(name, position);
         }
@@ -92,4 +99,5 @@ public class TypeBuilder {
             throw new ZephyrInternalException();
         }
     }
+
 }

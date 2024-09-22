@@ -25,7 +25,6 @@ import me.jkowalc.zephyr.util.TextPosition;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class Parser {
@@ -50,35 +49,23 @@ public class Parser {
 
     // program = {struct_definition | union_definition | function_definition };
     public Program parseProgram() throws LexicalException, SyntaxException, IOException {
-        HashMap<String, TypeDefinition> types = new HashMap<>();
-        HashMap<String, FunctionDefinition> functions = new HashMap<>();
+        List<TypeDefinition> types = new ArrayList<>();
+        List<FunctionDefinition> functions = new ArrayList<>();
         boolean isEnd = false;
         while(!isEnd) {
             StructDefinition structDefinition = parseStructDefinition();
             if (structDefinition != null) {
-                if(types.containsKey(structDefinition.getName())) {
-                    throw new MultipleDefinitionException("Type with name " + structDefinition.getName() + " already defined" +
-                            " (previous definition at " + types.get(structDefinition.getName()).getStartPosition() + ")", structDefinition.getStartPosition());
-                }
-                types.put(structDefinition.getName(), structDefinition);
+                types.add(structDefinition);
                 continue;
             }
             UnionDefinition unionDefinition = parseUnionDefinition();
             if (unionDefinition != null) {
-                if(types.containsKey(unionDefinition.getName())) {
-                    throw new MultipleDefinitionException("Type with name " + unionDefinition.getName() + " already defined" +
-                            " (previous definition at " + types.get(unionDefinition.getName()).getStartPosition() + ")", unionDefinition.getStartPosition());
-                }
-                types.put(unionDefinition.getName(), unionDefinition);
+                types.add(unionDefinition);
                 continue;
             }
             FunctionDefinition functionDefinition = parseFunctionDefinition();
             if (functionDefinition != null) {
-                if(functions.containsKey(functionDefinition.getName())) {
-                    throw new MultipleDefinitionException("Function with name " + functionDefinition.getName() + " already defined" +
-                            " (previous definition at " + functions.get(functionDefinition.getName()).getStartPosition() + ")", functionDefinition.getStartPosition());
-                }
-                functions.put(functionDefinition.getName(), functionDefinition);
+                functions.add(functionDefinition);
                 continue;
             }
             // EOF token is not required

@@ -9,7 +9,6 @@ import me.jkowalc.zephyr.domain.token.TokenType;
 import me.jkowalc.zephyr.domain.token.literal.IntegerLiteralToken;
 import me.jkowalc.zephyr.exception.lexical.LexicalException;
 import me.jkowalc.zephyr.exception.syntax.MissingTokenException;
-import me.jkowalc.zephyr.exception.syntax.MultipleDefinitionException;
 import me.jkowalc.zephyr.exception.syntax.SyntaxException;
 import org.junit.jupiter.api.Test;
 
@@ -28,13 +27,13 @@ public class ParseProgramTest {
         Program program = parser.parseProgram();
         assertEquals(1, program.getFunctions().size());
         assertEquals(0, program.getTypes().size());
-        assertEquals(expected, program.getFunctions().values().toArray()[0]);
+        assertEquals(expected, program.getFunctions().toArray()[0]);
     }
     private void testTypeDefinition(TypeDefinition expected) throws LexicalException, SyntaxException, IOException {
         Program program = parser.parseProgram();
         assertEquals(0, program.getFunctions().size());
         assertEquals(1, program.getTypes().size());
-        assertEquals(expected, program.getTypes().values().toArray()[0]);
+        assertEquals(expected, program.getTypes().toArray()[0]);
     }
     @Test
     public void testFunctionDefinition() throws LexicalException, IOException, SyntaxException {
@@ -191,45 +190,5 @@ public class ParseProgramTest {
         assertThrows(SyntaxException.class, () ->
             parser.parseProgram()
         );
-    }
-    @Test
-    public void testDoubleDefinition() throws LexicalException, IOException {
-        initParser(List.of(
-                new Token(TokenType.STRUCT),
-                new IdentifierToken("A"),
-                new Token(TokenType.OPEN_BRACE),
-                new Token(TokenType.CLOSE_BRACE),
-                new Token(TokenType.STRUCT),
-                new IdentifierToken("A"),
-                new Token(TokenType.OPEN_BRACE),
-                new Token(TokenType.CLOSE_BRACE)
-        ));
-        assertThrows(MultipleDefinitionException.class, () -> parser.parseProgram());
-
-        initParser(List.of(
-                new Token(TokenType.UNION),
-                new IdentifierToken("A"),
-                new Token(TokenType.OPEN_BRACE),
-                new Token(TokenType.CLOSE_BRACE),
-                new Token(TokenType.UNION),
-                new IdentifierToken("A"),
-                new Token(TokenType.OPEN_BRACE),
-                new Token(TokenType.CLOSE_BRACE)
-        ));
-        assertThrows(MultipleDefinitionException.class, () -> parser.parseProgram());
-
-        initParser(List.of(
-                new IdentifierToken("main"),
-                new Token(TokenType.OPEN_PARENTHESIS),
-                new Token(TokenType.CLOSE_PARENTHESIS),
-                new Token(TokenType.OPEN_BRACE),
-                new Token(TokenType.CLOSE_BRACE),
-                new IdentifierToken("main"),
-                new Token(TokenType.OPEN_PARENTHESIS),
-                new Token(TokenType.CLOSE_PARENTHESIS),
-                new Token(TokenType.OPEN_BRACE),
-                new Token(TokenType.CLOSE_BRACE)
-        ));
-        assertThrows(MultipleDefinitionException.class, () -> parser.parseProgram());
     }
 }

@@ -17,9 +17,7 @@ import me.jkowalc.zephyr.exception.analizer.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 
-import static java.util.Map.entry;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class AnalyzerTest {
@@ -27,15 +25,15 @@ public class AnalyzerTest {
 
     private Program programFromMainBlock(StatementBlock block) {
         return new Program(
-                Map.ofEntries(
-                        entry("main", new FunctionDefinition(
+                List.of(
+                        new FunctionDefinition(
                                 "main",
                                 List.of(),
                                 block,
                                 null
-                        ))
+                        )
                 ),
-                Map.of()
+                List.of()
         );
     }
 
@@ -72,8 +70,8 @@ public class AnalyzerTest {
     @Test
     public void testConvertiblePassedByReference() {
         Program program = new Program(
-                Map.ofEntries(
-                        entry("main", new FunctionDefinition(
+                List.of(
+                        new FunctionDefinition(
                                 "main",
                                 List.of(),
                                 new StatementBlock(
@@ -83,39 +81,60 @@ public class AnalyzerTest {
                                         )
                                 ),
                                 null
-                        )),
-                        entry("doSomething", new FunctionDefinition(
+                        ),
+                        new FunctionDefinition(
                                 "doSomething",
                                 List.of(new VariableDefinition("a", "float", true, true, null)),
                                 new StatementBlock(
                                         List.of()
                                 ),
-                                null))
+                                null)
                 ),
-                Map.of()
+                List.of()
         );
         assertThrows(ConvertiblePassedByReferenceException.class, () -> program.accept(analyzer));
     }
     @Test
-    public void testFunctionAlreadyDefined() {
+    public void testFunctionAlreadyDefinedStandard() {
         Program program = new Program(
-                Map.ofEntries(
-                        entry("main", new FunctionDefinition(
+                List.of(
+                        new FunctionDefinition(
+                                "hello",
+                                List.of(),
+                                new StatementBlock(List.of()),
+                                null
+                        ),
+                        new FunctionDefinition(
+                                "hello",
+                                List.of(),
+                                new StatementBlock(List.of()),
+                                null
+                        )
+                ),
+                List.of()
+        );
+        assertThrows(FunctionAlreadyDefinedException.class, () -> program.accept(analyzer));
+    }
+    @Test
+    public void testFunctionAlreadyDefinedBuiltin() {
+        Program program = new Program(
+                List.of(
+                        new FunctionDefinition(
                                 "main",
                                 List.of(),
                                 new StatementBlock(
                                         List.of()),
                                 null
-                        )),
-                        entry("print", new FunctionDefinition(
-                                "doSomething",
+                        ),
+                        new FunctionDefinition(
+                                "print",
                                 List.of(),
                                 new StatementBlock(
                                         List.of()
                                 ),
-                                null))
+                                null)
                 ),
-                Map.of()
+                List.of()
         );
         assertThrows(FunctionAlreadyDefinedException.class, () -> program.accept(analyzer));
     }
@@ -139,8 +158,8 @@ public class AnalyzerTest {
         assertThrows(ImmutableVariableException.class, () -> program.accept(analyzer));
 
         Program program1 = new Program(
-                Map.ofEntries(
-                        entry("main", new FunctionDefinition(
+                List.of(
+                        new FunctionDefinition(
                                 "main",
                                 List.of(),
                                 new StatementBlock(
@@ -151,18 +170,18 @@ public class AnalyzerTest {
                                         )
                                 ),
                                 null
-                        ))
+                        )
                 ),
-                Map.of(
-                        "SomeStruct", new StructDefinition("SomeStruct", List.of(
+                List.of(
+                        new StructDefinition("SomeStruct", List.of(
                                 new StructDefinitionMember("a", "int")
                         ))
                 )
         );
         assertThrows(ImmutableVariableException.class, () -> program1.accept(analyzer));
         Program program2 = new Program(
-                Map.ofEntries(
-                        entry("main", new FunctionDefinition(
+                List.of(
+                        new FunctionDefinition(
                                 "main",
                                 List.of(),
                                 new StatementBlock(
@@ -173,10 +192,10 @@ public class AnalyzerTest {
                                         )
                                 ),
                                 null
-                        ))
+                        )
                 ),
-                Map.of(
-                        "SomeStruct", new StructDefinition("SomeStruct", List.of(
+                List.of(
+                        new StructDefinition("SomeStruct", List.of(
                                 new StructDefinitionMember("a", "int")
                         ))
                 )
@@ -186,8 +205,8 @@ public class AnalyzerTest {
     @Test
     public void testInvalidArgumentCount() {
         Program program = new Program(
-                Map.ofEntries(
-                        entry("main", new FunctionDefinition(
+                List.of(
+                        new FunctionDefinition(
                                 "main",
                                 List.of(),
                                 new StatementBlock(
@@ -196,24 +215,24 @@ public class AnalyzerTest {
                                         )
                                 ),
                                 null
-                        )),
-                        entry("doSomething", new FunctionDefinition(
+                        ),
+                        new FunctionDefinition(
                                 "doSomething",
                                 List.of(new VariableDefinition("a", "int", false, false, null)),
                                 new StatementBlock(
                                         List.of()
                                 ),
-                                null))
+                                null)
                 ),
-                Map.of()
+                List.of()
         );
         assertThrows(InvalidArgumentCountException.class, () -> program.accept(analyzer));
     }
     @Test
     public void testInvalidFieldAccess() {
         Program program = new Program(
-                Map.ofEntries(
-                        entry("main", new FunctionDefinition(
+                List.of(
+                        new FunctionDefinition(
                                 "main",
                                 List.of(),
                                 new StatementBlock(
@@ -224,10 +243,10 @@ public class AnalyzerTest {
                                         )
                                 ),
                                 null
-                        ))
+                        )
                 ),
-                Map.of(
-                        "SomeStruct", new StructDefinition("SomeStruct", List.of(
+                List.of(
+                        new StructDefinition("SomeStruct", List.of(
                                 new StructDefinitionMember("a", "int")
                         ))
                 )
@@ -248,25 +267,25 @@ public class AnalyzerTest {
     @Test
     public void testMainFunctionNotDefined() {
         Program program = new Program(
-                Map.of(
-                        "doSomething", new FunctionDefinition("doSomething", List.of(), new StatementBlock(List.of()), null)
+                List.of(
+                        new FunctionDefinition("doSomething", List.of(), new StatementBlock(List.of()), null)
                 ),
-                Map.of()
+                List.of()
         );
         assertThrows(MainFunctionNotDefinedException.class, () -> program.accept(analyzer));
     }
     @Test
     public void testNonConvertibleType() {
         Program program = new Program(
-                Map.of(
-                        "main", new FunctionDefinition("main", List.of(), new StatementBlock(List.of(
+                List.of(
+                        new FunctionDefinition("main", List.of(), new StatementBlock(List.of(
                                 new VariableDefinition("a", "SomeVariant", false, false, new IntegerLiteral(1)),
                                 new FunctionCall("doSomething", List.of(new VariableReference("a")))
                         )), null),
-                        "doSomething", new FunctionDefinition("doSomething", List.of(new VariableDefinition("a", "float", false, false, null)), new StatementBlock(List.of()), null)
+                        new FunctionDefinition("doSomething", List.of(new VariableDefinition("a", "float", false, false, null)), new StatementBlock(List.of()), null)
                 ),
-                Map.of(
-                        "SomeVariant", new UnionDefinition("SomeVariant", List.of("int", "string"))
+                List.of(
+                        new UnionDefinition("SomeVariant", List.of("int", "string"))
                 )
         );
         assertThrows(NonConvertibleTypeException.class, () -> program.accept(analyzer));
@@ -274,13 +293,13 @@ public class AnalyzerTest {
     @Test
     public void testDuplicateFieldInStructLiteral() {
         Program program = new Program(
-                Map.of("main", new FunctionDefinition("main", List.of(), new StatementBlock(List.of(
+                List.of(new FunctionDefinition("main", List.of(), new StatementBlock(List.of(
                         new VariableDefinition("a", "A", false, false, new StructLiteral(List.of(
                                 new StructLiteralMember("a", new StringLiteral("hello")),
                                 new StructLiteralMember("a", new StringLiteral("world"))
                         )))
                 )), null)),
-                Map.of("A", new StructDefinition("A", List.of(
+                List.of(new StructDefinition("A", List.of(
                         new StructDefinitionMember("a", "string")
                         ))
                 )

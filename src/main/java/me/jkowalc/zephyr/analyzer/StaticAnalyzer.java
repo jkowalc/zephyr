@@ -73,22 +73,22 @@ public class StaticAnalyzer implements ASTVisitor {
         this.types = new TypeBuilder(program.getTypes()).build().getTypes();
         resetState();
         this.functions = new HashMap<>(BuiltinFunctionManager.BUILTIN_FUNCTIONS);
-        for(Map.Entry<String, FunctionDefinition> function : program.getFunctions().entrySet()) {
-            if(functions.containsKey(function.getKey())) {
-                throw new FunctionAlreadyDefinedException(function.getKey(), function.getValue().getStartPosition());
+        for(FunctionDefinition function : program.getFunctions()) {
+            if(functions.containsKey(function.getName())) {
+                throw new FunctionAlreadyDefinedException(function.getName(), function.getStartPosition());
             }
-            StaticType returnType = new StaticType(getBareType(function.getValue().getReturnType(), function.getValue().getStartPosition()));
+            StaticType returnType = new StaticType(getBareType(function.getReturnType(), function.getStartPosition()));
             List<StaticType> parameterTypes = new ArrayList<>();
-            for(VariableDefinition parameter : function.getValue().getParameters()) {
+            for(VariableDefinition parameter : function.getParameters()) {
                 parameterTypes.add(eval(parameter));
             }
-            functions.put(function.getKey(), new FunctionRepresentation(false, function.getKey(), parameterTypes, returnType, function.getValue()));
+            functions.put(function.getName(), new FunctionRepresentation(false, function.getName(), parameterTypes, returnType, function));
         }
         if(!functions.containsKey("main")) {
             throw new MainFunctionNotDefinedException(program.getStartPosition());
         }
         resetState();
-        for(FunctionDefinition functionDefinition : program.getFunctions().values()) {
+        for(FunctionDefinition functionDefinition : program.getFunctions()) {
             functionDefinition.accept(this);
             this.returnType.ignore();
         }
