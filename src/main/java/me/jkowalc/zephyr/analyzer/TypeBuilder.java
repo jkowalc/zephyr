@@ -7,6 +7,7 @@ import me.jkowalc.zephyr.domain.node.program.TypeDefinition;
 import me.jkowalc.zephyr.domain.node.program.UnionDefinition;
 import me.jkowalc.zephyr.domain.type.*;
 import me.jkowalc.zephyr.exception.ZephyrException;
+import me.jkowalc.zephyr.exception.analizer.DuplicateStructFieldException;
 import me.jkowalc.zephyr.exception.analizer.RecursiveTypeDefinitionException;
 import me.jkowalc.zephyr.exception.analizer.TypeAlreadyDefinedException;
 import me.jkowalc.zephyr.exception.analizer.TypeNotDefinedException;
@@ -68,6 +69,9 @@ public class TypeBuilder {
     private Map<String, BareStaticType> deriveFieldsFromDefinition(StructDefinition structDefinition) throws ZephyrException {
         Map<String, BareStaticType> fields = new SimpleMap<>();
         for(StructDefinitionMember member : structDefinition.getMembers()) {
+            if(fields.containsKey(member.getName())) {
+                throw new DuplicateStructFieldException(member.getName(), member.getStartPosition());
+            }
             fields.put(member.getName(), buildBareTypeFromName(member.getTypeName(), member.getStartPosition()));
         }
         return fields;

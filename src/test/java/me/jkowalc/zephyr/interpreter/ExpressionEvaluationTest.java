@@ -9,10 +9,7 @@ import me.jkowalc.zephyr.domain.node.program.FunctionDefinition;
 import me.jkowalc.zephyr.domain.node.program.Program;
 import me.jkowalc.zephyr.domain.node.statement.StatementBlock;
 import me.jkowalc.zephyr.domain.runtime.Value;
-import me.jkowalc.zephyr.domain.runtime.value.BooleanValue;
-import me.jkowalc.zephyr.domain.runtime.value.FloatValue;
-import me.jkowalc.zephyr.domain.runtime.value.IntegerValue;
-import me.jkowalc.zephyr.domain.runtime.value.StringValue;
+import me.jkowalc.zephyr.domain.runtime.value.*;
 import me.jkowalc.zephyr.exception.ZephyrException;
 import me.jkowalc.zephyr.exception.analizer.AmbiguousExpressionType;
 import me.jkowalc.zephyr.exception.analizer.NonConvertibleTypeException;
@@ -37,6 +34,14 @@ public class ExpressionEvaluationTest {
     public void testBasicExpression() throws ZephyrException {
         Value result = interpreter.evaluateExpression(new IntegerLiteral(1));
         assertEquals(new IntegerValue(1), result);
+    }
+    @Test
+    public void testStringConversion() throws ZephyrException {
+        assertEquals(new StringValue("{}"), interpreter.evaluateExpression(
+                new FunctionCall("to_string", List.of(
+                        new StructLiteral(List.of())
+                ))
+        ));
     }
     @Test
     public void testEqualsBasic() throws ZephyrException {
@@ -105,27 +110,27 @@ public class ExpressionEvaluationTest {
         assertEquals(new StringValue("1{a: 1}"),
                 interpreter.evaluateExpression(new AddExpression(
                         new IntegerLiteral(1),
-                        new StructLiteral(Map.of("a", new IntegerLiteral(1))))));
+                        new StructLiteral(List.of(new StructLiteralMember("a", new IntegerLiteral(1)))))));
 
         assertEquals(new StringValue("{a: 1}1"),
                 interpreter.evaluateExpression(new AddExpression(
-                        new StructLiteral(Map.of("a", new IntegerLiteral(1))),
+                        new StructLiteral(List.of(new StructLiteralMember("a", new IntegerLiteral(1)))),
                         new IntegerLiteral(1))));
 
         assertEquals(new StringValue("{a: 1}{b: 2}"),
                 interpreter.evaluateExpression(new AddExpression(
-                        new StructLiteral(Map.of("a", new IntegerLiteral(1))),
-                        new StructLiteral(Map.of("b", new IntegerLiteral(2))))));
+                        new StructLiteral(List.of(new StructLiteralMember("a", new IntegerLiteral(1)))),
+                        new StructLiteral(List.of(new StructLiteralMember("b", new IntegerLiteral(2)))))));
 
         assertEquals(new StringValue("1.0{a: 1}"),
                 interpreter.evaluateExpression(new AddExpression(
                         new FloatLiteral(1.0f),
-                        new StructLiteral(Map.of("a", new IntegerLiteral(1))))));
+                        new StructLiteral(List.of(new StructLiteralMember("a", new IntegerLiteral(1)))))));
 
         assertEquals(new StringValue("The struct: {a: 1}"),
                 interpreter.evaluateExpression(new AddExpression(
                         new StringLiteral("The struct: "),
-                        new StructLiteral(Map.of("a", new IntegerLiteral(1))))));
+                        new StructLiteral(List.of(new StructLiteralMember("a", new IntegerLiteral(1)))))));
     }
     @Test
     public void testComplexExpression() throws ZephyrException {
@@ -162,7 +167,7 @@ public class ExpressionEvaluationTest {
         assertEquals(new BooleanValue(false),
                 interpreter.evaluateExpression(new NotExpression(new NotExpression(new FloatLiteral(0.0f)))));
         assertThrows(NonConvertibleTypeException.class, () -> interpreter.evaluateExpression(
-                new NotExpression(new StructLiteral(Map.of("a", new IntegerLiteral(1))))
+                new NotExpression(new StructLiteral(List.of(new StructLiteralMember("a", new IntegerLiteral(1)))))
         ));
     }
     @Test

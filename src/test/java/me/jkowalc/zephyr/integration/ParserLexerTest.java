@@ -6,10 +6,7 @@ import me.jkowalc.zephyr.domain.node.expression.binary.AddExpression;
 import me.jkowalc.zephyr.domain.node.expression.binary.DotExpression;
 import me.jkowalc.zephyr.domain.node.expression.binary.LessEqualExpression;
 import me.jkowalc.zephyr.domain.node.expression.binary.SubtractExpression;
-import me.jkowalc.zephyr.domain.node.expression.literal.FloatLiteral;
-import me.jkowalc.zephyr.domain.node.expression.literal.IntegerLiteral;
-import me.jkowalc.zephyr.domain.node.expression.literal.StringLiteral;
-import me.jkowalc.zephyr.domain.node.expression.literal.StructLiteral;
+import me.jkowalc.zephyr.domain.node.expression.literal.*;
 import me.jkowalc.zephyr.domain.node.program.*;
 import me.jkowalc.zephyr.domain.node.statement.*;
 import me.jkowalc.zephyr.exception.lexical.LexicalException;
@@ -122,14 +119,14 @@ public class ParserLexerTest {
         Program program = parser.parseProgram();
         Program expected = new Program(Map.of(
                 "main", new FunctionDefinition("main", List.of(), new StatementBlock(List.of(
-                        new VariableDefinition("someStruct", "SomeStruct", false, false, new StructLiteral(Map.of(
-                                "a", new IntegerLiteral(1),
-                                "b", new FloatLiteral(1.5f)
+                        new VariableDefinition("someStruct", "SomeStruct", false, false, new StructLiteral(List.of(
+                                new StructLiteralMember("a", new IntegerLiteral(1)),
+                                new StructLiteralMember("b", new FloatLiteral(1.5f))
                         ))),
                         new AssignmentStatement(new DotExpression(new VariableReference("someStruct"), "a"), new IntegerLiteral(1)),
-                        new VariableDefinition("a", "SomeUnion", true, false, new StructLiteral(Map.of(
-                                "a", new IntegerLiteral(1),
-                                "b", new FloatLiteral(1.5f)
+                        new VariableDefinition("a", "SomeUnion", true, false, new StructLiteral(List.of(
+                                new StructLiteralMember("a", new IntegerLiteral(1)),
+                                new StructLiteralMember("b", new FloatLiteral(1.5f))
                         ))),
                         new AssignmentStatement(new VariableReference("a"), new IntegerLiteral(1))
                 )), null)

@@ -5,7 +5,9 @@ import me.jkowalc.zephyr.domain.node.expression.VariableReference;
 import me.jkowalc.zephyr.domain.node.expression.binary.DotExpression;
 import me.jkowalc.zephyr.domain.node.expression.binary.SubtractExpression;
 import me.jkowalc.zephyr.domain.node.expression.literal.IntegerLiteral;
+import me.jkowalc.zephyr.domain.node.expression.literal.StringLiteral;
 import me.jkowalc.zephyr.domain.node.expression.literal.StructLiteral;
+import me.jkowalc.zephyr.domain.node.expression.literal.StructLiteralMember;
 import me.jkowalc.zephyr.domain.node.program.*;
 import me.jkowalc.zephyr.domain.node.statement.AssignmentStatement;
 import me.jkowalc.zephyr.domain.node.statement.ReturnStatement;
@@ -144,8 +146,8 @@ public class AnalyzerTest {
                                 new StatementBlock(
                                         List.of(
                                                 new VariableDefinition("a", "SomeStruct", false, false,
-                                                        new StructLiteral(Map.of("a", new IntegerLiteral(1)))),
-                                                new AssignmentStatement(new VariableReference("a"), new StructLiteral(Map.of("a", new IntegerLiteral(2))))
+                                                        new StructLiteral(List.of(new StructLiteralMember("a", new IntegerLiteral(1))))),
+                                                new AssignmentStatement(new VariableReference("a"), new StructLiteral(List.of(new StructLiteralMember("a", new IntegerLiteral(2)))))
                                         )
                                 ),
                                 null
@@ -166,7 +168,7 @@ public class AnalyzerTest {
                                 new StatementBlock(
                                         List.of(
                                                 new VariableDefinition("a", "SomeStruct", false, false,
-                                                        new StructLiteral(Map.of("a", new IntegerLiteral(1)))),
+                                                        new StructLiteral(List.of(new StructLiteralMember("a", new IntegerLiteral(1))))),
                                                 new AssignmentStatement(new DotExpression(new VariableReference("a"), "a"), new IntegerLiteral(2))
                                         )
                                 ),
@@ -217,7 +219,7 @@ public class AnalyzerTest {
                                 new StatementBlock(
                                         List.of(
                                                 new VariableDefinition("a", "SomeStruct", false, false,
-                                                        new StructLiteral(Map.of("a", new IntegerLiteral(1)))),
+                                                        new StructLiteral(List.of(new StructLiteralMember("a", new IntegerLiteral(1))))),
                                                 new FunctionCall("print", List.of(new DotExpression(new VariableReference("a"), "b")))
                                         )
                                 ),
@@ -237,7 +239,7 @@ public class AnalyzerTest {
         Program program = programFromMainBlock(new StatementBlock(
                 List.of(
                         new FunctionCall("print", List.of(
-                                new SubtractExpression(new IntegerLiteral(1), new StructLiteral(Map.of("a", new IntegerLiteral(1))))
+                                new SubtractExpression(new IntegerLiteral(1), new StructLiteral(List.of(new StructLiteralMember("a", new IntegerLiteral(1)))))
                         ))
                 )
         ));
@@ -268,5 +270,21 @@ public class AnalyzerTest {
                 )
         );
         assertThrows(NonConvertibleTypeException.class, () -> program.accept(analyzer));
+    }
+    @Test
+    public void testDuplicateFieldInStructLiteral() {
+        Program program = new Program(
+                Map.of("main", new FunctionDefinition("main", List.of(), new StatementBlock(List.of(
+                        new VariableDefinition("a", "A", false, false, new StructLiteral(List.of(
+                                new StructLiteralMember("a", new StringLiteral("hello")),
+                                new StructLiteralMember("a", new StringLiteral("world"))
+                        )))
+                )), null)),
+                Map.of("A", new StructDefinition("A", List.of(
+                        new StructDefinitionMember("a", "string")
+                        ))
+                )
+        );
+        assertThrows(DuplicateStructFieldException.class, () -> program.accept(analyzer));
     }
 }

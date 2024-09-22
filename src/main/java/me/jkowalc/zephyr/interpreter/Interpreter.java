@@ -463,10 +463,15 @@ public class Interpreter implements ASTVisitor {
     @Override
     public void visit(StructLiteral structLiteral) throws ZephyrException {
         Map<String, Value> fields = new SimpleMap<>();
-        for (Map.Entry<String, Literal> entry : structLiteral.getFields().entrySet()) {
-            fields.put(entry.getKey(), eval(entry.getValue()));
+        for (StructLiteralMember field : structLiteral.getFields()) {
+            fields.put(field.getFieldName(), eval(field.getFieldValue()));
         }
         returnValue.set(new StructValue(fields));
+    }
+
+    @Override
+    public void visit(StructLiteralMember structLiteralMember) throws ZephyrException {
+        throw new UnsupportedOperationException("Visiting struct literal member is not supported");
     }
 
     @Override

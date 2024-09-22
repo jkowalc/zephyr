@@ -21,14 +21,12 @@ import me.jkowalc.zephyr.exception.lexical.LexicalException;
 import me.jkowalc.zephyr.exception.syntax.*;
 import me.jkowalc.zephyr.lexer.LexerInterface;
 import me.jkowalc.zephyr.util.Pair;
-import me.jkowalc.zephyr.util.SimpleMap;
 import me.jkowalc.zephyr.util.TextPosition;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class Parser {
     private final TokenReader reader;
@@ -706,26 +704,44 @@ public class Parser {
             default -> {return null;}
         }
     }
-    // struct_literal = "{", {struct_literal_member}, "}";
+    // struct_literal = "{", [struct_literal_member, {",", struct_literal_member}], "}";
     private StructLiteral parseStructLiteral() throws LexicalException, IOException, SyntaxException {
         if(reader.getType() != TokenType.OPEN_BRACE) {
             return null;
         }
-        Map<String, Literal> fields = new SimpleMap<>();
+        List<StructLiteralMember> fields = new ArrayList<>();
         TextPosition startPosition = reader.getToken().getStartPosition();
-        IdentifierToken identifierToken;
-        do {
+        reader.next();
+        if(reader.getType().equals(TokenType.CLOSE_BRACE)) {
+            TextPosition endPosition = reader.getToken().getEndPosition();
             reader.next();
-            mustBe(TokenType.IDENTIFIER, "Expected struct member name");
-            identifierToken = (IdentifierToken) reader.getToken();
+            return new StructLiteral(startPosition, endPosition, List.of());
+        }
+        StructLiteralMember field = parseStructLiteralMember();
+        if(field == null) throw new SyntaxException("Expected struct literal member", reader.getToken().getStartPosition());
+        fields.add(field);
+        while(reader.getType() == TokenType.COMMA) {
             reader.next();
-            mustBe(TokenType.COLON, "Expected ':'");
-            reader.next();
-            fields.put(identifierToken.getValue(), parseLiteral());
-        } while (reader.getType() == TokenType.COMMA);
+            field = parseStructLiteralMember();
+            if(field == null) throw new SyntaxException("Expected struct literal member", reader.getToken().getStartPosition());
+            fields.add(field);
+        }
         mustBe(TokenType.CLOSE_BRACE, "Expected '}'");
         TextPosition endPosition = reader.getToken().getEndPosition();
         reader.next();
         return new StructLiteral(startPosition, endPosition, fields);
+    }
+    // struct_literal_member = identifier, ":", literal;
+    private StructLiteralMember parseStructLiteralMember() throws SyntaxException, LexicalException, IOException {
+        if(reader.getType() != TokenType.IDENTIFIER) return null;
+        IdentifierToken identifierToken = (IdentifierToken) reader.getToken();
+        reader.next();
+        mustBe(TokenType.COLON, "Expected ':'");
+        reader.next();
+        Literal literal = parseLiteral();
+        if(literal == null) {
+            throw new MissingLiteralException(reader.getToken().getStartPosition());
+        }
+        return new StructLiteralMember(identifierToken.getStartPosition(), identifierToken.getValue(), literal);
     }
 }
