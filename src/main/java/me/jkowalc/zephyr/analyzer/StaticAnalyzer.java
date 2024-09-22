@@ -100,7 +100,7 @@ public class StaticAnalyzer implements ASTVisitor {
         if(functionDefinition.getName().equals("main")) {
             String mainReturnType = functionDefinition.getReturnType();
             if(!(mainReturnType == null || mainReturnType.equals("int"))) {
-                throw new AnalizerException("Main function must return int or void", functionDefinition.getStartPosition());
+                throw new AnalyzerException("Main function must return int or void", functionDefinition.getStartPosition());
             }
         }
         for(VariableDefinition parameter : functionDefinition.getParameters()) {
@@ -155,7 +155,7 @@ public class StaticAnalyzer implements ASTVisitor {
     }
 
     @Override
-    public void visit(VariableReference variableReference) throws AnalizerException {
+    public void visit(VariableReference variableReference) throws AnalyzerException {
         try {
             returnType.set(context.get(variableReference.getName()));
         } catch(VariableNotDefinedScopeException e) {
