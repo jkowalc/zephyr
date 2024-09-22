@@ -370,10 +370,18 @@ public class StaticAnalyzer implements ASTVisitor {
     @Override
     public void visit(StructLiteral structLiteral) throws ZephyrException {
         Map<String, BareStaticType> fields = new SimpleMap<>();
-        for(Map.Entry<String, Literal> entry : structLiteral.getFields().entrySet()) {
-            fields.put(entry.getKey(), eval(entry.getValue()).getBareStaticType());
+        for(StructLiteralMember field : structLiteral.getFields()) {
+            if(fields.containsKey(field.getFieldName())) {
+                throw new DuplicateStructFieldException(field.getFieldName(), field.getStartPosition());
+            }
+            fields.put(field.getFieldName(), eval(field.getFieldValue()).getBareStaticType());
         }
         returnType.set(new StaticType(new StructStaticType(fields)));
+    }
+
+    @Override
+    public void visit(StructLiteralMember structLiteralMember) throws ZephyrException {
+        throw new UnsupportedOperationException("Visiting struct literal member is not supported. Checks are made when visiting StructLiteral");
     }
 
     @Override

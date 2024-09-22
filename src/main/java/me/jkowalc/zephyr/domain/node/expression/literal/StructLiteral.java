@@ -7,19 +7,19 @@ import me.jkowalc.zephyr.exception.ZephyrException;
 import me.jkowalc.zephyr.util.ASTVisitor;
 import me.jkowalc.zephyr.util.TextPosition;
 
-import java.util.Map;
+import java.util.List;
 
 @Getter
 @EqualsAndHashCode(callSuper = false)
 public final class StructLiteral extends Node implements Literal {
-    private final Map<String, Literal> fields;
+    private final List<StructLiteralMember> fields;
 
-    public StructLiteral(Map<String, Literal> fields) {
+    public StructLiteral(List<StructLiteralMember> fields) {
         super(null, null);
         this.fields = fields;
     }
 
-    public StructLiteral(TextPosition startPosition, TextPosition endPosition, Map<String, Literal> fields) {
+    public StructLiteral(TextPosition startPosition, TextPosition endPosition, List<StructLiteralMember> fields) {
         super(startPosition, endPosition);
         this.fields = fields;
     }

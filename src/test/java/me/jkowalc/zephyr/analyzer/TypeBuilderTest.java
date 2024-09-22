@@ -9,6 +9,7 @@ import me.jkowalc.zephyr.domain.type.StructStaticType;
 import me.jkowalc.zephyr.domain.type.TypeCategory;
 import me.jkowalc.zephyr.domain.type.UnionStaticType;
 import me.jkowalc.zephyr.exception.ZephyrException;
+import me.jkowalc.zephyr.exception.analizer.DuplicateStructFieldException;
 import me.jkowalc.zephyr.exception.analizer.RecursiveTypeDefinitionException;
 import org.junit.jupiter.api.Test;
 
@@ -68,5 +69,15 @@ public class TypeBuilderTest {
                 )),
                 "SomeUnion", new UnionDefinition("SomeUnion", List.of("SomeStruct"))
         )));
+    }
+    @Test
+    public void testDuplicateFieldInStructDefinition() {
+        assertThrows(DuplicateStructFieldException.class, () -> build(Map.of(
+                "SomeStruct", new StructDefinition(
+                        "SomeStruct", List.of(
+                                new StructDefinitionMember("a", "int"),
+                                new StructDefinitionMember("a", "string")
+                        )
+                ))));
     }
 }

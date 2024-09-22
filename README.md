@@ -384,7 +384,7 @@ elementary_expresssion = identifier
 
 literal = int_literal | float_literal | string_literal | bool_literal | struct_literal;
 
-struct_literal = "{", {struct_literal_member}, "}";
+struct_literal = "{", [struct_literal_member, {",", struct_literal_member}], "}";
 struct_literal_member = identifier, ":", literal;
 
 

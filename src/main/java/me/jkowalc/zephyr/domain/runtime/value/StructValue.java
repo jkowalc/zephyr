@@ -33,7 +33,7 @@ public record StructValue(Map<String, Value> fields) implements Value {
         StringBuffer sb = new StringBuffer();
         sb.append("{");
         fields.forEach((key, value) -> sb.append(key).append(": ").append(value).append(", "));
-        sb.delete(sb.length() - 2, sb.length());
+        if(!fields.isEmpty()) sb.delete(sb.length() - 2, sb.length());
         sb.append("}");
         return sb.toString();
     }

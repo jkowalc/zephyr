@@ -32,6 +32,7 @@ public interface ASTVisitor {
     void visit(FloatLiteral floatLiteral) throws ZephyrException;
     void visit(StringLiteral stringLiteral) throws ZephyrException;
     void visit(StructLiteral structLiteral) throws ZephyrException;
+    void visit(StructLiteralMember structLiteralMember) throws ZephyrException;
     void visit(NegationExpression negationExpression) throws ZephyrException;
     void visit(NotExpression notExpression) throws ZephyrException;
     void visit(FunctionDefinition functionDefinition) throws ZephyrException;

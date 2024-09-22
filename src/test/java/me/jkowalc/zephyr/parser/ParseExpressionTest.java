@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -301,6 +300,17 @@ public class ParseExpressionTest {
         assertThrows(SyntaxException.class, () -> parser.parseExpression());
     }
     @Test
+    public void testEmptyStructLiteral() throws LexicalException, SyntaxException, IOException {
+        initParser(List.of(
+                new Token(TokenType.OPEN_BRACE),
+                new Token(TokenType.CLOSE_BRACE)
+        ));
+        Expression expected = new StructLiteral(
+                List.of()
+        );
+        assertEquals(expected, parser.parseExpression());
+    }
+    @Test
     public void testStructLiteral() throws IOException, LexicalException, SyntaxException {
         initParser(List.of(
                 new Token(TokenType.OPEN_BRACE),
@@ -314,9 +324,9 @@ public class ParseExpressionTest {
                 new Token(TokenType.CLOSE_BRACE)
         ));
         Expression expected = new StructLiteral(
-                Map.of(
-                        "hello", new IntegerLiteral(1),
-                        "world", new IntegerLiteral(2)
+                List.of(
+                        new StructLiteralMember("hello", new IntegerLiteral(1)),
+                        new StructLiteralMember("world", new IntegerLiteral(2))
                 )
         );
         Expression actual = parser.parseExpression();
@@ -340,11 +350,11 @@ public class ParseExpressionTest {
                 new Token(TokenType.CLOSE_BRACE)
         ));
         Expression expected = new StructLiteral(
-                Map.of(
-                        "hello", new IntegerLiteral(1),
-                        "world", new StructLiteral(
-                                Map.of("foo", new IntegerLiteral(2))
-                        )
+                List.of(
+                        new StructLiteralMember( "hello", new IntegerLiteral(1)),
+                        new StructLiteralMember("world", new StructLiteral(
+                                List.of(new StructLiteralMember("foo", new IntegerLiteral(2)))
+                        ))
                 )
         );
         Expression actual = parser.parseExpression();

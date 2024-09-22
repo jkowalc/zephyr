@@ -15,7 +15,6 @@ import me.jkowalc.zephyr.util.CharacterUtil;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Map;
 
 public class ASTPrinter implements ASTVisitor {
     private int indent = 0;
@@ -187,12 +186,18 @@ public class ASTPrinter implements ASTVisitor {
     public void visit(StructLiteral structLiteral) throws ZephyrException {
         print("StructLiteral from " + structLiteral.getStartPosition() + " to " + structLiteral.getEndPosition() + "\n");
         indent++;
-        for (Map.Entry<String, Literal> entry: structLiteral.getFields().entrySet()) {
-            print("\"" + CharacterUtil.getRepresentation(entry.getKey()) + "\":\n");
-            indent++;
-            entry.getValue().accept(this);
-            indent--;
+        for (StructLiteralMember field: structLiteral.getFields()) {
+            field.accept(this);
+
         }
+        indent--;
+    }
+
+    @Override
+    public void visit(StructLiteralMember structLiteralMember) throws ZephyrException {
+        print("\"" + CharacterUtil.getRepresentation(structLiteralMember.getFieldName()) + "\":\n");
+        indent++;
+        structLiteralMember.getFieldValue().accept(this);
         indent--;
     }
 
