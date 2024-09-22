@@ -43,9 +43,9 @@ public class Lexer implements LexerInterface {
         String tokenValue = buffer.toString();
         TokenType keywordType = KeywordMapper.mapKeyword(tokenValue);
         if(keywordType != null) {
-            return new Token(tokenStart, reader.getPosition().subtractColumn(1), keywordType);
+            return new Token(tokenStart, keywordType);
         }
-        return new IdentifierToken(tokenStart, reader.getPosition().subtractColumn(1), tokenValue);
+        return new IdentifierToken(tokenStart, tokenValue);
     }
     private Float readFractionalPart() throws IOException, LexicalException {
         if(reader.getChar() != '.') return null;
@@ -73,10 +73,10 @@ public class Lexer implements LexerInterface {
             reader.next();
             Float fractionalPart;
             if ((fractionalPart = readFractionalPart()) != null)
-                return new FloatLiteralToken(startPosition, reader.getPosition().subtractColumn(1), fractionalPart);
+                return new FloatLiteralToken(startPosition, fractionalPart);
             else if (Character.isDigit(reader.getChar()))
                 throw new LexicalException("Integer literal cannot have a leading 0", reader.getPosition());
-            else return new IntegerLiteralToken(startPosition, reader.getPosition().subtractColumn(1), 0);
+            else return new IntegerLiteralToken(startPosition, 0);
         }
         int number = 0;
         while (Character.isDigit(reader.getChar())) {
@@ -89,9 +89,9 @@ public class Lexer implements LexerInterface {
         }
         Float fractionalPart;
         if ((fractionalPart = readFractionalPart()) != null)
-            return new FloatLiteralToken(startPosition, reader.getPosition().subtractColumn(1), number + fractionalPart);
+            return new FloatLiteralToken(startPosition, number + fractionalPart);
         else
-            return new IntegerLiteralToken(startPosition, reader.getPosition().subtractColumn(1), number);
+            return new IntegerLiteralToken(startPosition, number);
     }
     private boolean readEscapeSequence() throws IOException, LexicalException {
         if(reader.getChar() != '\\') return false;
@@ -127,14 +127,14 @@ public class Lexer implements LexerInterface {
             throw new UnterminatedStringException("Unterminated string", stringStart);
         }
         reader.next();
-        return new StringLiteralToken(stringStart, reader.getPosition(), buffer.toString());
+        return new StringLiteralToken(stringStart, buffer.toString());
     }
     private Token readSingleCharOperator() throws IOException {
         TokenType tokenType = OperatorMapper.mapSingleCharOperator(reader.getChar());
         if(tokenType == null) return null;
         TextPosition operatorPosition = reader.getPosition();
         reader.next();
-        return new Token(operatorPosition, operatorPosition, tokenType);
+        return new Token(operatorPosition, tokenType);
     }
     private Token readDoubleCharOperator() throws IOException {
         TokenType tokenType = OperatorMapper.mapDoubleCharOperator("" + reader.getChar() + reader.peek());
@@ -142,7 +142,7 @@ public class Lexer implements LexerInterface {
         TextPosition operatorPosition = reader.getPosition();
         reader.next();
         reader.next();
-        return new Token(operatorPosition, operatorPosition.addColumn(1), tokenType);
+        return new Token(operatorPosition, tokenType);
     }
     private Token readComment() throws IOException, LexicalException {
         if(reader.getChar() != '/') return null;
@@ -156,13 +156,13 @@ public class Lexer implements LexerInterface {
             buffer.append(reader.getChar());
             reader.next();
         }
-        return new CommentToken(commentStart, reader.getPosition().subtractColumn(1), buffer.toString());
+        return new CommentToken(commentStart, buffer.toString());
     }
     public Token nextToken() throws IOException, LexicalException {
         buffer.setLength(0);
         skipWhitespace();
         if(reader.getChar() == Character.UNASSIGNED) {
-            return new Token(reader.getPosition(), reader.getPosition(), TokenType.EOF);
+            return new Token(reader.getPosition(), TokenType.EOF);
         }
         Token token;
         if((token = readComment()) != null) return token;

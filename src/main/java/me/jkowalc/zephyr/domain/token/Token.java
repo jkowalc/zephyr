@@ -1,23 +1,22 @@
 package me.jkowalc.zephyr.domain.token;
 
+import lombok.Getter;
 import me.jkowalc.zephyr.util.TextPosition;
 
 import java.util.Objects;
 
+@Getter
 public class Token {
     private final TextPosition startPosition;
-    private final TextPosition endPosition;
     private final TokenType type;
 
-    public Token(TextPosition startPosition, TextPosition endPosition, TokenType type) {
+    public Token(TextPosition startPosition, TokenType type) {
         this.startPosition = startPosition;
-        this.endPosition = endPosition;
         this.type = type;
     }
 
     public Token(TokenType type) {
         this.startPosition = null;
-        this.endPosition = null;
         this.type = type;
     }
 
@@ -25,20 +24,8 @@ public class Token {
     public String toString() {
         return "Token{" +
                 "startPosition=" + startPosition +
-                ", endPosition=" + endPosition +
                 ", type=" + type +
                 '}';
-    }
-    public TextPosition getStartPosition() {
-        return startPosition;
-    }
-
-    public TextPosition getEndPosition() {
-        return endPosition;
-    }
-
-    public TokenType getType() {
-        return type;
     }
 
     @Override
