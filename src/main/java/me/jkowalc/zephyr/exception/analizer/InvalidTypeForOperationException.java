@@ -5,7 +5,7 @@ import me.jkowalc.zephyr.util.TextPosition;
 
 import java.util.List;
 
-public class InvalidTypeForOperationException extends AnalizerException {
+public class InvalidTypeForOperationException extends AnalyzerException {
     private static String formatTypes(List<BareStaticType> types) {
         StringBuilder builder = new StringBuilder();
         for (BareStaticType type : types) {

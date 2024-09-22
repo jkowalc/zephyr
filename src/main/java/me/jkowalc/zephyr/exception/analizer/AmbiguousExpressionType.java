@@ -5,7 +5,7 @@ import me.jkowalc.zephyr.util.TextPosition;
 
 import java.util.List;
 
-public class AmbiguousExpressionType extends AnalizerException {
+public class AmbiguousExpressionType extends AnalyzerException {
     private static String formatPossibleTypes(List<BareStaticType> possibleTypes) {
         StringBuilder builder = new StringBuilder();
         for (BareStaticType possibleType : possibleTypes) {
