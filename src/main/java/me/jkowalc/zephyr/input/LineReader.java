@@ -14,6 +14,7 @@ public class LineReader {
     public LineReader(InputStreamReader inputStreamReader) throws IOException {
         this.bufferedReader = new CharacterReplacer(inputStreamReader);
         this.currentChar = bufferedReader.read();
+        if(this.currentChar == '\n') resetColumnFlag = true;
     }
     public TextPosition getPosition() {
         return new TextPosition(currentLine, currentColumn);

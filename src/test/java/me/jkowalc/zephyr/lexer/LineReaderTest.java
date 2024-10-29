@@ -57,4 +57,11 @@ public class LineReaderTest {
         assertCharLineColumn(reader, 'b', 1, 2);
         assertEquals(Character.UNASSIGNED, reader.peek());
     }
+    @Test
+    void newlineAtStart() throws IOException {
+        LineReader reader = new LineReader(Utils.getStringAsInputStreamReader("\na"));
+        assertCharLineColumn(reader, '\n', 1, 1);
+        reader.next();
+        assertCharLineColumn(reader, 'a', 2, 1);
+    }
 }
