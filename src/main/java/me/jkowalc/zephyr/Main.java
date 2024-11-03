@@ -54,8 +54,8 @@ public class Main {
                 System.exit(1);
             }
             if(parseOnly) {
-                StaticAnalyzer staticAnalizer = new StaticAnalyzer();
-                program.accept(staticAnalizer);
+                StaticAnalyzer staticAnalyzer = new StaticAnalyzer();
+                program.accept(staticAnalyzer);
                 ASTPrinter printer = new ASTPrinter(System.out, 4);
                 program.accept(printer);
             }
